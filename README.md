@@ -103,6 +103,7 @@ Point `STUDYKIT_DATA` somewhere else to keep it out of the repo entirely, or to 
 ./study dashboard --open          self-contained HTML charts
 ./study packs                     what content exists, how covered it is
 ./study doctor                    validate packs and data
+./study test                      run the test suite with Python 3.12+
 ```
 
 Full reference: [docs/cli.md](docs/cli.md).
@@ -124,7 +125,7 @@ Full reference: [docs/cli.md](docs/cli.md).
 
 Python 3.12 or newer, and a POSIX shell. That is the whole list. If `python3` on your PATH is older, set `STUDYKIT_PYTHON=/path/to/python3.12`.
 
-Tests: `python3 -m unittest discover tests -v`
+Tests: `./study test --verbose`
 
 ## Licence
 

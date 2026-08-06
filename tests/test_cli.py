@@ -191,6 +191,10 @@ class TestBank(CliTestCase):
 
 
 class TestReportsAndArtefacts(CliTestCase):
+    def test_test_command_is_available(self):
+        args = cli.build_parser().parse_args(["test"])
+        self.assertIs(args.func, cli.cmd_test)
+
     def test_status_and_progress_run_on_an_empty_ledger(self):
         for command in ("status", "progress", "queue", "packs", "levels"):
             code, out = self.run_cli(command)

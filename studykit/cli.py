@@ -842,6 +842,16 @@ def cmd_doctor(args) -> int:
     return 1 if problems else 0
 
 
+def cmd_test(args) -> int:
+    """Run the repository test suite with the interpreter selected by ./study."""
+    import unittest
+
+    tests_dir = Path(__file__).resolve().parent.parent / "tests"
+    suite = unittest.defaultTestLoader.discover(str(tests_dir))
+    result = unittest.TextTestRunner(verbosity=2 if args.verbose else 1).run(suite)
+    return 0 if result.wasSuccessful() else 1
+
+
 def cmd_export(args) -> int:
     mapping = {"state": state_path(), "metrics": metrics_path(), "profile": data_dir() / "profile.json"}
     if args.what == "ledger":
@@ -974,6 +984,10 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = subparsers.add_parser("doctor", help="Validate packs and data.")
     doctor.add_argument("--verbose", "-v", action="store_true")
     doctor.set_defaults(func=cmd_doctor)
+
+    test = subparsers.add_parser("test", help="Run the repository test suite.")
+    test.add_argument("--verbose", "-v", action="store_true")
+    test.set_defaults(func=cmd_test)
 
     export = subparsers.add_parser("export", help="Print state, metrics, ledger or profile as JSON.")
     export.add_argument("what", choices=["state", "metrics", "ledger", "profile"])

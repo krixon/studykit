@@ -20,7 +20,7 @@ Environment:
 | `STUDYKIT_TODAY` | override today's date globally. |
 | `NO_COLOR` | disable colour. |
 
-Errors exit `2` with a one-line message on stderr and no traceback. `doctor` exits `1` when it finds problems.
+Errors exit `2` with a one-line message on stderr and no traceback. `doctor` and `test` exit `1` when they find problems.
 
 ---
 
@@ -204,6 +204,15 @@ Writes a self-contained HTML page — inline CSS, inline SVG, no network request
 ---
 
 ## Maintenance
+
+### `test`
+
+Runs the repository test suite with the same Python 3.12+ interpreter discovery as every other `./study` command.
+
+```
+./study test
+./study test --verbose
+```
 
 ### `doctor`
 

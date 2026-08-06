@@ -109,7 +109,7 @@ The same reasoning applies to packs in TOML rather than in a content service, an
 ## Tests
 
 ```
-python3 -m unittest discover tests -v
+./study test --verbose
 ```
 
 Coverage is concentrated where correctness is not obvious by inspection: the interval function and its caps, the session-mean collapse, `overall` supersession, level filtering, ledger validation and its rejections, and the end-to-end record-then-rebuild path. The content packs are validated by `./study doctor`, which is the more useful check for them.

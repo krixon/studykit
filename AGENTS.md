@@ -36,7 +36,7 @@ Full model: `docs/scoring.md`. Warrants: `docs/research.md`.
 - `studykit/schedule.py` is the only implementation of the interval algorithm. If you change it, update `docs/scoring.md` in the same commit.
 - The ledger is append-only and is the only source of truth. `state.json` and `metrics.json` are pure functions of it, rebuilt on every `record`.
 - Never write user data into `packs/`. Session-generated questions go to `data/bank/` unless `--into-pack` is passed.
-- Run `python3 -m unittest discover tests` and `./study doctor` before committing.
+- Run `./study test` and `./study doctor` before committing.
 
 ## Working on content
 
