@@ -1,0 +1,106 @@
+# Question bank: version-control
+topic = "version-control"
+
+[[q]]
+id = "vc-001"
+qtype = "recall"
+subtopic = "commits-history"
+levels = ["graduate", "mid", "senior"]
+q = "Is a Git commit a diff or a snapshot, and why does the answer matter?"
+a = "A snapshot of the whole tree plus a pointer to its parent, identified by a hash of its content. Diffs are computed when you ask for one. It matters because the id depends on the content and the parent, so rewriting any old commit changes every id after it - which is the whole reason rebasing shared history is a problem."
+
+[[q]]
+id = "vc-002"
+qtype = "recall"
+subtopic = "commits-history"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What should a commit message say that the diff cannot?"
+a = "Why. The diff already shows what changed. Fix null check is worthless; guard against a missing profile, which happens for users created before the migration, answers the question the next reader will actually have."
+
+[[q]]
+id = "vc-003"
+qtype = "recall"
+subtopic = "commits-history"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Which command finds the commit that introduced a particular line of text, and why is it better than blame here?"
+a = "git log -S with the string, which finds commits that added or removed it. blame tells you who last touched the line, which is often a reformat or a rename; log -S finds where the text actually entered the codebase."
+
+[[q]]
+id = "vc-004"
+qtype = "discrimination"
+subtopic = "branching"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Trunk-based development and long-lived feature branches. What is the real trade?"
+a = "Divergence over time. Short-lived branches merged daily mean small, frequent conflicts and genuine continuous integration, at the cost of needing feature flags to keep main releasable. A three-week branch defers all the conflicts to one painful day. Most merge pain is a scheduling problem, not a tooling one."
+
+[[q]]
+id = "vc-005"
+qtype = "recall"
+subtopic = "branching"
+levels = ["graduate", "mid"]
+q = "Why is creating a Git branch instant even on a huge repository?"
+a = "Because a branch is just a movable pointer to a commit - a file containing a hash. Nothing is copied. That is also why deleting a branch does not delete any commits."
+
+[[q]]
+id = "vc-006"
+qtype = "discrimination"
+subtopic = "merge-vs-rebase"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Merge and rebase. What does each do to history?"
+a = "Merge creates a commit with two parents, so the history is truthful about what happened and contains merge commits. Rebase replays your commits onto a new base, producing linear history and new commit hashes because the parents changed. The new hashes are the reason for every rebase rule."
+
+[[q]]
+id = "vc-007"
+qtype = "judgment"
+subtopic = "merge-vs-rebase"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are about to rebase a branch two colleagues have already pulled and built on. More or less appropriate?"
+a = "Not appropriate, -2. Rebasing rewrites the commits, so their local history refers to hashes that no longer exist, and reconciling that is painful for everyone. Rebase your own unpushed work; merge anything shared."
+
+[[q]]
+id = "vc-008"
+qtype = "judgment"
+subtopic = "merge-vs-rebase"
+levels = ["senior", "lead", "staff"]
+q = "Your team squashes every branch to a single commit on merge. New information - branches routinely contain a refactor commit followed by a behaviour change. More or less appropriate?"
+a = "Less, -1. Squashing is right when the intermediate commits are wip and fix typo. When a branch separates a refactor from a behaviour change, that separation is exactly what makes the change reviewable and revertable later, and squashing throws it away. Squash noise, keep meaningful steps."
+
+[[q]]
+id = "vc-009"
+qtype = "recall"
+subtopic = "conflicts"
+levels = ["graduate", "mid", "senior"]
+q = "What must you do after resolving a merge conflict, and why is it easy to skip?"
+a = "Run the tests. A conflict resolution can be syntactically clean and semantically broken - your rename and their new call site each compile alone and not together. Git only knows about text, so it cannot tell you the merge is wrong."
+
+[[q]]
+id = "vc-010"
+qtype = "recall"
+subtopic = "conflicts"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is the most common bad conflict resolution?"
+a = "Keeping your version wholesale and discarding the other side, which silently reverts someone else's fix. Resolve by understanding both intentions and producing something that satisfies each, not by picking a winner."
+
+[[q]]
+id = "vc-011"
+qtype = "recall"
+subtopic = "finding-bugs"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does git bisect do and how many steps over 1000 commits?"
+a = "Binary search over history. Mark a good and a bad commit, it checks out the midpoint, you judge, and it converges - about 10 steps over 1000 commits. With a script that exits non-zero on the bug, git bisect run does the whole thing unattended."
+
+[[q]]
+id = "vc-012"
+qtype = "discrimination"
+subtopic = "finding-bugs"
+levels = ["mid", "senior", "lead", "staff"]
+q = "git revert and git reset. Which is safe on a shared branch?"
+a = "revert. It creates a new commit that undoes an old one, so history is unchanged and everyone's clone stays consistent. reset moves the branch pointer and rewrites history, which is fine locally and disruptive on anything others have pulled."
+
+[[q]]
+id = "vc-013"
+qtype = "recall"
+subtopic = "finding-bugs"
+levels = ["senior", "lead", "staff"]
+q = "You reset --hard and lost two hours of committed work. What recovers it?"
+a = "git reflog. It records every position HEAD has held, including commits no branch points at any more, so you can find the old hash and reset or cherry-pick back to it. Unreferenced commits survive for about 90 days before garbage collection, which is why almost nothing committed is ever truly lost."

@@ -1,0 +1,130 @@
+# Question bank: sharding
+topic = "sharding"
+
+[[q]]
+id = "sh-001"
+qtype = "discrimination"
+subtopic = "partition-schemes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Range and hash partitioning. What does each give up?"
+a = "Range keeps keys ordered so scans are cheap, and gives up balance whenever the key is sequential - all writes land on the last shard. Hash gives near-perfect balance and destroys ordered scans, so a range query touches every shard. The question to ask is whether the workload does ordered scans at all."
+
+[[q]]
+id = "sh-002"
+qtype = "recall"
+subtopic = "partition-schemes"
+levels = ["senior", "lead", "staff"]
+q = "When is directory-based partitioning the right answer despite the extra lookup?"
+a = "When you need to place specific tenants deliberately - isolating a large customer, meeting a residency requirement, or moving one noisy tenant to dedicated hardware. Hashing gives you balance but no control; a directory gives control at the cost of a lookup on the request path and a component that must be highly available."
+
+[[q]]
+id = "sh-003"
+qtype = "recall"
+subtopic = "shard-key"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Three properties of a good shard key."
+a = "High cardinality so it can spread far enough. Even write distribution so no shard is hot. Present in the read path so most queries hit one shard. The third is the one people forget - a perfectly balanced key that is not in the query predicate turns every read into a scatter-gather."
+
+[[q]]
+id = "sh-004"
+qtype = "judgment"
+subtopic = "shard-key"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are sharding an events table on created_at. New information - the workload is 90 percent writes of new events. More or less appropriate?"
+a = "Much less, -2. A monotonic key means every write goes to the newest shard, so you have the operational cost of sharding with the write capacity of one node. Shard on something high-cardinality and uncorrelated with time, such as a hash of the entity id, and keep time as a secondary sort within the shard."
+
+[[q]]
+id = "sh-005"
+qtype = "discrimination"
+subtopic = "shard-key"
+levels = ["senior", "lead", "staff"]
+q = "A composite shard key of (day, user) versus (user, day). What changes?"
+a = "(day, user) puts an entire day on one shard - perfectly hot, and a user's history is scattered across days. (user, day) spreads users across shards and keeps one user's history together, so per-user queries hit one shard and time-range queries within a user are a local scan. Ordering within a composite key decides both balance and query locality."
+
+[[q]]
+id = "sh-006"
+qtype = "recall"
+subtopic = "cross-shard-tx"
+levels = ["senior", "lead", "staff"]
+q = "Why is two-phase commit a poor fit for the request path?"
+a = "Because it blocks. Between prepare and commit, participants hold locks; if the coordinator dies in that window they hold them until it returns. The latency is at least two round trips to the slowest participant, and the availability of the transaction is the product of all participants' availability."
+
+[[q]]
+id = "sh-007"
+qtype = "discrimination"
+subtopic = "cross-shard-tx"
+levels = ["senior", "lead", "staff"]
+q = "Two-phase commit and sagas. What do you actually trade?"
+a = "2PC gives atomicity and takes locks, so intermediate states are never visible but the system blocks on failure. A saga takes no locks and gives up atomicity - intermediate states ARE visible, and rollback is a compensating action you write, which must itself be idempotent and can fail. 2PC fails by stalling; sagas fail by exposing partial state."
+
+[[q]]
+id = "sh-008"
+qtype = "judgment"
+subtopic = "cross-shard-tx"
+levels = ["lead", "staff"]
+q = "You are designing sagas to handle cross-shard order writes. New information - an order and its line items are always written and read together. More or less appropriate?"
+a = "Much less, -2 - you have created a distributed transaction problem you did not need. Choose the shard key so the transactional unit lives on one shard, here shard by order id and keep lines with their order. One shard per transaction boundary is a design constraint worth paying for."
+
+[[q]]
+id = "sh-009"
+qtype = "numeric"
+subtopic = "resharding"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You go from 4 shards to 5 using hash mod N. Roughly what fraction of keys move?"
+a = "About 80 percent, or (N-1)/N. Only keys whose hash is congruent under both divisors stay put. Consistent hashing moves about 1/N instead, here 20 percent."
+
+[[q]]
+id = "sh-010"
+qtype = "recall"
+subtopic = "resharding"
+levels = ["senior", "lead", "staff"]
+q = "What does pre-splitting into logical shards buy you?"
+a = "Rebalancing becomes moving whole logical shards between physical nodes, with no rehashing at all. Decide on 1024 logical shards up front, map them to however many machines you have, and growth is a table update plus a data move. It costs almost nothing to decide early and is close to impossible to retrofit."
+
+[[q]]
+id = "sh-011"
+qtype = "recall"
+subtopic = "resharding"
+levels = ["lead", "staff"]
+q = "List the steps of a live resharding with no downtime."
+a = "Dual-write to old and new placement. Backfill historical data. Verify by comparing both for a period. Cut reads over, ideally per tenant or per percentage. Stop dual-writing and drop the old placement. Every step needs a rollback path, and the verification step is the one people skip and regret."
+
+[[q]]
+id = "sh-012"
+qtype = "diagnostic"
+subtopic = "hot-shard"
+levels = ["senior", "lead", "staff"]
+q = "One shard is at 90 percent CPU, the rest at 20 percent. Key distribution looks uniform and the ring is balanced. What is it?"
+a = "Workload skew - a hot key, not a hot range or bad assignment. Uniform key distribution with balanced arcs rules out the two problems partitioning can fix. The remedy is at a different layer: replicate the value with suffixed copies or an in-process cache, because every partitioning scheme maps that key to exactly one owner."
+
+[[q]]
+id = "sh-013"
+qtype = "discrimination"
+subtopic = "hot-shard"
+levels = ["senior", "lead", "staff"]
+q = "Hot key, hot range, and assignment skew. Which one do virtual nodes fix?"
+a = "Only assignment skew, where keys and traffic are uniform and the ring simply divided the space badly. A hot key is workload skew, fixed by replicating the value. A hot range is key-design skew, fixed by changing the key. Adding virtual nodes to either of the other two accomplishes nothing."
+
+[[q]]
+id = "sh-014"
+qtype = "discrimination"
+subtopic = "replication-vs-sharding"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Sharding and replication. Which ceilings does each move?"
+a = "Sharding moves the write-throughput and storage ceilings, because each node holds only a slice. Replication moves the read and availability ceilings, because each node holds a full copy. They are orthogonal and almost always used together - each shard is itself a replica group. Treating it as either-or is a misread of the question."
+
+[[q]]
+id = "sh-015"
+qtype = "judgment"
+subtopic = "replication-vs-sharding"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are proposing to shard because the database is struggling. New information - it is 95 percent reads on a 400GB dataset. More or less appropriate?"
+a = "Much less, -2. Read pressure on a dataset that fits comfortably on one machine is a replication and caching problem. Add read replicas and a cache, and you keep transactions, joins and operational simplicity. Sharding costs all three and moves a ceiling you are nowhere near."
+
+[[q]]
+id = "sh-016"
+qtype = "numeric"
+subtopic = "cross-shard-tx"
+levels = ["senior", "lead", "staff"]
+q = "A query scatter-gathers across 20 shards, each with a p99 of 50ms. Roughly what is the query p99, and why?"
+a = "Well above 50ms - the query waits for the slowest of 20, so the tail of the maximum matters, not the tail of one. If each shard independently exceeds 50ms one percent of the time, the chance at least one does is about 1 - 0.99^20, roughly 18 percent. Fan-out converts a rare tail event into a common one."

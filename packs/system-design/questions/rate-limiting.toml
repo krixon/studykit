@@ -1,0 +1,122 @@
+# Question bank: rate-limiting
+topic = "rate-limiting"
+
+[[q]]
+id = "rl-001"
+qtype = "recall"
+subtopic = "algorithms"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What is the boundary defect in a fixed-window counter?"
+a = "A caller can spend the full limit at the end of one window and the full limit at the start of the next, so twice the limit passes in a period shorter than one window. The counter is correct per calendar window and wrong about the actual rate."
+
+[[q]]
+id = "rl-002"
+qtype = "discrimination"
+subtopic = "algorithms"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Token bucket and leaky bucket. What actually separates them?"
+a = "Token bucket allows a burst up to the bucket size then paces at the refill rate - output is bursty, nothing queues. Leaky bucket drains at a fixed rate with requests queued behind it - output is perfectly smooth and latency is added. Token bucket expresses an API contract; leaky bucket protects something that cannot absorb bursts at all."
+
+[[q]]
+id = "rl-003"
+qtype = "judgment"
+subtopic = "algorithms"
+levels = ["senior", "lead", "staff"]
+q = "You are choosing a sliding window log for exactness. New information - the endpoint is public and unauthenticated, and you are being scraped. More or less appropriate?"
+a = "Much less, -2. A sliding window log stores a timestamp per request, so memory grows with traffic - the attack makes the defence more expensive. Under hostile load you want constant memory per key: token bucket or a sliding window counter."
+
+[[q]]
+id = "rl-004"
+qtype = "recall"
+subtopic = "algorithms"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why is token bucket usually the default for an API rate limit?"
+a = "Because it expresses what an API contract actually says - a sustained rate R with a burst allowance B - in two numbers, with two numbers of state per key. Fixed windows cannot express the burst, and logs cost memory proportional to traffic."
+
+[[q]]
+id = "rl-005"
+qtype = "numeric"
+subtopic = "distributed-state"
+levels = ["senior", "lead", "staff"]
+q = "500 nodes, each leasing 10 tokens locally, against a limit of 1,000,000 per minute. Worst-case overshoot as a percentage?"
+a = "0.5 percent. Worst case is one full unused lease per node, 500 x 10 = 5000 tokens beyond the limit, which is 0.5 percent of 1,000,000. Irrelevant at this limit."
+
+[[q]]
+id = "rl-006"
+qtype = "judgment"
+subtopic = "distributed-state"
+levels = ["senior", "lead", "staff"]
+q = "You are leasing rate-limit tokens locally across 500 nodes. New information - this tenant's limit is 10 per minute. Does local leasing become more or less appropriate?"
+a = "Much less, -2. The floor on overshoot is roughly one lease per node, so 500 nodes against a limit of 10 is a 5000 percent overshoot. Overshoot has to be judged against the limit, not in absolute terms. Small limits need central enforcement or sticky routing."
+
+[[q]]
+id = "rl-007"
+qtype = "discrimination"
+subtopic = "distributed-state"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Central counter, sticky routing, and local leasing. What does each cost?"
+a = "Central counter - exact, but a network hop on every request and a new dependency and capacity limit. Sticky routing - no coordination, but rebalancing moves counters and a hot tenant becomes a hot node. Local leasing - one round trip per N requests instead of per request, paid for in overshoot proportional to node count over limit."
+
+[[q]]
+id = "rl-008"
+qtype = "recall"
+subtopic = "contract-keys"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Why is limiting by IP address unreliable?"
+a = "NAT and mobile carriers put thousands of unrelated users behind one address, so a legitimate population gets throttled together, while an attacker can rent thousands of addresses and stay under any per-IP limit. It is the only option for unauthenticated traffic and should be treated as a blunt instrument."
+
+[[q]]
+id = "rl-009"
+qtype = "judgment"
+subtopic = "contract-keys"
+levels = ["senior", "lead", "staff"]
+q = "You are applying one limit of 1000 requests per minute across all endpoints. New information - one search endpoint costs roughly 50x a simple read. More or less appropriate?"
+a = "Less, -2. A uniform limit either strangles cheap calls or leaves the expensive path unprotected, and here 1000 searches is 50,000 read-equivalents. Give requests a cost and draw that many tokens, so the limit is expressed in work rather than in calls."
+
+[[q]]
+id = "rl-010"
+qtype = "recall"
+subtopic = "contract-keys"
+levels = ["mid", "senior", "lead", "staff"]
+q = "State a rate limit unambiguously. What three things must it name?"
+a = "The key it is counted against (tenant, user, IP, endpoint), the cost of a request in tokens, and the window or refill rate. Ambiguity in any of the three is where limiters get argued about in production."
+
+[[q]]
+id = "rl-011"
+qtype = "judgment"
+subtopic = "failure-modes"
+levels = ["senior", "lead", "staff"]
+q = "Your rate limiter's Redis is unreachable. You are deciding to fail closed and reject everything. New information - the limiter exists to protect the service from overload, and the service is currently healthy."
+a = "Less appropriate, -2. Failing closed turns a limiter outage into a total service outage, which is precisely the outage the limiter existed to prevent. A protection limiter fails open, ideally with a conservative local fallback limit. A commercial limiter enforcing a paid plan is the case that fails closed."
+
+[[q]]
+id = "rl-012"
+qtype = "diagnostic"
+subtopic = "failure-modes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Traffic arrives in sharp spikes exactly every 60 seconds. Each spike is mostly rejected with 429s, then the pattern repeats identically. What is happening?"
+a = "Synchronised client retries. Rejected clients all back off by the same fixed interval and return together, get rejected together, and re-synchronise. Return Retry-After with jitter, and have clients use full jitter on backoff, so the herd disperses."
+
+[[q]]
+id = "rl-013"
+qtype = "recall"
+subtopic = "failure-modes"
+levels = ["senior", "lead", "staff"]
+q = "Why is a rate limit applied after authentication and a database lookup a weak defence?"
+a = "Because the cost you were trying to save has already been spent by the time you reject. Under attack, the limiter approves nothing and the system still does all the expensive work. Limit as early as possible - the edge - even if the precise per-tenant limit needs a later, cheaper check."
+
+[[q]]
+id = "rl-014"
+qtype = "discrimination"
+subtopic = "definitions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Rate limiting, load shedding and backpressure. What decides which one applies?"
+a = "Whose state drives the decision. Rate limiting rejects based on the CALLER exceeding a quota. Load shedding drops work based on the SERVER being unhealthy, regardless of whether callers are behaving. Backpressure signals upstream to slow down rather than dropping anything. You usually need all three; they are not substitutes."
+
+[[q]]
+id = "rl-015"
+qtype = "recall"
+subtopic = "definitions"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Which status code for a rate-limited request, and what should accompany it?"
+a = "429 Too Many Requests, with Retry-After so the client knows when to return, and ideally headers giving the limit, remaining, and reset time. 503 is a different claim - it says the service is unhealthy, not that the caller exceeded a quota."

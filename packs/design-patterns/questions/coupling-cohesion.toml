@@ -1,0 +1,90 @@
+# Question bank: coupling-cohesion
+topic = "coupling-cohesion"
+
+[[q]]
+id = "co-001"
+qtype = "recall"
+subtopic = "coupling-kinds"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why is a boolean parameter that switches behaviour a design problem?"
+a = "It is control coupling - the caller is reaching in to change how the callee behaves, so the function does two things and the call site does not say which. render(true) is unreadable and usually wants to be two functions with names."
+
+[[q]]
+id = "co-002"
+qtype = "discrimination"
+subtopic = "coupling-kinds"
+levels = ["senior", "lead", "staff"]
+q = "Name two kinds of coupling that do not appear in the classic list and are worse than most that do."
+a = "Temporal coupling - A must be called before B and nothing enforces it, so open-then-read fails at runtime if reversed. And semantic coupling - two modules share an assumption written down nowhere, which is the worst kind because nothing in the code shows the connection and it survives every refactor until it breaks."
+
+[[q]]
+id = "co-003"
+qtype = "recall"
+subtopic = "coupling-kinds"
+levels = ["senior", "lead", "staff"]
+q = "How do you design away temporal coupling?"
+a = "Make the invalid order unrepresentable. Instead of open() then read() on the same object, have open() return the object that has read() on it. The type system then enforces the sequence, rather than a comment asking people to remember it."
+
+[[q]]
+id = "co-004"
+qtype = "recall"
+subtopic = "cohesion"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What do class names ending in Manager, Helper or Util usually indicate?"
+a = "Coincidental or logical cohesion - a place things were put rather than a thing. The name says nothing about responsibility, so it accretes whatever has no obvious home, and nobody can say what belongs in it or what does not."
+
+[[q]]
+id = "co-005"
+qtype = "discrimination"
+subtopic = "cohesion"
+levels = ["senior", "lead", "staff"]
+q = "Shotgun surgery and divergent change. What does each tell you, and why do they point in opposite directions?"
+a = "Shotgun surgery - one change requires edits in many places, so cohesion is too LOW and things that change together are spread apart; the fix is to gather them. Divergent change - one class changes for many unrelated reasons, so cohesion is wrong the other way; the fix is to split it. Both are cohesion failures, and reading which one you have tells you which direction to move."
+
+[[q]]
+id = "co-006"
+qtype = "judgment"
+subtopic = "cohesion"
+levels = ["senior", "lead", "staff"]
+q = "You are maximising cohesion by splitting until every class does exactly one tiny thing. More or less aligned with good design?"
+a = "Less past a point, -1. Maximum cohesion alone gives a thousand tiny classes that must all talk to each other, which is high coupling. The two properties trade off at the extremes; the goal is the balance that makes likely changes local, and likely is a judgement about the domain rather than a property of the code."
+
+[[q]]
+id = "co-007"
+qtype = "recall"
+subtopic = "demeter"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is order.getCustomer().getAddress().getPostcode() actually telling you?"
+a = "That behaviour is in the wrong place. You are coupled to three classes and the chain of relationships between them, any of which can break you. The fix is not a delegating method per chain - ask why you need the postcode, and the answer is usually order.calculateShipping()."
+
+[[q]]
+id = "co-008"
+qtype = "judgment"
+subtopic = "demeter"
+levels = ["senior", "lead", "staff"]
+q = "A reviewer flags list.filter(...).map(...).first() as a Law of Demeter violation. More or less correct?"
+a = "Incorrect, -2. Each call returns a new value rather than exposing an internal structure, so there is no coupling to a hidden object graph - the same is true of a fluent builder. Demeter is about reaching through objects to their internals, not about counting dots."
+
+[[q]]
+id = "co-009"
+qtype = "recall"
+subtopic = "leaky-abstractions"
+levels = ["senior", "lead", "staff"]
+q = "Give two examples of an abstraction leaking, and say what the leak costs."
+a = "A repository interface that throws SqlException, so callers must know it is SQL. A cache get that sometimes takes 200ms because it silently falls through to the network. The cost is that you cannot reason about the caller without reading the implementation, which is the only thing an abstraction was supposed to buy."
+
+[[q]]
+id = "co-010"
+qtype = "judgment"
+subtopic = "leaky-abstractions"
+levels = ["senior", "lead", "staff"]
+q = "Someone argues that since all non-trivial abstractions leak, you should not bother abstracting. More or less sound?"
+a = "Unsound, -2, though the premise is true. Because leaks are inevitable you leak DELIBERATELY - put timeouts and failure modes into the interface rather than pretending they do not exist, and translate foreign exception types at the boundary. The real test is whether the abstraction lets you reason about the caller without reading the implementation."
+
+[[q]]
+id = "co-011"
+qtype = "recall"
+subtopic = "leaky-abstractions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a weak justification for introducing an abstraction?"
+a = "That it might let you swap the implementation one day. Swappability is rarely exercised and is usually the wrong reason on its own. The good reasons are that it lets a caller be understood without the implementation, and that it lets the thing be tested without the real dependency."

@@ -1,0 +1,130 @@
+# Question bank: message-queues
+topic = "message-queues"
+
+[[q]]
+id = "mq-001"
+qtype = "discrimination"
+subtopic = "queue-vs-log"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A queue and a log. What is the structural difference, and what does it change?"
+a = "A queue deletes a message on acknowledgement and tracks per-message state in the broker. A log retains messages for a window and the CONSUMER tracks an offset. It changes everything downstream - a log supports replay, multiple independent consumer groups reading the same stream, and reprocessing after a bug fix. A queue supports none of those."
+
+[[q]]
+id = "mq-002"
+qtype = "judgment"
+subtopic = "queue-vs-log"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are choosing a queue for order events. New information - three teams already want to consume these events for different purposes, and more will. More or less appropriate?"
+a = "Much less, -2. With a queue, consumers compete for messages, so serving three independent consumers means three queues and a fan-out component you maintain. A log gives each consumer group its own offset over one stream, and adding the fourth consumer is a configuration change rather than an architecture change."
+
+[[q]]
+id = "mq-003"
+qtype = "recall"
+subtopic = "queue-vs-log"
+levels = ["senior", "lead", "staff"]
+q = "Give the rule of thumb for queue versus log in one line, and the question that decides it."
+a = "Queue for work distribution, log for event distribution. The deciding question is whether anyone will ever need to re-read the stream - to add a consumer, to reprocess after a bug, or to rebuild a derived store. If yes, you need retention and offsets."
+
+[[q]]
+id = "mq-004"
+qtype = "recall"
+subtopic = "delivery-semantics"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why is exactly-once delivery impossible, and what is achievable instead?"
+a = "The sender cannot distinguish a lost message from a lost acknowledgement, so it must either retry, risking duplicates, or not, risking loss. What is achievable is exactly-once PROCESSING - at-least-once delivery plus either an idempotent consumer or a transaction that commits the side effect and the offset atomically."
+
+[[q]]
+id = "mq-005"
+qtype = "discrimination"
+subtopic = "delivery-semantics"
+levels = ["mid", "senior", "lead", "staff"]
+q = "At-most-once and at-least-once. What single decision produces each?"
+a = "When you acknowledge. Acknowledge before processing and a crash loses the message - at-most-once. Acknowledge after processing and a crash redelivers it - at-least-once. Almost every production system runs the second, which is why consumers must be idempotent."
+
+[[q]]
+id = "mq-006"
+qtype = "judgment"
+subtopic = "delivery-semantics"
+levels = ["senior", "lead", "staff"]
+q = "You are relying on Kafka's exactly-once semantics for a consumer that writes to PostgreSQL. More or less appropriate?"
+a = "Much less than it sounds, -2. Kafka's exactly-once is a transaction across the log and its own offset store, and that boundary ends at Kafka. A write to an external database is outside the transaction, so on retry you get a duplicate write with the offset uncommitted. You still need an idempotency key on the database write."
+
+[[q]]
+id = "mq-007"
+qtype = "recall"
+subtopic = "ordering"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why does nobody buy global ordering, and what is bought instead?"
+a = "Global ordering needs one serialisation point, which is a hard throughput ceiling and a single failure domain. What is bought instead is ordering within a partition key - all events for one entity go to one partition read in order, and events for different entities are unordered relative to each other, which is almost always fine."
+
+[[q]]
+id = "mq-008"
+qtype = "judgment"
+subtopic = "ordering"
+levels = ["senior", "lead", "staff"]
+q = "A message fails and you are re-queueing it at the tail so it gets retried. New information - this topic is partitioned by account id specifically to preserve per-account ordering."
+a = "Much less appropriate, -2. Re-queueing at the tail places the retried message after later messages for the same account, so you have broken exactly the ordering the partitioning existed to provide. Either block the partition and retry in place, accepting head-of-line blocking, or move the message to a per-key error state so subsequent messages for that key are also held."
+
+[[q]]
+id = "mq-009"
+qtype = "recall"
+subtopic = "ordering"
+levels = ["senior", "lead", "staff"]
+q = "In what sense is a partition key a shard key?"
+a = "In every sense - it decides which single consumer handles a key, so it inherits the same skew problems. One entity that is 30 percent of traffic makes one partition 30 percent of the load, and no amount of extra consumers helps because concurrency within a partition is one."
+
+[[q]]
+id = "mq-010"
+qtype = "diagnostic"
+subtopic = "consumer-lag"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Consumer lag has been flat at 200,000 messages for six hours. Throughput in and out are equal. Is this healthy?"
+a = "It is stable but not healthy - you have a permanent backlog, so every message is delayed by the time it takes to drain 200k. Input equals output means the consumer is exactly at capacity with no headroom, so any burst grows the backlog and it will never shrink. Add capacity to create headroom, and alert on time lag rather than message count."
+
+[[q]]
+id = "mq-011"
+qtype = "recall"
+subtopic = "consumer-lag"
+levels = ["senior", "lead", "staff"]
+q = "Why is queue depth a poor alert on its own?"
+a = "A deep queue draining fast is healthy, and a shallow queue that never drains is not. Depth alone tells you neither. Alert on time lag, which the business understands, and on the derivative or projected drain time, which tells you whether it is getting better."
+
+[[q]]
+id = "mq-012"
+qtype = "recall"
+subtopic = "dlq-poison"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a poison message and what does handling it require beyond a redelivery cap?"
+a = "A message that fails every time it is processed, so without a cap it is retried forever, blocking its partition or burning capacity while looking like healthy traffic. Handling it needs a dead letter queue, an alert on DLQ depth, enough context on the message to diagnose it, and a replay path back once fixed. A DLQ nobody monitors is a data loss mechanism with extra steps."
+
+[[q]]
+id = "mq-013"
+qtype = "judgment"
+subtopic = "dlq-poison"
+levels = ["senior", "lead", "staff"]
+q = "You are putting retries on the same queue as first attempts to keep it simple. More or less appropriate?"
+a = "Less, -1. Retries then compete with and delay first attempts, so a burst of failures slows down healthy traffic, and a backed-off retry occupying the queue is capacity not doing work. A separate retry queue with its own delay tier keeps the two workloads independent."
+
+[[q]]
+id = "mq-014"
+qtype = "numeric"
+subtopic = "partitions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A topic has 12 partitions. You run 20 consumers in one group. How many are doing work?"
+a = "12. The remaining 8 are idle, because a partition is assigned to exactly one consumer in a group. Partition count is the hard ceiling on consumer parallelism, which is why you over-provision partitions early - they are cheap and increasing them later breaks per-key ordering across the change."
+
+[[q]]
+id = "mq-015"
+qtype = "diagnostic"
+subtopic = "partitions"
+levels = ["senior", "lead", "staff"]
+q = "A consumer group spends most of its time rebalancing and lag keeps growing. Nothing is crashing. What is likely?"
+a = "Processing time per batch exceeds the consumer poll timeout, so the broker judges the consumer dead and triggers a rebalance, which pauses the group, which makes the next batch worse. Fix by shrinking batch size, raising the poll interval, or moving slow work off the poll loop."
+
+[[q]]
+id = "mq-016"
+qtype = "recall"
+subtopic = "partitions"
+levels = ["senior", "lead", "staff"]
+q = "Why is increasing partition count after the fact painful?"
+a = "Because it changes the key-to-partition mapping, so a key that used to land on partition 3 now lands on partition 7 while messages for it still sit unprocessed on 3. Per-key ordering breaks across the change. The mitigation is over-provisioning up front, or an explicit migration where you drain first."

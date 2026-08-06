@@ -1,0 +1,114 @@
+# Question bank: replication
+topic = "replication"
+
+[[q]]
+id = "rp-001"
+qtype = "discrimination"
+subtopic = "topologies"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Single-leader and multi-leader replication. What does the second one commit you to permanently?"
+a = "Conflict resolution. Single leader has no write conflicts by construction because there is one writer per key. The moment two leaders can accept a write to the same key, concurrent writes are possible and something - last-write-wins, CRDTs, or your application - must decide the outcome forever after. That is an architectural commitment, not a configuration flag."
+
+[[q]]
+id = "rp-002"
+qtype = "recall"
+subtopic = "topologies"
+levels = ["senior", "lead", "staff"]
+q = "What does leaderless quorum replication remove, and what does it add?"
+a = "It removes the failover step - there is no leader to promote, so a node loss is not an event. It adds read repair and anti-entropy to converge replicas, and the requirement to think about W and R on every operation. W + R > N is necessary for overlap, and not sufficient for linearizability."
+
+[[q]]
+id = "rp-003"
+qtype = "discrimination"
+subtopic = "sync-vs-async"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Synchronous versus asynchronous replication. State the trade in terms a business would recognise."
+a = "Synchronous means zero data loss on failover and every write pays the replica's latency, including when that replica is slow. Asynchronous means fast writes and you lose whatever had not shipped when the leader died. The business-facing name for that loss is RPO, and with async replication it is non-zero and equal to the lag at the moment of failure."
+
+[[q]]
+id = "rp-004"
+qtype = "judgment"
+subtopic = "sync-vs-async"
+levels = ["senior", "lead", "staff"]
+q = "You are making replication synchronous to all three followers. New information - one follower is in another region, 90ms away. More or less appropriate?"
+a = "Much less, -2. Waiting for all followers means every write pays 90ms, and one slow or restarting follower stalls all writes. Semi-synchronous - wait for a quorum, or for any one follower - bounds the loss without making the slowest replica the write latency."
+
+[[q]]
+id = "rp-005"
+qtype = "diagnostic"
+subtopic = "lag-effects"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A user updates their profile, the page reloads, and the old value is shown. A refresh a second later shows the new one. What is this, and what is the fix?"
+a = "A read-your-writes violation caused by reading from a lagging follower. The fix is to route that user's reads to the leader for a bounded window after their write, or to track the write position and require the serving follower to be at least that current."
+
+[[q]]
+id = "rp-006"
+qtype = "discrimination"
+subtopic = "lag-effects"
+levels = ["senior", "lead", "staff"]
+q = "Monotonic reads and consistent prefix reads. Give the user-visible symptom of each."
+a = "Monotonic reads violated - a comment appears, then vanishes on refresh, then reappears, because successive reads hit replicas with different lag. Consistent prefix violated - you see a reply before the message it replies to, because causally related writes arrived out of order across partitions. Fixes differ: pin the session to one replica for the first, keep causally related data in one partition for the second."
+
+[[q]]
+id = "rp-007"
+qtype = "recall"
+subtopic = "lag-effects"
+levels = ["senior", "lead", "staff"]
+q = "Name the situations that make replication lag jump from milliseconds to minutes."
+a = "A large write burst or bulk import. A long-running query on the follower blocking apply. A schema change. Follower restart and catch-up. Network saturation between leader and follower. All of them are correlated with the moments you most need the replica, which is why lag has to be monitored rather than assumed."
+
+[[q]]
+id = "rp-008"
+qtype = "recall"
+subtopic = "failover"
+levels = ["senior", "lead", "staff"]
+q = "Why is detecting a dead leader hard, and what does the timeout choice cost you either way?"
+a = "In an asynchronous network you cannot distinguish a dead node from a slow one - there is no observation that separates them. A short timeout fails over on a GC pause or a network blip, causing unnecessary failovers and possible data loss. A long one extends every real outage by that amount. Every timeout is a bet, and it should be a deliberate one."
+
+[[q]]
+id = "rp-009"
+qtype = "recall"
+subtopic = "failover"
+levels = ["senior", "lead", "staff"]
+q = "What is split brain here, and what actually prevents it?"
+a = "Two nodes both believing they are the leader and both accepting writes, so the histories diverge and one must be discarded. Prevention is fencing - a monotonically increasing epoch or lease number that the storage layer checks and rejects if stale, so an old leader that wakes up cannot write. Timeouts alone do not prevent it."
+
+[[q]]
+id = "rp-010"
+qtype = "judgment"
+subtopic = "failover"
+levels = ["lead", "staff"]
+q = "You are enabling automatic failover to reduce downtime. New information - replication is asynchronous and typically 2 seconds behind. More or less appropriate?"
+a = "It depends on what those 2 seconds contain, and that is the point, so roughly 0. Automatic failover trades a rare, long, human-timed outage for more frequent, short, automatic ones that each silently discard up to 2 seconds of acknowledged writes. Fine for a session store, not fine for payments. Decide by what the lost writes are, then either accept it or make replication semi-synchronous."
+
+[[q]]
+id = "rp-011"
+qtype = "discrimination"
+subtopic = "conflict-handling"
+levels = ["senior", "lead", "staff"]
+q = "Last-write-wins and version vectors. What does each actually do?"
+a = "LWW resolves - a timestamp picks a winner and the other write is destroyed, with clock skew deciding. Version vectors detect - they tell you two writes were concurrent rather than ordered, and then you still have to choose. Detection without a resolution strategy just moves the problem to the application, which is often the honest place for it."
+
+[[q]]
+id = "rp-012"
+qtype = "judgment"
+subtopic = "conflict-handling"
+levels = ["senior", "lead", "staff"]
+q = "You are adopting CRDTs to handle multi-region conflicts. New information - the operation is transfer funds between accounts, which must not overdraw."
+a = "Much less appropriate, -2. CRDTs converge because their merge is commutative, associative and idempotent, which works for counters, sets and text. A conditional operation - only if funds allow - is not expressible that way, because the condition depends on a global state no replica has. Either route all writes for an account to one region, or use consensus."
+
+[[q]]
+id = "rp-013"
+qtype = "recall"
+subtopic = "conflict-handling"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is the cheapest conflict-handling strategy, and why is it under-used?"
+a = "Avoiding conflicts - route all writes for a given key to one region or one leader, so concurrent writes to the same key cannot happen. It is under-used because active-active sounds stronger than partitioned active-active, even though the latter gives the same latency and availability without permanent conflict resolution."
+
+[[q]]
+id = "rp-014"
+qtype = "numeric"
+subtopic = "sync-vs-async"
+levels = ["mid", "senior", "lead", "staff"]
+q = "N=3, W=2, R=2. How many nodes can you lose and still read and write, and why does W + R > N matter?"
+a = "One. With two nodes up you can still assemble both quorums. W + R > N (here 4 > 3) forces the read set and write set to overlap in at least one node, so a read is guaranteed to see a node that took the last acknowledged write."

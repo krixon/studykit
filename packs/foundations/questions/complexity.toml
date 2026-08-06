@@ -1,0 +1,98 @@
+# Question bank: complexity
+topic = "complexity"
+
+[[q]]
+id = "cx-001"
+qtype = "recall"
+subtopic = "big-o"
+levels = ["graduate", "mid"]
+q = "What does big-O actually describe, and what does it deliberately ignore?"
+a = "How cost grows as the input grows. It ignores constants and lower-order terms, so O(n) and O(100n) are the same class even though one is a hundred times slower on every real input. It is a statement about scaling, not about speed."
+
+[[q]]
+id = "cx-002"
+qtype = "numeric"
+subtopic = "big-o"
+levels = ["graduate", "mid", "senior"]
+q = "An O(n squared) algorithm handles 1000 items instantly. Roughly what happens at 1 million?"
+a = "1000 items is a million operations, instant. A million items is 10 to the 12, which at a hundred million operations per second is around three hours. Multiplying the input by 1000 multiplied the work by a million."
+
+[[q]]
+id = "cx-003"
+qtype = "discrimination"
+subtopic = "big-o"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Average, worst and amortised complexity. Why does the distinction matter in production?"
+a = "Because the case an attacker controls is the one you get. A hash lookup is O(1) average and O(n) worst under engineered collisions, which is a real denial-of-service technique. Amortised is different again - a dynamic array append is O(n) on resize but O(1) amortised, because resizes double capacity and become rare."
+
+[[q]]
+id = "cx-004"
+qtype = "recall"
+subtopic = "structure-choice"
+levels = ["graduate", "mid"]
+q = "You need to check repeatedly whether an item has been seen before. Which structure, and why?"
+a = "A hash set. Membership is O(1) average, against O(n) for scanning a list. This is the single most common structure fix in real code - a linear scan inside a loop turns O(n squared) into O(n) with a few lines changed."
+
+[[q]]
+id = "cx-005"
+qtype = "discrimination"
+subtopic = "structure-choice"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A hash map and a balanced tree map both store key-value pairs. When is the tree the right choice?"
+a = "When you need order - range queries, sorted iteration, or nearest-key lookups. A hash map has no order at all, so answering all keys between A and M means scanning everything. You pay O(log n) instead of O(1) for the ordering."
+
+[[q]]
+id = "cx-006"
+qtype = "recall"
+subtopic = "hashing"
+levels = ["graduate", "mid", "senior"]
+q = "What is a hash collision and what happens when there are many?"
+a = "Two keys mapping to the same bucket. A few are normal and handled by chaining or probing. Many degrade every operation towards O(n), because the structure becomes a list. Causes are a poor hash function, a high load factor, or input engineered to collide."
+
+[[q]]
+id = "cx-007"
+qtype = "diagnostic"
+subtopic = "hashing"
+levels = ["mid", "senior", "lead", "staff"]
+q = "An object is put into a hash map, then one of its fields is changed, and afterwards looking it up returns nothing even though it is clearly in the map. Why?"
+a = "The field is part of the hash. Changing it changes the bucket the object should be in, but the object is still sitting in the old bucket, so the lookup searches the new bucket and finds nothing. Keys in a hash map must be immutable, and hashCode and equals must agree."
+
+[[q]]
+id = "cx-008"
+qtype = "recall"
+subtopic = "sorting-searching"
+levels = ["graduate", "mid", "senior"]
+q = "What does binary search require, and what does it cost you to get there?"
+a = "Sorted input, and it gives O(log n). Getting there costs O(n log n) to sort, so sorting to do one search is slower than just scanning. Sorting to do many searches pays back after roughly log n searches."
+
+[[q]]
+id = "cx-009"
+qtype = "recall"
+subtopic = "sorting-searching"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a stable sort and when do you need one?"
+a = "One that preserves the relative order of elements that compare equal. You need it for multi-key sorting - sort by name, then by department, and within each department the names stay ordered. With an unstable sort the first sort is discarded."
+
+[[q]]
+id = "cx-010"
+qtype = "judgment"
+subtopic = "memory-locality"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are replacing an array with a linked list because insertion in the middle is O(1) rather than O(n). New information - the collection holds 200 items and is iterated constantly. More or less appropriate?"
+a = "Much less, -2. At 200 items the asymptotic difference is irrelevant and the constant factors dominate. Array iteration is sequential and prefetched at roughly 1ns per element; following pointers costs a cache miss at around 100ns each. The array will win on both operations."
+
+[[q]]
+id = "cx-011"
+qtype = "numeric"
+subtopic = "memory-locality"
+levels = ["senior", "lead", "staff"]
+q = "Roughly how much slower is a main-memory access than an L1 cache hit, and why does that matter to a data structure choice?"
+a = "About 100x - roughly 1ns against 100ns. It matters because big-O ignores exactly this factor, so a structure with worse asymptotics but contiguous memory often wins at practical sizes. The crossover is frequently in the thousands of elements, not at ten."
+
+[[q]]
+id = "cx-012"
+qtype = "diagnostic"
+subtopic = "structure-choice"
+levels = ["graduate", "mid", "senior"]
+q = "A page is fast in testing with 20 records and takes 40 seconds with 2000. The code loops over records and, for each one, searches a list of related items. What is the shape of the problem?"
+a = "Nested iteration, so O(n squared) - 100x more records is 10,000x more work. Build a map from the related items keyed by whatever the inner search looks up, then each lookup is O(1) and the whole thing becomes O(n)."

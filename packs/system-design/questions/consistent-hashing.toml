@@ -1,0 +1,114 @@
+# Question bank: consistent-hashing
+topic = "consistent-hashing"
+
+[[q]]
+id = "ch-001"
+qtype = "recall"
+subtopic = "definition"
+levels = ["mid", "senior", "lead", "staff"]
+q = "State the property consistent hashing guarantees, and what it fixes."
+a = "Only about K/N keys move when a node joins or leaves, where K is the key count and N the node count. It fixes hash mod N, where changing N changes the divisor and remaps almost every key - going from 4 nodes to 5 remaps roughly 80 percent."
+
+[[q]]
+id = "ch-002"
+qtype = "numeric"
+subtopic = "definition"
+levels = ["mid", "senior", "lead", "staff"]
+q = "8 nodes, one is added. Roughly what fraction of keys move under consistent hashing, and under mod N?"
+a = "Consistent hashing about 1/9, roughly 11 percent. Mod N about 8/9, roughly 89 percent. That difference is the whole reason the technique exists."
+
+[[q]]
+id = "ch-003"
+qtype = "recall"
+subtopic = "ring-mechanics"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How is a key mapped to a node on the ring, and what is the lookup cost?"
+a = "Hash the key onto the same circular space as the node positions and walk clockwise to the first node found. With node positions kept in a sorted array it is a binary search, O(log N), and the ring is small enough to hold in memory on every client."
+
+[[q]]
+id = "ch-004"
+qtype = "recall"
+subtopic = "ring-mechanics"
+levels = ["senior", "lead", "staff"]
+q = "For replication factor 3, how do you choose the replicas, and what is the trap?"
+a = "Keep walking clockwise and take the next 3 DISTINCT physical nodes. The trap is skipping the distinctness check once virtual nodes exist - several consecutive positions can belong to the same machine, so all three replicas land on one box and the replication factor is a fiction."
+
+[[q]]
+id = "ch-005"
+qtype = "recall"
+subtopic = "virtual-nodes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why does one ring position per node not work, and what do virtual nodes change?"
+a = "Random placement of a handful of points divides the circle very unevenly, so some nodes own several times the arc of others and there is no way to fix it without moving nodes. Giving each node 100-200 positions cuts imbalance to low single-digit percent, roughly as 1 over the square root of V."
+
+[[q]]
+id = "ch-006"
+qtype = "discrimination"
+subtopic = "virtual-nodes"
+levels = ["senior", "lead", "staff"]
+q = "Virtual nodes are usually explained as improving balance. Name the two benefits that matter more in practice."
+a = "Departure spreading - when a node dies its many small arcs each go to a different successor, so the load is absorbed by the whole cluster instead of dumped on one neighbour. And heterogeneous capacity - give a machine twice the hardware twice the virtual nodes and it takes twice the keys, with no other change."
+
+[[q]]
+id = "ch-007"
+qtype = "judgment"
+subtopic = "virtual-nodes"
+levels = ["senior", "lead", "staff"]
+q = "You are raising virtual nodes from 150 to 2000 per node to improve balance. New information - the cluster has 500 nodes and clients hold the ring in memory. More or less appropriate?"
+a = "Less, -1. Balance improves as 1 over root V, so going from 150 to 2000 buys maybe a factor of 3.6 on an imbalance already in the low single digits. Meanwhile the ring goes from 75k to 1M entries in every client, and every membership change touches far more, smaller ranges. The returns have flattened well before this point."
+
+[[q]]
+id = "ch-008"
+qtype = "recall"
+subtopic = "rebalancing"
+levels = ["senior", "lead", "staff"]
+q = "What has to happen between a node joining the ring and it serving its new keys?"
+a = "It claims arcs from several successors and streams those keys across. Until the transfer completes, reads for those keys must still be served by the old owner or sent to both, otherwise the new node answers misses for data that exists. Membership change and data movement are separate steps and must not be treated as atomic."
+
+[[q]]
+id = "ch-009"
+qtype = "diagnostic"
+subtopic = "rebalancing"
+levels = ["senior", "lead", "staff"]
+q = "After adding cache nodes, hit rate drops to near zero for several minutes and the database is overwhelmed, even though only a small fraction of keys should have moved. What went wrong?"
+a = "Clients disagreed about ring membership. If some clients saw the new node and some did not, keys are looked up in two different places, so both miss. Gossip converges eventually and serves inconsistent views during the change. Either use a coordination service for a consistent view, or roll membership changes out with a warm-up where the new node is populated before it is authoritative."
+
+[[q]]
+id = "ch-010"
+qtype = "discrimination"
+subtopic = "alternatives"
+levels = ["senior", "lead", "staff"]
+q = "Rendezvous hashing versus a ring. What is the trade?"
+a = "Rendezvous computes hash(key, node) for every node and takes the highest, giving the same minimal-disruption property with no ring to build, natural weighting, and code that is obviously correct. The cost is O(N) per lookup instead of O(log N), which is irrelevant for tens of nodes and disqualifying for thousands."
+
+[[q]]
+id = "ch-011"
+qtype = "judgment"
+subtopic = "alternatives"
+levels = ["lead", "staff"]
+q = "You are choosing jump consistent hash for its O(1) lookup and perfect balance. New information - nodes fail and are replaced by machines with different identifiers. More or less appropriate?"
+a = "Much less, -2. Jump consistent hash only maps to buckets 0..N-1 and only supports adding or removing at the END of the range, so it cannot express removing an arbitrary node. It is right for a shard count you only ever grow, wrong for a membership set that churns."
+
+[[q]]
+id = "ch-012"
+qtype = "recall"
+subtopic = "alternatives"
+levels = ["senior", "lead", "staff"]
+q = "When are fixed logical shards with an explicit lookup table better than any hashing scheme?"
+a = "When you need deliberate placement - isolating a large tenant, meeting residency rules, or draining one machine gracefully. The table is the source of truth rather than a function, so rebalancing is moving whole shards and you can see and choose exactly where anything lives. It costs a lookup and a component to keep available."
+
+[[q]]
+id = "ch-013"
+qtype = "judgment"
+subtopic = "hot-key"
+levels = ["mid", "senior", "lead", "staff"]
+q = "One key is taking 40 percent of your cache traffic. You are adding virtual nodes to spread it. More or less appropriate?"
+a = "Not appropriate at all, -2. Consistent hashing balances keyspace, not traffic. A single key maps to exactly one node however the ring is arranged, and no number of virtual nodes changes that. Replicate the VALUE - suffixed copies read at random, or an in-process L1 on every client."
+
+[[q]]
+id = "ch-014"
+qtype = "recall"
+subtopic = "hot-key"
+levels = ["senior", "lead", "staff"]
+q = "What question separates the three imbalances a ring-based system can show?"
+a = "Is the KEY hot, the RANGE hot, or the SLOT hot. A hot key is workload skew - replicate the value. A hot range is key-design skew - change the key. A hot slot is assignment skew - add virtual nodes. Only the last is a hashing problem."

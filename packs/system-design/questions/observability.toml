@@ -1,0 +1,122 @@
+# Question bank: observability
+topic = "observability"
+
+[[q]]
+id = "ob-001"
+qtype = "discrimination"
+subtopic = "signals"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Metrics, logs and traces. What can each answer that the others cannot?"
+a = "Metrics answer is it happening and how much, cheaply and continuously, and cannot slice by anything high-cardinality. Logs answer what exactly happened in this one case, at a cost proportional to volume. Traces answer where in the call graph the time went, across service boundaries, which neither of the others can reconstruct."
+
+[[q]]
+id = "ob-002"
+qtype = "recall"
+subtopic = "signals"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Why are structured logs worth the effort over prose logs?"
+a = "Because they are queryable and aggregatable. A key-value log line can be filtered, grouped and counted, which lets you answer questions you did not anticipate and often removes the need for a purpose-built metric. Prose logs can only be grepped, and the grep breaks whenever someone edits the message."
+
+[[q]]
+id = "ob-003"
+qtype = "recall"
+subtopic = "signals"
+levels = ["senior", "lead", "staff"]
+q = "Describe how the four signals compose during an incident."
+a = "A metric alert fires on a symptom. A trace localises which service and which span holds the latency. Logs for that trace id give the detail of what that span was doing. A profile explains why that code is slow. A stack missing any one of these has a gap you feel at 3am, usually the trace."
+
+[[q]]
+id = "ob-004"
+qtype = "recall"
+subtopic = "slo-sli"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Define SLI, SLO and error budget, and say what the budget is for."
+a = "SLI is the measurement - proportion of requests under 300ms. SLO is the target over a window - 99.9 percent over 28 days. The error budget is 1 minus the SLO, about 40 minutes in that example. It is for spending deliberately: ship risk while budget remains, freeze and stabilise when it is gone."
+
+[[q]]
+id = "ob-005"
+qtype = "judgment"
+subtopic = "slo-sli"
+levels = ["senior", "lead", "staff"]
+q = "You are alerting on CPU above 80 percent. More or less appropriate as a primary alert?"
+a = "Less, -2. It is a cause, not a symptom - it fires during a healthy batch job and stays silent during a deadlock where CPU is near zero and nothing works. Alert on user-visible symptoms such as error rate or latency against the SLO, and keep resource metrics for diagnosis after the symptom alert fires."
+
+[[q]]
+id = "ob-006"
+qtype = "recall"
+subtopic = "slo-sli"
+levels = ["senior", "lead", "staff"]
+q = "Why can you not average percentiles across hosts?"
+a = "Because a percentile is a position in a distribution, not a quantity, so the mean of per-host p99s is not the fleet p99 and can be badly wrong when hosts have different traffic or different distributions. Aggregate from histograms, which merge correctly, then compute the percentile once."
+
+[[q]]
+id = "ob-007"
+qtype = "numeric"
+subtopic = "slo-sli"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A page makes 100 backend calls. Each has a p99 of 100ms. Roughly what fraction of page loads contain at least one 100ms call?"
+a = "About 63 percent - 1 minus 0.99 to the power 100. Fan-out turns a rare tail event into the common case, which is why tail latency is a first-class concern rather than a rounding error, and why reducing fan-out is often more effective than reducing per-call latency."
+
+[[q]]
+id = "ob-008"
+qtype = "numeric"
+subtopic = "slo-sli"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How much downtime does 99.9 percent allow over 28 days, and how much does 99.99 percent allow?"
+a = "About 40 minutes and about 4 minutes. Each extra nine divides the budget by ten and costs roughly an order of magnitude more engineering, which is why the number should come from what the business actually needs rather than from ambition."
+
+[[q]]
+id = "ob-009"
+qtype = "recall"
+subtopic = "cardinality"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What determines the cost of a metric, and what must never be a label?"
+a = "The number of time series, which is the PRODUCT of the cardinalities of its labels. Never label with a user id, request id, session id, full URL containing ids, or a raw error string - each is unbounded, so the series count is unbounded. Those belong in logs or traces, which are built for high cardinality."
+
+[[q]]
+id = "ob-010"
+qtype = "diagnostic"
+subtopic = "cardinality"
+levels = ["senior", "lead", "staff"]
+q = "During an incident, the metrics backend itself becomes unavailable, exactly when you need it. A deploy went out an hour earlier. What is the likely cause?"
+a = "A new metric label with unbounded cardinality - typically a customer or request identifier - added in that deploy. Series count goes from thousands to millions and the backend falls over. Roll back the instrumentation, and add a cardinality limit and a pre-merge check so it cannot recur."
+
+[[q]]
+id = "ob-011"
+qtype = "recall"
+subtopic = "cardinality"
+levels = ["senior", "lead", "staff"]
+q = "What is an exemplar and what problem does it solve?"
+a = "A sample trace id attached to a histogram bucket. It lets you jump from the p99 bucket straight to an actual slow request without ever labelling the metric with a request id, which is how you get high-cardinality drill-down from a low-cardinality signal."
+
+[[q]]
+id = "ob-012"
+qtype = "discrimination"
+subtopic = "tracing"
+levels = ["senior", "lead", "staff"]
+q = "Head-based and tail-based trace sampling. What does each get wrong?"
+a = "Head-based decides at the entry point before anything has happened, so it is cheap and keeps boring traces while dropping the interesting ones. Tail-based buffers the whole trace and decides after seeing it, so it keeps every error and slow request - at the cost of buffering all traces from all services until the decision. Tail-based is what you want and costs more to run."
+
+[[q]]
+id = "ob-013"
+qtype = "judgment"
+subtopic = "tracing"
+levels = ["senior", "lead", "staff"]
+q = "You are instrumenting tracing across services but skipping the queue boundary because it is asynchronous. More or less appropriate?"
+a = "Much less, -2. The asynchronous half is frequently where the latency actually is, and stopping at the queue splits every trace into two unlinked halves. Propagate the trace context in the message headers so the consumer's spans attach to the originating trace."
+
+[[q]]
+id = "ob-014"
+qtype = "recall"
+subtopic = "alerting"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is the test for whether something should be an alert?"
+a = "Whether a human must do something now. If the response is acknowledge and ignore, it is not an alert, it is a dashboard. The measurable proxy is the fraction of pages that lead to action - below about half, people stop reading them and the one that mattered is missed."
+
+[[q]]
+id = "ob-015"
+qtype = "recall"
+subtopic = "alerting"
+levels = ["senior", "lead", "staff"]
+q = "Why multi-window multi-burn-rate alerting rather than a single threshold?"
+a = "Because you want two urgency levels from one SLO. A fast burn rate over a short window catches a severe failure within minutes and pages. A slow burn over a long window catches a persistent low-level problem and opens a ticket. The short window gives speed, the long window suppresses noise from brief blips, and requiring both reduces false pages."

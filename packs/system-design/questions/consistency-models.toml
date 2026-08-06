@@ -1,0 +1,106 @@
+# Question bank: consistency-models
+topic = "consistency-models"
+
+[[q]]
+id = "cm-001"
+qtype = "discrimination"
+subtopic = "model-spectrum"
+levels = ["senior", "lead", "staff"]
+q = "Serializability and linearizability. What is each about?"
+a = "Serializability is about TRANSACTIONS - there exists some serial order producing the same result, and it says nothing about which order or about real time. Linearizability is about SINGLE OBJECTS in REAL TIME - each operation appears to take effect at an instant between its call and return. They are orthogonal; strict serializability is both."
+
+[[q]]
+id = "cm-002"
+qtype = "recall"
+subtopic = "model-spectrum"
+levels = ["senior", "lead", "staff"]
+q = "Why is causal consistency significant among the weaker models?"
+a = "It is the strongest model that remains available under a network partition. It needs metadata to track causality but no coordination round trip, so it is the ceiling on what you can guarantee while still answering during a partition."
+
+[[q]]
+id = "cm-003"
+qtype = "judgment"
+subtopic = "model-spectrum"
+levels = ["senior", "lead", "staff"]
+q = "A vendor says the store is eventually consistent so it will be fine. More or less reassuring?"
+a = "Much less, -2. Eventual consistency promises convergence if writes stop, with no bound on when and no constraint on what you may observe in the meantime. It is compatible with reads going backwards, with seeing an answer before its question, and with never seeing your own write. Ask which session guarantees are offered - that is the answerable question."
+
+[[q]]
+id = "cm-004"
+qtype = "recall"
+subtopic = "session-guarantees"
+levels = ["senior", "lead", "staff"]
+q = "Name the four session guarantees and one user-visible symptom each."
+a = "Read-your-writes - your edit appears lost after a reload. Monotonic reads - a comment appears, disappears, reappears. Monotonic writes - a create-then-update lands as update-then-create. Consistent prefix - you see a reply before the message it replies to."
+
+[[q]]
+id = "cm-005"
+qtype = "recall"
+subtopic = "session-guarantees"
+levels = ["senior", "lead", "staff"]
+q = "How do you implement read-your-writes cheaply on an eventually consistent store?"
+a = "Carry the client's last write position - a version, timestamp or log offset - and require the serving replica to be at least that current, falling back to the leader if none is. The cheaper approximation is to pin the session to one replica, or route reads to the leader for a bounded window after a write."
+
+[[q]]
+id = "cm-006"
+qtype = "judgment"
+subtopic = "session-guarantees"
+levels = ["lead", "staff"]
+q = "Your team wants to move from eventual consistency to linearizable reads because users report seeing stale data. More or less appropriate?"
+a = "Less, -1 to -2 without diagnosing first. Most stale-data complaints are read-your-writes or monotonic-read violations, which are per-session properties fixable with replica pinning or version tracking at almost no cost. Linearizable reads impose a quorum round trip on every read globally to solve a problem session guarantees solve locally."
+
+[[q]]
+id = "cm-007"
+qtype = "discrimination"
+subtopic = "conflict-resolution"
+levels = ["senior", "lead", "staff"]
+q = "Last-write-wins and CRDTs. What class of problem does each actually handle?"
+a = "LWW handles the case where losing one of two concurrent writes is acceptable - a clock picks a winner and the other is destroyed. CRDTs handle operations whose merge is commutative, associative and idempotent, so any order converges without discarding anything: counters, sets, text sequences. Anything conditional on global state, like do not overdraw, fits neither."
+
+[[q]]
+id = "cm-008"
+qtype = "recall"
+subtopic = "conflict-resolution"
+levels = ["senior", "lead", "staff"]
+q = "Why is clock skew a correctness problem for last-write-wins, not just an accuracy one?"
+a = "Because the timestamp decides which write survives. A node with a clock a second fast makes its writes win against later writes from other nodes, so the surviving value is chosen by clock error rather than by causality. The data loss is silent and permanent."
+
+[[q]]
+id = "cm-009"
+qtype = "diagnostic"
+subtopic = "failure-modes"
+levels = ["senior", "lead", "staff"]
+q = "Two on-call engineers each check that at least one other person is on duty, then both go off duty. Both transactions were valid. What is this called and which isolation level permits it?"
+a = "Write skew. Each transaction reads a set, checks an invariant, and writes disjoint rows, so no write conflicts and no read conflicts occur. Snapshot isolation permits it because it only prevents conflicting writes to the same rows. Serializable isolation prevents it, as does materialising the conflict with an explicit lock or a constraint row."
+
+[[q]]
+id = "cm-010"
+qtype = "discrimination"
+subtopic = "failure-modes"
+levels = ["senior", "lead", "staff"]
+q = "A stale read and a read skew. Why does confusing them send you to the wrong fix?"
+a = "A stale read is a REPLICATION-lag anomaly - you asked a follower that is behind, and the fix is routing or session guarantees. Read skew is an ISOLATION anomaly - within one transaction you saw part of another transaction's effects, and the fix is snapshot isolation. Tuning isolation will not fix replica lag and adding replicas will not fix isolation."
+
+[[q]]
+id = "cm-011"
+qtype = "recall"
+subtopic = "failure-modes"
+levels = ["senior", "lead", "staff"]
+q = "What is a lost update and what are the two standard fixes?"
+a = "Two read-modify-write cycles interleave and one update silently vanishes. Fix with a compare-and-set on a version column, so the second write fails and retries with fresh state, or with an atomic operation in the database that does not read into the application at all."
+
+[[q]]
+id = "cm-012"
+qtype = "judgment"
+subtopic = "failure-modes"
+levels = ["lead", "staff"]
+q = "You are relying on repeatable read to prevent a business invariant being violated by concurrent transactions. More or less appropriate?"
+a = "Less, -2, and there is a naming trap. What most databases label repeatable read is snapshot isolation, which permits write skew - exactly the shape most business invariants break on. Either use serializable, or materialise the conflict so the two transactions collide on a real row."
+
+[[q]]
+id = "cm-013"
+qtype = "numeric"
+subtopic = "model-spectrum"
+levels = ["senior", "lead", "staff"]
+q = "What does a linearizable read cost same-region and cross-region, and what does that imply?"
+a = "A quorum round trip - roughly 1-3ms same-region, 50-150ms cross-region. It implies linearizability is affordable within a region and a product decision across regions, which is why global systems keep strong consistency regional and use causal or eventual consistency between regions."

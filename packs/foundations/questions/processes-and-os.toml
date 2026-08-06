@@ -1,0 +1,106 @@
+# Question bank: processes-and-os
+topic = "processes-and-os"
+
+[[q]]
+id = "os-001"
+qtype = "recall"
+subtopic = "process-model"
+levels = ["graduate", "mid", "senior"]
+q = "Why do stdout and stderr exist as separate streams?"
+a = "So program output can be piped while diagnostics still reach the terminal. Output goes to stdout, diagnostics to stderr. Logging to stdout breaks anything downstream that parses your output, which is why yourprog | jq fails when someone adds a helpful log line."
+
+[[q]]
+id = "os-002"
+qtype = "recall"
+subtopic = "process-model"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What does an exit code of 0 mean, and who cares?"
+a = "Success; anything else is failure. Shells, CI pipelines, container orchestrators and && all branch on it, so a program that exits 0 after failing silently breaks every piece of automation around it."
+
+[[q]]
+id = "os-003"
+qtype = "discrimination"
+subtopic = "process-model"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How is a container different from a process, really?"
+a = "It is a process, with namespaced views of the filesystem, network and process table plus cgroup resource limits. Nothing about scheduling, memory or signals changes. The one genuine difference is that your process may be PID 1, which does not get default signal handlers and is expected to reap orphans."
+
+[[q]]
+id = "os-004"
+qtype = "diagnostic"
+subtopic = "memory"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service disappears with no error in its logs and no stack trace. The container restarts. What do you check?"
+a = "The exit code and the kernel log. 137 is 128 plus 9, killed by SIGKILL, which for a container almost always means the OOM killer or the cgroup memory limit. There is no log line because the process was not asked to stop, it was terminated."
+
+[[q]]
+id = "os-005"
+qtype = "discrimination"
+subtopic = "memory"
+levels = ["senior", "lead", "staff"]
+q = "Resident set size and virtual size. Which one gets you killed?"
+a = "RSS. It is the physical memory actually in use and is what the OOM killer and cgroup limits act on. Virtual size is address space reserved, is often enormous for reasons that do not matter, and alarms people unnecessarily."
+
+[[q]]
+id = "os-006"
+qtype = "judgment"
+subtopic = "memory"
+levels = ["senior", "lead", "staff"]
+q = "You are adding swap to a server so it stops running out of memory. More or less appropriate?"
+a = "Usually less, -1 to -2 for a latency-sensitive service. Swap converts a memory shortage into a latency catastrophe - a page fault to disk is around a hundred thousand times slower than RAM, so the service stays alive and stops meeting any latency target. Failing fast is generally better than swapping; fix the leak or raise the limit."
+
+[[q]]
+id = "os-007"
+qtype = "diagnostic"
+subtopic = "files-descriptors"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A server starts failing to accept connections after several hours, with errors about too many open files. What is happening?"
+a = "File descriptor exhaustion - descriptors opened and not closed on some path, usually an error path. The default per-process limit is often 1024, which is very low for a server. The error surfaces far from the leak, because it appears when the next open happens rather than where the leak is."
+
+[[q]]
+id = "os-008"
+qtype = "recall"
+subtopic = "files-descriptors"
+levels = ["graduate", "mid", "senior"]
+q = "Why are a crashed program's last log lines often missing?"
+a = "Output is buffered and had not been flushed when the process died. Line-buffer or explicitly flush anything you need to survive a crash - which is exactly the logs you most want after one."
+
+[[q]]
+id = "os-009"
+qtype = "recall"
+subtopic = "signals-shutdown"
+levels = ["mid", "senior", "lead", "staff"]
+q = "SIGTERM and SIGKILL. Which matters to your code and why?"
+a = "SIGTERM, because it is catchable and is what an orchestrator sends first - it is your chance to shut down cleanly. SIGKILL cannot be caught and gives you nothing, and arrives when the grace period expires, typically 30 seconds later."
+
+[[q]]
+id = "os-010"
+qtype = "recall"
+subtopic = "signals-shutdown"
+levels = ["mid", "senior", "lead", "staff"]
+q = "List the steps of a graceful shutdown."
+a = "Catch SIGTERM. Fail the readiness check so the load balancer stops sending new traffic. Stop accepting new work. Finish in-flight requests up to a deadline shorter than the orchestrator's grace period. Close connections and flush buffers. Exit 0. Without this, every deploy drops the requests in flight."
+
+[[q]]
+id = "os-011"
+qtype = "diagnostic"
+subtopic = "signals-shutdown"
+levels = ["senior", "lead", "staff"]
+q = "Your app handles SIGTERM correctly, and in the container it is still killed hard on every deploy. Why?"
+a = "The signal is not reaching it. If the entrypoint is a shell script, the shell is PID 1 and does not forward SIGTERM to its child, so your handler never runs and SIGKILL arrives 30 seconds later. Use exec in the script, or a minimal init as PID 1."
+
+[[q]]
+id = "os-012"
+qtype = "recall"
+subtopic = "environment-config"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Why does configuration come from the environment rather than being built into the artefact?"
+a = "So the same artefact runs in every environment. Same image, different config, is what makes promoting a build from staging to production meaningful - otherwise the thing you tested is not the thing you shipped."
+
+[[q]]
+id = "os-013"
+qtype = "recall"
+subtopic = "environment-config"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What should happen at startup if a required configuration value is missing?"
+a = "The process should exit immediately with a message naming the missing key. Failing fast at startup turns a mystery null three hours later on an uncommon path into an obvious error before any traffic arrives. Log the effective configuration too, with secrets redacted."

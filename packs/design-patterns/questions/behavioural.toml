@@ -1,0 +1,98 @@
+# Question bank: behavioural
+topic = "behavioural"
+
+[[q]]
+id = "be-001"
+qtype = "recall"
+subtopic = "strategy"
+levels = ["graduate", "mid", "senior"]
+q = "What does the strategy pattern replace, and what does it cost the reader?"
+a = "A switch on a type code, replaced by polymorphism, so adding a case adds a class rather than editing an existing method. The cost is that the behaviour is no longer visible at the call site - you have to know how it was wired to know what runs."
+
+[[q]]
+id = "be-002"
+qtype = "judgment"
+subtopic = "strategy"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are defining an interface with one method plus three implementing classes for a sorting rule. New information - the language has first-class functions. More or less appropriate?"
+a = "Less, -1 to -2. A one-method interface is a function wearing a costume, and the costume costs four files. Pass the comparison function directly. Reach for the interface when there is genuine state, more than one method, or when the implementations need names for a registry."
+
+[[q]]
+id = "be-003"
+qtype = "discrimination"
+subtopic = "strategy"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Strategy and state have the same structure. What tells them apart?"
+a = "Who decides the next behaviour. A strategy is chosen by the caller and does not change itself. A state transitions ITSELF in response to events. If the object decides what it becomes next, it is state; if something outside picks, it is strategy."
+
+[[q]]
+id = "be-004"
+qtype = "recall"
+subtopic = "observer"
+levels = ["graduate", "mid", "senior"]
+q = "What does the observer pattern buy, and name two costs."
+a = "The subject notifies interested parties without knowing who they are, so new listeners are added without touching it. Costs - control flow becomes invisible, since reading the publisher tells you nothing about what happens next; and ordering is usually unspecified, so code that quietly depends on it is fragile."
+
+[[q]]
+id = "be-005"
+qtype = "diagnostic"
+subtopic = "observer"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A long-running application slowly grows in memory. Objects that should have been discarded are still reachable, and the profiler shows they are held by an event source. What is it?"
+a = "Observers that never unsubscribe. The subject holds a reference to every listener, so a listener that should have died is kept alive - and keeps being called. It is one of the most common leaks in long-lived applications, and the fix is explicit unsubscription tied to the listener's lifecycle, or weak references."
+
+[[q]]
+id = "be-006"
+qtype = "judgment"
+subtopic = "observer"
+levels = ["senior", "lead", "staff"]
+q = "You are making order-placed notify five synchronous in-process observers. New information - one of them calls an external email provider. More or less appropriate?"
+a = "Less, -2. A synchronous observer makes the publisher wait for every subscriber, so a slow third party is now in your order write path, and an exception there can break the notification loop for the others. Publish an event and let a separate consumer do the email."
+
+[[q]]
+id = "be-007"
+qtype = "recall"
+subtopic = "template-method"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is the weakness of template method, and what is usually preferred?"
+a = "It uses inheritance, so you get one axis of variation, tight coupling to the base class's internals, and a subclass that must know which hooks are called when. Composition is usually preferred - pass in strategies for the varying steps rather than subclassing."
+
+[[q]]
+id = "be-008"
+qtype = "diagnostic"
+subtopic = "template-method"
+levels = ["senior", "lead", "staff"]
+q = "A base class has fifteen hooks, six of which are optional, and subclasses override wildly different subsets. What does that tell you?"
+a = "The sequence is not actually fixed, so the premise of template method does not hold. The variation is broader than the pattern can express, and it is now a base class that different subclasses use in incompatible ways. Move to composition, or split into separate flows that share nothing."
+
+[[q]]
+id = "be-009"
+qtype = "recall"
+subtopic = "state"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does the state pattern replace, and why is that a correctness improvement rather than a tidiness one?"
+a = "A switch on this.status repeated in eight methods. It is a correctness improvement because adding a state means finding all eight, and every one you miss is a silent bug. With state objects the compiler makes you implement the interface, and illegal transitions can be refused in one place rather than allowed by omission."
+
+[[q]]
+id = "be-010"
+qtype = "judgment"
+subtopic = "state"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are introducing the state pattern for an object with two states, on and off. More or less appropriate?"
+a = "Less, -2. Two states and no transition rules is a boolean. The pattern earns its cost around four or five states, or as soon as transitions have rules worth enforcing in one place."
+
+[[q]]
+id = "be-011"
+qtype = "recall"
+subtopic = "command"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does turning a request into an object make possible?"
+a = "Queuing and deferred execution, retry without reconstructing the request, an audit log of intent rather than of effect, and undo where each command knows its inverse. A job in a work queue is this pattern, and so is an event-sourced write."
+
+[[q]]
+id = "be-012"
+qtype = "judgment"
+subtopic = "command"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are wrapping every service call in a command object for consistency. More or less appropriate?"
+a = "Less, -2 without a reason. The pattern costs a class per operation and earns it only if you need at least one of storage, deferral, audit or undo. If you only ever call the thing immediately, call it."

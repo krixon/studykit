@@ -1,0 +1,90 @@
+# Question bank: structural
+topic = "structural"
+
+[[q]]
+id = "st-001"
+qtype = "discrimination"
+subtopic = "adapter"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Adapter and decorator have the same shape in a diagram. What separates them?"
+a = "Whether the interface changes. An adapter makes an incompatible interface fit - you need PaymentGateway and the vendor gives you StripeClient, so the interface changes. A decorator implements the same interface and adds behaviour. Same structure, opposite intent."
+
+[[q]]
+id = "st-002"
+qtype = "recall"
+subtopic = "adapter"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why is an adapter the standard way to handle a third-party SDK?"
+a = "Because the vendor's types, exceptions and vocabulary stop at the adapter, so nothing else in the codebase mentions them. Replacing the vendor then touches one class instead of everywhere the SDK was used, and your domain stays expressed in your own language."
+
+[[q]]
+id = "st-003"
+qtype = "recall"
+subtopic = "decorator"
+levels = ["graduate", "mid", "senior"]
+q = "What does the decorator pattern let you avoid?"
+a = "A subclass explosion. Three orthogonal behaviours - caching, retrying, logging - need three decorators that stack in any order, against eight subclasses for every combination. Adding or removing one becomes a change to wiring rather than to a hierarchy."
+
+[[q]]
+id = "st-004"
+qtype = "judgment"
+subtopic = "decorator"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are wrapping a repository in six decorators - logging, metrics, caching, retry, circuit breaking, tracing. More or less appropriate?"
+a = "Roughly 0, with a real caveat. Each concern is genuinely separate and independently testable, which is the pattern working. The cost is that a stack trace is now six frames of indirection deep and the actual behaviour is only visible in the wiring code. Keep it, and make the composition root read clearly, because that file is now the only place the behaviour is described."
+
+[[q]]
+id = "st-005"
+qtype = "discrimination"
+subtopic = "facade"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How is a facade different from an adapter?"
+a = "A facade wraps MANY objects and offers a NARROWER, simpler interface than the subsystem behind it. An adapter wraps ONE object and offers an equivalent interface in a different shape. Facade simplifies; adapter translates."
+
+[[q]]
+id = "st-006"
+qtype = "diagnostic"
+subtopic = "facade"
+levels = ["senior", "lead", "staff"]
+q = "A facade has grown to forty methods, each a one-line delegation. What has gone wrong?"
+a = "It has stopped simplifying anything - it is the subsystem plus a layer of indirection, and every subsystem change now also changes the facade. Either it should expose only the few operations callers actually need, or the subsystem needs a genuine simplification rather than a pass-through."
+
+[[q]]
+id = "st-007"
+qtype = "discrimination"
+subtopic = "proxy"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Proxy and decorator have identical structure. What is the difference in intent, and what does it imply?"
+a = "A decorator ADDS to what happens; a proxy CONTROLS whether it happens. The implication is practical: a proxy may not call the real object at all - a protection proxy refuses, a caching proxy answers from a store, a virtual proxy has not created it yet."
+
+[[q]]
+id = "st-008"
+qtype = "recall"
+subtopic = "proxy"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name three proxies you use without thinking of them as proxies."
+a = "An ORM lazy-loaded collection - a virtual proxy deferring the query. An RPC or gRPC client stub - a remote proxy hiding the network. A permission check wrapper on a service - a protection proxy. All three share the same interface as the thing behind them."
+
+[[q]]
+id = "st-009"
+qtype = "recall"
+subtopic = "composite"
+levels = ["graduate", "mid", "senior"]
+q = "What does the composite pattern remove from client code?"
+a = "The conditional. Leaves and containers share an interface, so client code never asks whether it is holding one thing or a tree - recursion falls out of the structure. Files and folders, UI elements and panels, a validation rule and a set of rules."
+
+[[q]]
+id = "st-010"
+qtype = "judgment"
+subtopic = "composite"
+levels = ["senior", "lead", "staff"]
+q = "You put add(child) on the shared Component interface so clients never need to know leaf from container. More or less appropriate?"
+a = "It is a genuine trade with no clean answer, so about 0. Putting it on the interface forces leaves to throw not-supported, which violates Liskov. Keeping it only on the container means clients sometimes must know which they hold. Pick which cost you prefer and be explicit; claiming there is no cost is the wrong answer."
+
+[[q]]
+id = "st-011"
+qtype = "discrimination"
+subtopic = "adapter"
+levels = ["senior", "lead", "staff"]
+q = "You need to intercept, defer or deny a call. Which of the four wrapping patterns, and why not the others?"
+a = "Proxy. Adapter is out because the interface should not change. Decorator is out because you may need not to call through at all, and a decorator always delegates. Facade is out because it wraps a subsystem and simplifies rather than controlling access to one object."

@@ -1,0 +1,98 @@
+# Question bank: solid
+topic = "solid"
+
+[[q]]
+id = "so-001"
+qtype = "recall"
+subtopic = "srp"
+levels = ["graduate", "mid", "senior"]
+q = "State the single responsibility principle in the form that is actually useful."
+a = "One responsibility to one actor - a class should have one reason to change, where a reason means a group of people who request changes. If finance's rules and reporting's rules live in the same class, two teams collide in one file."
+
+[[q]]
+id = "so-002"
+qtype = "judgment"
+subtopic = "srp"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A codebase has been split so aggressively that every class has one method. More or less aligned with SRP?"
+a = "Less, -1. Small is not the goal, cohesive is. A swarm of one-method classes means following a single operation requires opening nine files, which raises coupling and destroys comprehension. SRP is about grouping by reason to change, not about minimising line count."
+
+[[q]]
+id = "so-003"
+qtype = "recall"
+subtopic = "ocp"
+levels = ["graduate", "mid", "senior"]
+q = "What does open-closed mean, and what is its precondition?"
+a = "Open for extension, closed for modification - add behaviour without editing existing code, usually via polymorphism or a registry. The precondition is that you guessed the axis of variation correctly. Along the wrong axis you get an abstraction that never varies while the real change still touches everything."
+
+[[q]]
+id = "so-004"
+qtype = "judgment"
+subtopic = "ocp"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are adding an interface now because a second implementation might be needed later. More or less appropriate?"
+a = "Less, -1 to -2. Wait for the second case. Going from a concrete class to an interface when the second implementation arrives is a cheap mechanical refactor; unwinding an abstraction built along the wrong axis is expensive and everyone works around it in the meantime."
+
+[[q]]
+id = "so-005"
+qtype = "recall"
+subtopic = "lsp"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name three concrete ways Liskov substitution gets violated."
+a = "Overriding a method to throw not-supported. Strengthening a precondition, so the subclass rejects input the parent accepted. Weakening a postcondition, so it returns less than promised. The visible symptom is callers writing if x is SpecialCase, which announces the hierarchy is wrong."
+
+[[q]]
+id = "so-006"
+qtype = "discrimination"
+subtopic = "lsp"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why is Square extends Rectangle the standard Liskov example?"
+a = "Because a caller holding a Rectangle may reasonably set the width and expect the height unchanged, and a Square cannot honour that. The subtype is not substitutable, so code correct for the parent is wrong for the child. It shows that is-a in English is not the same as substitutable in code."
+
+[[q]]
+id = "so-007"
+qtype = "recall"
+subtopic = "isp"
+levels = ["graduate", "mid", "senior"]
+q = "What does a fat interface cost, and what is the practical benefit of splitting it?"
+a = "Every implementer writes stubs for methods it does not need, and every consumer is affected by changes to methods it never calls. The practical benefit of splitting is that a narrow interface is trivial to fake in a test - a ten-method interface where you need one is a setup tax paid on every test forever."
+
+[[q]]
+id = "so-008"
+qtype = "recall"
+subtopic = "isp"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What should interfaces be segregated by?"
+a = "Client need, not symmetry. If one caller only reads and another only writes, that is two interfaces even if one class implements both. Splitting by what callers actually use is the point; splitting to make the design look tidy is not."
+
+[[q]]
+id = "so-009"
+qtype = "recall"
+subtopic = "dip"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What exactly is inverted in dependency inversion?"
+a = "The direction of the dependency arrow. Normally business logic calls a database class, so the domain depends on infrastructure. Inverted, the domain declares the interface it needs and the database implementation depends on the domain by implementing it. The domain can then be understood and tested with no database at all."
+
+[[q]]
+id = "so-010"
+qtype = "judgment"
+subtopic = "dip"
+levels = ["senior", "lead", "staff"]
+q = "Every class in the codebase has an interface in front of it, each with exactly one implementation, in the same package. Is this dependency inversion?"
+a = "No, -2. Nothing is inverted - the interface sits beside its only implementation and no boundary is crossed, so it is indirection with extra files. DIP is about which way dependencies point across a boundary. An interface with one permanent implementation and no boundary is ceremony."
+
+[[q]]
+id = "so-011"
+qtype = "discrimination"
+subtopic = "dip"
+levels = ["senior", "lead", "staff"]
+q = "Group the five SOLID principles by what they are actually about."
+a = "SRP and ISP are about the size and grouping of units. LSP is a correctness constraint on inheritance and the only one that can be objectively violated. OCP and DIP are about the direction of dependency. Seeing that makes clear they are not five instances of one idea."
+
+[[q]]
+id = "so-012"
+qtype = "judgment"
+subtopic = "ocp"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are applying SOLID rigorously to a script that will be deleted next month. More or less appropriate?"
+a = "Less, -2. Every one of these principles costs indirection now to make future change cheap. With no future, there is no return. They earn their keep in code that has been alive long enough to change repeatedly, and nowhere else."

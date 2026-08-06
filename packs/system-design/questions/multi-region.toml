@@ -1,0 +1,114 @@
+# Question bank: multi-region
+topic = "multi-region"
+
+[[q]]
+id = "mr-001"
+qtype = "discrimination"
+subtopic = "topologies"
+levels = ["senior", "lead", "staff"]
+q = "Active-active partitioned by key versus active-active replicated everywhere. What does the first one avoid entirely?"
+a = "Write conflicts. If each region owns a disjoint set of keys - usually by user or tenant home region - there is one writer per key, so concurrent conflicting writes cannot occur and you need no resolution strategy at all. Replicating every key everywhere makes conflict resolution a permanent part of the system."
+
+[[q]]
+id = "mr-002"
+qtype = "judgment"
+subtopic = "topologies"
+levels = ["senior", "lead", "staff"]
+q = "You are proposing multi-region for availability. New information - the current deployment is single-AZ. More or less appropriate as the next step?"
+a = "Less, -2 as the next step. Multi-AZ within one region gives independent failure domains about a millisecond apart, which removes the most common failure causes at a fraction of the cost and complexity. Do that first, then reassess whether whole-region loss is a risk you are actually funded to handle."
+
+[[q]]
+id = "mr-003"
+qtype = "recall"
+subtopic = "topologies"
+levels = ["senior", "lead", "staff"]
+q = "What is the hidden cost of an active-passive warm standby?"
+a = "It is the untested path. You pay for idle capacity and, worse, the standby has stale configuration, cold caches, unscaled connection pools and possibly expired credentials, none of which you discover until the moment you need it. Regular real traffic shifts are what convert it from a plan into a capability."
+
+[[q]]
+id = "mr-004"
+qtype = "recall"
+subtopic = "data-residency"
+levels = ["senior", "lead", "staff"]
+q = "How does a data residency requirement change the architecture, and where is it usually violated by accident?"
+a = "It forces partitioning by user home region rather than replication, because the data legally cannot leave. It is usually violated in the places nobody maps - backups, logs, traces, analytics exports and error reports - all of which carry personal data out of the jurisdiction without anyone deciding to."
+
+[[q]]
+id = "mr-005"
+qtype = "judgment"
+subtopic = "data-residency"
+levels = ["lead", "staff"]
+q = "You are replicating all user data to every region to make failover simple. New information - some users are subject to a data localisation law. More or less appropriate?"
+a = "Not appropriate at all, -2. Residency is a hard legal constraint that overrides architectural convenience - it is not a tradeoff to balance against failover simplicity. Partition by home region, keep a global identifier index if you need cross-region lookup, and accept a more complex failover story for those regions."
+
+[[q]]
+id = "mr-006"
+qtype = "discrimination"
+subtopic = "failover"
+levels = ["senior", "lead", "staff"]
+q = "DNS, anycast and a global load balancer for failover. What separates them?"
+a = "Speed and control. DNS is minutes because of TTLs and resolvers that ignore them. Anycast is seconds via BGP but coarse - you cannot steer a specific user, and route changes break long-lived connections. A health-checked global load balancer sits between them, giving fast, controllable steering at the cost of another component in the path."
+
+[[q]]
+id = "mr-007"
+qtype = "recall"
+subtopic = "failover"
+levels = ["lead", "staff"]
+q = "Why is failback harder than failover?"
+a = "Because the recovered region is now behind by everything that happened while it was down, so bringing it back means re-syncing a moving dataset while continuing to serve. It is a second migration with a live cutover, and it usually gets less planning than the failover it follows."
+
+[[q]]
+id = "mr-008"
+qtype = "recall"
+subtopic = "failover"
+levels = ["senior", "lead", "staff"]
+q = "Why is split brain worse across regions than within one?"
+a = "Because the partition can persist far longer - a cross-region link can be down for many minutes - so both sides accumulate a large volume of divergent writes before anyone notices. Fencing tokens and a single authoritative source of who leads are the mitigation; a timeout alone is not."
+
+[[q]]
+id = "mr-009"
+qtype = "recall"
+subtopic = "rto-rpo"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Define RTO and RPO and say who sets them."
+a = "RTO is recovery time - how long until service resumes. RPO is recovery point - how much data you may lose, measured in time. The business sets them, then the architecture is chosen to meet them. Doing it the other way round produces an expensive design nobody asked for."
+
+[[q]]
+id = "mr-010"
+qtype = "judgment"
+subtopic = "rto-rpo"
+levels = ["senior", "lead", "staff"]
+q = "The business asks for RPO of zero. New information - the standby is in another region 90ms away. More or less achievable as stated?"
+a = "Achievable, but the price is fixed and worth stating plainly, so roughly -1 on the proposal as framed. RPO zero requires synchronous cross-region replication, so every write pays at least 90ms - forever, not just during a disaster. Present that number and let them decide whether a few seconds of RPO is worth the latency back."
+
+[[q]]
+id = "mr-011"
+qtype = "recall"
+subtopic = "rto-rpo"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What makes a backup not a backup?"
+a = "Never having restored it. Until you have timed a full restore at current data volume, you know neither that it works nor what your RTO actually is. Restore time grows with the data while the runbook stays the same, so an untimed restore estimate ages badly."
+
+[[q]]
+id = "mr-012"
+qtype = "numeric"
+subtopic = "latency-tradeoffs"
+levels = ["senior", "lead", "staff"]
+q = "A page makes three sequential cross-region calls at 80ms round trip each. What is the floor on page latency, and what would you change?"
+a = "240ms of pure network before any work. The fix is to remove the sequence, not the calls - batch them into one round trip, parallelise the independent ones, or move the data so the calls are local. Sequential dependency across regions is the thing to design out."
+
+[[q]]
+id = "mr-013"
+qtype = "diagnostic"
+subtopic = "latency-tradeoffs"
+levels = ["senior", "lead", "staff"]
+q = "A service deployed in three regions shows good p50 everywhere but a p99 in one region three times the others. Its own dependencies look healthy. What do you suspect?"
+a = "A hidden cross-region call from that region - a dependency that is global rather than regional, a cache miss falling through to a distant origin, or a queue whose consumers live elsewhere. p50 is fine because the common path is local; the tail is where the remote call shows up. Trace a slow request end to end and look for a span with a suspiciously round 80-150ms."
+
+[[q]]
+id = "mr-014"
+qtype = "numeric"
+subtopic = "latency-tradeoffs"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Roughly what does multi-region cost relative to single-region, and where does the money go?"
+a = "Typically 2-3x. Duplicated compute and storage, idle standby capacity that must be sized for full load, inter-region data transfer which is billed and is not negligible at volume, and the engineering time for the failover machinery and the exercises that keep it real."

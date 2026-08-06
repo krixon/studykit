@@ -1,0 +1,114 @@
+# Question bank: load-balancing
+topic = "load-balancing"
+
+[[q]]
+id = "lb-001"
+qtype = "recall"
+subtopic = "l4-l7"
+levels = ["graduate", "mid"]
+q = "What can a layer 7 load balancer route on that a layer 4 one cannot?"
+a = "Anything in the HTTP request - path, headers, cookies, method. Layer 4 only sees the IP and port, so it can balance connections but cannot make a decision based on what is being asked for."
+
+[[q]]
+id = "lb-002"
+qtype = "discrimination"
+subtopic = "l4-l7"
+levels = ["mid", "senior", "lead", "staff"]
+q = "L4 and L7 balancing. What does each balance, and where does the difference actually bite?"
+a = "L4 balances CONNECTIONS, L7 balances REQUESTS. It bites with HTTP/2 or gRPC, where many requests are multiplexed over one long-lived connection - an L4 balancer pins them all to one backend and the pool goes lopsided. That is the case where L7 or client-side balancing stops being optional."
+
+[[q]]
+id = "lb-003"
+qtype = "judgment"
+subtopic = "l4-l7"
+levels = ["senior", "lead", "staff"]
+q = "You are putting an L4 balancer in front of a gRPC service. New information - clients hold connections open for hours and each sends thousands of requests. More or less appropriate?"
+a = "Much less, -2. L4 assigns a backend per connection, so hours-long connections pin load and the distribution never corrects. Use L7 balancing, client-side balancing with a service mesh, or force redistribution with a maximum connection age."
+
+[[q]]
+id = "lb-004"
+qtype = "recall"
+subtopic = "algorithms"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "When is round robin the wrong algorithm?"
+a = "When requests cost very different amounts, or backends have different capacity. Round robin assumes uniformity in both; without it, some backends saturate while others idle. Least-connections or a latency-aware algorithm adapts without you having to measure the cost."
+
+[[q]]
+id = "lb-005"
+qtype = "recall"
+subtopic = "algorithms"
+levels = ["senior", "lead", "staff"]
+q = "What is power-of-two-choices and why is it used instead of least-connections?"
+a = "Pick two backends at random and send to the less loaded of the two. It gets almost all the benefit of global least-connections without needing global state, which is what makes it the standard choice for client-side balancing where no component sees the whole fleet."
+
+[[q]]
+id = "lb-006"
+qtype = "judgment"
+subtopic = "algorithms"
+levels = ["senior", "lead", "staff"]
+q = "You are choosing least-response-time balancing. New information - one backend has a corrupt config and returns 500 in 2ms. More or less appropriate?"
+a = "Much less, -2. Fast failure looks like low latency, so the algorithm routes MORE traffic to the broken backend - a black hole. Balance on success rate as well as latency, and make health checks assert correctness rather than speed."
+
+[[q]]
+id = "lb-007"
+qtype = "discrimination"
+subtopic = "health-checks"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Shallow versus deep health checks. What does each miss, and what is the danger of the deep one?"
+a = "A shallow check confirms the process is listening, so it stays green while every dependency is down. A deep check confirms real dependencies, so it catches that - and because the dependency is shared, it can mark the ENTIRE fleet unhealthy at once, which is worse than the original fault. The mitigation is a panic threshold: below some fraction healthy, ignore health and spread traffic across everything."
+
+[[q]]
+id = "lb-008"
+qtype = "numeric"
+subtopic = "health-checks"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Health checks every 5 seconds with a threshold of 3 consecutive failures. How long is a dead backend still taking traffic?"
+a = "Up to about 15 seconds, plus the check timeout on the failing probes. That is your real detection budget, and it is why passive signals from live traffic matter as well as active probes."
+
+[[q]]
+id = "lb-009"
+qtype = "judgment"
+subtopic = "health-checks"
+levels = ["lead", "staff"]
+q = "You are making the health check assert that the backend can reach its database. New information - all backends share one database. More or less appropriate?"
+a = "Less, -1 to -2 without a panic threshold. When the database blips, every backend fails its check simultaneously and the balancer removes the entire fleet, turning a degraded service into a total outage. Either keep the check shallow and detect the database fault separately, or configure the balancer to ignore health below a healthy-fraction threshold."
+
+[[q]]
+id = "lb-010"
+qtype = "discrimination"
+subtopic = "topology"
+levels = ["senior", "lead", "staff"]
+q = "DNS-based and anycast-based traffic steering. What separates them on failover?"
+a = "DNS failover is bounded below by the TTL plus resolvers that ignore it, so assume minutes of traffic to a dead site. Anycast reroutes at BGP speed, seconds, because the same IP is announced from many places. The cost of anycast is that you do not choose which site a client lands on and a route change can break long-lived connections."
+
+[[q]]
+id = "lb-011"
+qtype = "recall"
+subtopic = "topology"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does a client-side balancer or mesh sidecar buy over a central proxy tier?"
+a = "It removes a network hop, balances per request over multiplexed connections rather than per connection, and lets the balancing logic ship with the client. The cost is that policy now lives in every client and updating it is a fleet-wide rollout."
+
+[[q]]
+id = "lb-012"
+qtype = "diagnostic"
+subtopic = "failure-modes"
+levels = ["senior", "lead", "staff"]
+q = "A backend has a brief 30-second wobble. Load then stays at 4x normal for ten minutes and the service never recovers on its own. What happened?"
+a = "A retry storm. Clients retried the failures, and with retries at more than one layer the multiplication is large - three layers retrying three times is 27 attempts. The extra load keeps the service failing, which generates more retries. Fix with retry budgets capping retries as a fraction of traffic, full jitter, and retrying at exactly one layer."
+
+[[q]]
+id = "lb-013"
+qtype = "recall"
+subtopic = "failure-modes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why does a failover cause a second outage, and what prevents it?"
+a = "Every client reconnects to the survivors at the same instant, so the surviving capacity takes a synchronised spike on top of the traffic it just inherited. Jittered exponential backoff on reconnect, plus an accept-rate cap on the server, spreads the herd."
+
+[[q]]
+id = "lb-014"
+qtype = "judgment"
+subtopic = "failure-modes"
+levels = ["lead", "staff"]
+q = "You are adding retries at the gateway to improve reliability. New information - the client SDK already retries three times, and the service calls a downstream that also retries. More or less appropriate?"
+a = "Much less, -2. Three layers at three attempts each is up to 27 requests for one logical call, and the amplification peaks exactly when the system is least able to take it. Retry at one layer, ideally closest to the caller where the deadline is known, and give the others a budget of zero."

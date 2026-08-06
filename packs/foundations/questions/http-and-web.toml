@@ -1,0 +1,98 @@
+# Question bank: http-and-web
+topic = "http-and-web"
+
+[[q]]
+id = "ht-001"
+qtype = "recall"
+subtopic = "request-response"
+levels = ["graduate", "mid"]
+q = "HTTP is stateless. What does that actually mean, and how does being logged in work anyway?"
+a = "The server remembers nothing between requests - each one is understood entirely on its own. Being logged in works because the client sends something every time, usually a cookie holding a session id or a token, and the server reconstructs who you are from that."
+
+[[q]]
+id = "ht-002"
+qtype = "numeric"
+subtopic = "request-response"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How many round trips before the first byte of application data on a fresh HTTPS connection, and on a reused one?"
+a = "Two to three on a fresh one - one for TCP, one or two for TLS depending on version. Zero on a reused connection. That is why connection reuse and keep-alive matter far more than most server-side tuning for a client on a slow network."
+
+[[q]]
+id = "ht-003"
+qtype = "discrimination"
+subtopic = "methods-status"
+levels = ["graduate", "mid", "senior"]
+q = "Safe and idempotent. What does each mean and why do the labels matter?"
+a = "Safe means it does not change state - GET, HEAD. Idempotent means doing it twice has the same effect as once - GET, PUT, DELETE. They matter because browsers, proxies, caches and retry libraries act on them: a GET can be prefetched, cached or retried automatically, so a state change behind a GET can happen without anyone clicking anything."
+
+[[q]]
+id = "ht-004"
+qtype = "discrimination"
+subtopic = "methods-status"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "401 and 403. What is the difference and what does each tell the client to do?"
+a = "401 means not authenticated - get credentials and try again. 403 means authenticated and still not allowed - retrying with the same identity will never work. Returning 401 for an authorisation failure sends clients into a pointless re-login loop."
+
+[[q]]
+id = "ht-005"
+qtype = "judgment"
+subtopic = "methods-status"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are implementing delete-an-item as a GET so it can be a plain link. More or less appropriate?"
+a = "Not appropriate, -2. GET is defined as safe, so browsers prefetch links, crawlers follow them, and proxies may repeat them. Someone's link preview or a search crawler will delete data. Use POST or DELETE with a confirmation."
+
+[[q]]
+id = "ht-006"
+qtype = "recall"
+subtopic = "headers-caching"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does an ETag do, and what does it not save you?"
+a = "The server sends a version tag, the client sends it back with If-None-Match, and an unchanged resource gets a 304 with no body. It saves the bandwidth of re-sending the body. It does not save the round trip - you still asked and waited."
+
+[[q]]
+id = "ht-007"
+qtype = "diagnostic"
+subtopic = "headers-caching"
+levels = ["senior", "lead", "staff"]
+q = "You add a CDN in front of a site whose pages are identical for everyone, and the hit rate is nearly zero. What do you check?"
+a = "The Vary header and Set-Cookie. Vary: Cookie makes each distinct cookie value a separate cache entry, so any per-user cookie - including an analytics one set on the response - collapses the hit rate to nothing."
+
+[[q]]
+id = "ht-008"
+qtype = "recall"
+subtopic = "cookies-sessions"
+levels = ["graduate", "mid", "senior"]
+q = "Name the three cookie flags that matter for security and what each stops."
+a = "HttpOnly - JavaScript cannot read it, so cross-site scripting cannot steal the session. Secure - only sent over HTTPS, so it is not exposed on a plain connection. SameSite - not sent on cross-site requests, which blunts cross-site request forgery."
+
+[[q]]
+id = "ht-009"
+qtype = "discrimination"
+subtopic = "cookies-sessions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A server-side session versus a signed token in the cookie. What do you trade?"
+a = "A server-side session id means the state lives with you, so revocation is immediate and you pay a lookup per request. A signed token carries the state, so the server stores nothing and scales trivially - and revocation becomes hard, because a valid token stays valid until it expires. You then need short expiry plus refresh, or a deny-list that reintroduces the lookup."
+
+[[q]]
+id = "ht-010"
+qtype = "recall"
+subtopic = "cors-origins"
+levels = ["graduate", "mid", "senior"]
+q = "What is the same-origin policy for, and what counts as a different origin?"
+a = "It stops a page on one site reading responses from another, which matters because the browser attaches your cookies automatically - without it any site could read your email by asking for it. An origin is scheme plus host plus port, so http and https differ, and so do two ports on the same host."
+
+[[q]]
+id = "ht-011"
+qtype = "judgment"
+subtopic = "cors-origins"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Someone says CORS protects your API from unauthorised callers. More or less accurate?"
+a = "Inaccurate, -2. CORS is a browser rule - it stops other websites reading your responses in a user's browser. A server, a script or curl ignores it entirely. It protects your users from other sites, not your API from attackers. Authentication and authorisation do that."
+
+[[q]]
+id = "ht-012"
+qtype = "diagnostic"
+subtopic = "cors-origins"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A browser reports a CORS error on a POST with a JSON body, but the same request works from curl. What is likely happening?"
+a = "The preflight is failing. A POST with a JSON content type is not a simple request, so the browser sends an OPTIONS request first and only proceeds if the response permits the origin, method and headers. curl sends no preflight, so it never sees the problem. Handle OPTIONS and return the right Allow headers."

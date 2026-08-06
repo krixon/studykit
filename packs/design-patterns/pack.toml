@@ -1,0 +1,121 @@
+[pack]
+name = "design-patterns"
+title = "Design patterns and code structure"
+description = "Patterns, principles and boundaries: how to arrange code so it can be changed. Graduate through Staff+."
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+areas = ["design-principles", "patterns", "refactoring", "architecture"]
+
+[calibration.graduate]
+bar = "Names the pattern, says what problem it solves, and can sketch the shape. A real example beats a UML diagram."
+assume = "Can write classes and functions. Has not yet maintained code long enough to feel the cost of a bad structure."
+push_on = ["what problem it solves", "what the code looked like before", "how you would recognise the need"]
+avoid = "Do not demand judgement about when a pattern is over-engineering. That comes from having been burnt."
+
+[calibration.mid]
+bar = "Correct shape, plus when it is the wrong tool. Should reach for the simplest thing that works."
+assume = "Has maintained code someone else wrote and has regretted a design decision."
+push_on = ["when not to use it", "the simpler alternative", "what it costs the reader"]
+avoid = "Do not reward pattern-name fluency on its own."
+
+[calibration.senior]
+bar = "Chooses structure by the change it needs to absorb, and can name the cost of the indirection."
+assume = "Has refactored a large codebase and has seen patterns applied badly."
+push_on = ["what change does this make cheap", "what does the indirection cost", "how would you refactor towards it safely", "what would you delete"]
+avoid = "Do not accept a pattern applied without a named axis of change."
+
+[calibration.lead]
+bar = "Everything at senior, plus how the structure survives a team that did not design it."
+assume = "Sets conventions. Reviews other people's designs."
+push_on = ["how do you keep this consistent across a team", "what convention would you enforce and how", "what will people get wrong"]
+avoid = "Do not reward elegance that only the author can maintain."
+
+[calibration.staff]
+bar = "Fluent, with the boundaries of each pattern named and an explicit account of when the received advice is wrong."
+assume = "Everything below is assumed."
+push_on = ["where this principle misleads", "the second-order cost", "what you would delete from an existing design", "how you would migrate incrementally"]
+avoid = "Do not accept a principle stated without its boundary conditions."
+
+[[topic]]
+id = "solid"
+title = "SOLID principles"
+area = "design-principles"
+prefix = "so"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["srp", "ocp", "lsp", "isp", "dip"]
+
+[[topic]]
+id = "creational"
+title = "Creational patterns"
+area = "patterns"
+prefix = "cr"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["factory", "builder", "singleton", "object-lifetime"]
+
+[[topic]]
+id = "structural"
+title = "Structural patterns"
+area = "patterns"
+prefix = "st"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["adapter", "decorator", "facade", "proxy", "composite"]
+
+[[topic]]
+id = "behavioural"
+title = "Behavioural patterns"
+area = "patterns"
+prefix = "be"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["strategy", "observer", "template-method", "state", "command"]
+
+[[topic]]
+id = "dependency-injection"
+title = "Dependency injection"
+area = "design-principles"
+prefix = "di"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["inversion", "wiring", "lifetimes", "test-seams"]
+
+[[topic]]
+id = "coupling-cohesion"
+title = "Coupling and cohesion"
+area = "design-principles"
+prefix = "co"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["coupling-kinds", "cohesion", "demeter", "leaky-abstractions"]
+
+[[topic]]
+id = "refactoring"
+title = "Refactoring and smells"
+area = "refactoring"
+prefix = "rf"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["smells", "safe-steps", "naming", "duplication"]
+
+[[topic]]
+id = "boundaries"
+title = "Boundaries and layering"
+area = "architecture"
+prefix = "bo"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["layering", "ports-adapters", "domain-purity", "module-seams"]
+
+[[problem]]
+slug = "god-class"
+title = "Refactor a god class"
+areas = ["refactoring", "design-principles"]
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+minutes = 40
+
+[[problem]]
+slug = "plugin-system"
+title = "Design a plugin system"
+areas = ["patterns", "architecture"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 40
+
+[[problem]]
+slug = "payment-abstraction"
+title = "Abstract over payment providers"
+areas = ["architecture", "design-principles"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 45

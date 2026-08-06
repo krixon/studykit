@@ -1,0 +1,106 @@
+# Question bank: sql-and-indexes
+topic = "sql-and-indexes"
+
+[[q]]
+id = "sq-001"
+qtype = "discrimination"
+subtopic = "joins"
+levels = ["graduate", "mid"]
+q = "INNER JOIN and LEFT JOIN. What question does each answer?"
+a = "INNER answers only the rows that matched on both sides - customers who have orders. LEFT answers every row from the left side, with nulls where there was no match - all customers, including those with no orders. The choice depends on whether the absence is data you want."
+
+[[q]]
+id = "sq-002"
+qtype = "diagnostic"
+subtopic = "joins"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A LEFT JOIN stops returning the unmatched rows after someone adds a WHERE clause on the right-hand table. Why?"
+a = "Because the unmatched rows have nulls in those columns, and a null fails the comparison, so the WHERE filters them out - converting the LEFT JOIN into an inner join. Move the condition into the ON clause, where it filters what to match rather than what to keep."
+
+[[q]]
+id = "sq-003"
+qtype = "recall"
+subtopic = "normalisation"
+levels = ["graduate", "mid", "senior"]
+q = "State the point of normalisation without using the word normal form."
+a = "Store each fact once and reference it from everywhere else. If changing one fact means updating many rows, it is not normalised, and sooner or later the copies will disagree."
+
+[[q]]
+id = "sq-004"
+qtype = "judgment"
+subtopic = "normalisation"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are storing the customer name on the order row instead of joining. More or less appropriate?"
+a = "It depends what the field means, so roughly 0 without that. If it is a cached copy of the current name it is denormalisation and will drift. If it is the name at the time of the order, deliberately frozen for the invoice, it is a different fact and belongs on the order. Say which one you mean, because the two look identical in the schema."
+
+[[q]]
+id = "sq-005"
+qtype = "recall"
+subtopic = "indexes"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What does every extra index cost you?"
+a = "A write. Every insert, update and delete has to maintain every index on the table, so five indexes turn one insert into six writes, plus storage and buffer-pool space. Indexes that are never used are pure cost, and the database can tell you which those are."
+
+[[q]]
+id = "sq-006"
+qtype = "recall"
+subtopic = "indexes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You have an index on (customer_id, created_at). Which of these use it - filter by customer_id, filter by created_at, filter by both?"
+a = "customer_id yes, both yes, created_at alone no. The index is ordered by the leading column, so there is no way to seek into it without knowing customer_id. This leading-column rule is the most useful single fact about composite indexes."
+
+[[q]]
+id = "sq-007"
+qtype = "diagnostic"
+subtopic = "indexes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A query filtering on lower(email) is slow despite an index on email. Why?"
+a = "Wrapping the column in a function means the stored values no longer match what is being compared, so the index cannot be used and the database scans. Either index the expression lower(email), or store the email already normalised and compare directly."
+
+[[q]]
+id = "sq-008"
+qtype = "recall"
+subtopic = "indexes"
+levels = ["senior", "lead", "staff"]
+q = "What is a covering index and why is it often the biggest single win?"
+a = "An index containing every column the query returns, so the answer comes from the index alone and the table is never touched. It removes a random read per row, which on a query returning many rows usually beats any other single change."
+
+[[q]]
+id = "sq-009"
+qtype = "recall"
+subtopic = "n-plus-one"
+levels = ["graduate", "mid", "senior"]
+q = "What is an N+1 query problem and how do you recognise it in a log?"
+a = "You fetch N rows, then issue one query per row to load a related field, so one query becomes N+1. In a log it is a flood of identical queries differing only by an id. The symptom is a page that is fine with 10 rows and unusable with 500."
+
+[[q]]
+id = "sq-010"
+qtype = "numeric"
+subtopic = "n-plus-one"
+levels = ["mid", "senior", "lead", "staff"]
+q = "An N+1 over 500 rows, each query taking 1ms. How much latency, and what does the fix cost?"
+a = "About half a second, all of it avoidable. The fix - a join, or one IN query with the collected ids - is a single query in the low milliseconds. It is the highest-ratio performance fix in ordinary application code."
+
+[[q]]
+id = "sq-011"
+qtype = "recall"
+subtopic = "transactions"
+levels = ["graduate", "mid", "senior"]
+q = "Expand ACID and say which letter people most often misunderstand."
+a = "Atomicity, Consistency, Isolation, Durability. Consistency is the misunderstood one - here it means your declared constraints hold before and after, which is a different thing entirely from consistency in a distributed systems sense."
+
+[[q]]
+id = "sq-012"
+qtype = "judgment"
+subtopic = "transactions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are calling a payment provider inside an open database transaction so the charge and the order are atomic. More or less appropriate?"
+a = "Much less, -2. You are holding database locks for the duration of a slow third-party call, so one slow provider blocks your database. It also does not give you atomicity - the external charge cannot be rolled back by your transaction. Take the payment outside the transaction with an idempotency key and reconcile."
+
+[[q]]
+id = "sq-013"
+qtype = "recall"
+subtopic = "transactions"
+levels = ["senior", "lead", "staff"]
+q = "Why should transactions be kept short?"
+a = "A transaction holds locks, so a long one blocks other writers, and in an MVCC database it also prevents cleanup of old row versions, which bloats storage and slows every other query. Long transactions are one of the classic causes of a database that gets gradually worse for no visible reason."

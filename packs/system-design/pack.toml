@@ -1,0 +1,266 @@
+[pack]
+name = "system-design"
+title = "System design"
+description = "Distributed systems design, from first components to multi-region tradeoffs. Graduate through Staff+."
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+areas = [
+  "caching", "networking", "rate-limiting", "api-schema", "geo-cdn",
+  "partitioning", "storage", "consistency", "messaging", "real-time",
+  "observability", "multi-region-dr",
+]
+
+# --------------------------------------------------------------------------- #
+# Calibration: the bar an answer is judged against, per level.
+# The engine injects this into every session so the same question can be scored
+# fairly at different levels. It changes the bar, never the score scale.
+# --------------------------------------------------------------------------- #
+
+[calibration.graduate]
+bar = "Names the component, says what problem it solves, and draws a sensible box diagram. Getting the mechanism right is the whole job."
+assume = "No prior exposure to distributed systems. Vocabulary is being learned, not assumed."
+push_on = ["what it is", "what it is for", "when you would reach for it", "one thing that can go wrong"]
+avoid = "Do not demand numbers, blast-radius analysis, or organisational consequences. A correct mechanism scores well here."
+
+[calibration.mid]
+bar = "Correct mechanism plus the main tradeoff, and a rough sense of scale. Should not need the alternatives listed for them."
+assume = "Comfortable with HTTP, SQL, a cache and a queue. Has shipped features on someone else's architecture."
+push_on = ["the tradeoff, not just the mechanism", "when it is the wrong tool", "the common failure mode", "an order-of-magnitude estimate"]
+avoid = "Do not require multi-region reasoning or cost modelling unless the topic is about them."
+
+[calibration.senior]
+bar = "Tradeoff named and defended, a number attached, and a failure mode volunteered without being asked."
+assume = "Has operated systems in production. Knows what a pager feels like."
+push_on = ["why, not what", "what breaks at 10x", "what it costs", "the second-order effect", "what you would measure"]
+avoid = "Do not accept 'it works' as a complete answer, and do not accept a mechanism with no cost attached."
+
+[calibration.lead]
+bar = "Everything at senior, plus the migration path and the operational burden the team actually inherits."
+assume = "Owns a system and a team. Decisions have to survive people leaving."
+push_on = ["how you would get there from here", "what the team has to run at 3am", "which decision is reversible", "what you would deliberately not build"]
+avoid = "Do not reward the most sophisticated design. Reward the one that survives contact with a real team."
+
+[calibration.staff]
+bar = "Correct, quantified, with a failure mode and a blast radius, and an explicit statement of what the design buys and what it forecloses."
+assume = "Basics are assumed entirely. Vocabulary is shared."
+push_on = ["blast radius", "cost at 10x and at 100x", "what you would delete", "where the design is load-bearing on an assumption", "what you would tell an exec"]
+avoid = "Do not accept an unquantified claim. Do not accept a design with no stated failure mode."
+
+# --------------------------------------------------------------------------- #
+# Topics. `prefix` seeds question ids. `levels` gates the topic in the queue.
+# --------------------------------------------------------------------------- #
+
+[[topic]]
+id = "caching"
+title = "Caching"
+area = "caching"
+prefix = "ca"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["read-strategies", "write-strategies", "eviction", "stampede-penetration", "hot-key", "cache-economics", "placement"]
+
+[[topic]]
+id = "load-balancing"
+title = "Load balancing"
+area = "networking"
+prefix = "lb"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["l4-l7", "algorithms", "health-checks", "topology", "failure-modes"]
+
+[[topic]]
+id = "api-design"
+title = "API design"
+area = "api-schema"
+prefix = "ap"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["styles", "versioning", "pagination", "errors-status", "compatibility"]
+
+[[topic]]
+id = "cdn-edge"
+title = "CDN and edge"
+area = "geo-cdn"
+prefix = "cd"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["what-it-caches", "invalidation", "origin-shield", "edge-compute", "tls-latency"]
+
+[[topic]]
+id = "rate-limiting"
+title = "Rate limiting"
+area = "rate-limiting"
+prefix = "rl"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["algorithms", "distributed-state", "contract-keys", "failure-modes", "definitions"]
+
+[[topic]]
+id = "sharding"
+title = "Sharding and partitioning"
+area = "partitioning"
+prefix = "sh"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["partition-schemes", "shard-key", "cross-shard-tx", "resharding", "hot-shard", "replication-vs-sharding"]
+
+[[topic]]
+id = "consistent-hashing"
+title = "Consistent hashing"
+area = "partitioning"
+prefix = "ch"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["definition", "ring-mechanics", "virtual-nodes", "rebalancing", "alternatives", "hot-key"]
+
+[[topic]]
+id = "replication"
+title = "Replication"
+area = "storage"
+prefix = "rp"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["topologies", "sync-vs-async", "lag-effects", "failover", "conflict-handling"]
+
+[[topic]]
+id = "storage-engines"
+title = "Storage engines"
+area = "storage"
+prefix = "se"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["btree-vs-lsm", "write-amplification", "oltp-vs-olap", "index-cost", "durability"]
+
+[[topic]]
+id = "cap-pacelc"
+title = "CAP and PACELC"
+area = "consistency"
+prefix = "cp"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["cap", "pacelc", "quorum", "tunability", "examples"]
+
+[[topic]]
+id = "consistency-models"
+title = "Consistency models"
+area = "consistency"
+prefix = "cm"
+levels = ["senior", "lead", "staff"]
+subtopics = ["model-spectrum", "session-guarantees", "conflict-resolution", "failure-modes"]
+
+[[topic]]
+id = "message-queues"
+title = "Message queues and logs"
+area = "messaging"
+prefix = "mq"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["queue-vs-log", "delivery-semantics", "ordering", "consumer-lag", "dlq-poison", "partitions"]
+
+[[topic]]
+id = "idempotency"
+title = "Idempotency and retries"
+area = "api-schema"
+prefix = "id"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["keys", "retries", "exactly-once", "dedup-windows", "side-effects"]
+
+[[topic]]
+id = "realtime-delivery"
+title = "Real-time delivery"
+area = "real-time"
+prefix = "rt"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["transports", "fan-out", "presence", "backpressure", "connection-scaling"]
+
+[[topic]]
+id = "observability"
+title = "Observability"
+area = "observability"
+prefix = "ob"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["signals", "slo-sli", "cardinality", "tracing", "alerting"]
+
+[[topic]]
+id = "multi-region"
+title = "Multi-region and DR"
+area = "multi-region-dr"
+prefix = "mr"
+levels = ["senior", "lead", "staff"]
+subtopics = ["topologies", "data-residency", "failover", "rto-rpo", "latency-tradeoffs"]
+
+# --------------------------------------------------------------------------- #
+# Problems. `minutes` is the planning cost the composer budgets for.
+# --------------------------------------------------------------------------- #
+
+[[problem]]
+slug = "pastebin"
+title = "Pastebin"
+areas = ["storage", "caching"]
+levels = ["graduate", "mid"]
+minutes = 35
+
+[[problem]]
+slug = "url-shortener"
+title = "URL shortener"
+areas = ["storage", "caching"]
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+minutes = 45
+
+[[problem]]
+slug = "image-hosting"
+title = "Image hosting and delivery"
+areas = ["storage", "geo-cdn"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 45
+
+[[problem]]
+slug = "notification-service"
+title = "Notification service"
+areas = ["messaging", "api-schema"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 45
+
+[[problem]]
+slug = "ticket-booking"
+title = "Ticket booking"
+areas = ["consistency", "storage"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 45
+
+[[problem]]
+slug = "rate-limiter"
+title = "Distributed rate limiter"
+areas = ["rate-limiting", "partitioning"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 45
+
+[[problem]]
+slug = "chat-system"
+title = "Chat system"
+areas = ["real-time", "messaging"]
+levels = ["senior", "lead", "staff"]
+minutes = 50
+
+[[problem]]
+slug = "news-feed"
+title = "Social news feed"
+areas = ["real-time", "caching"]
+levels = ["senior", "lead", "staff"]
+minutes = 50
+
+[[problem]]
+slug = "metrics-pipeline"
+title = "Metrics and monitoring pipeline"
+areas = ["observability", "messaging"]
+levels = ["senior", "lead", "staff"]
+minutes = 50
+
+[[problem]]
+slug = "ride-matching"
+title = "Ride matching"
+areas = ["real-time", "partitioning"]
+levels = ["senior", "lead", "staff"]
+minutes = 55
+
+[[problem]]
+slug = "key-value-store"
+title = "Distributed key-value store"
+areas = ["storage", "consistency", "partitioning"]
+levels = ["lead", "staff"]
+minutes = 60
+
+[[problem]]
+slug = "multi-region-checkout"
+title = "Multi-region checkout"
+areas = ["multi-region-dr", "consistency"]
+levels = ["lead", "staff"]
+minutes = 60

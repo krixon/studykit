@@ -1,0 +1,98 @@
+# Question bank: concurrency
+topic = "concurrency"
+
+[[q]]
+id = "cc-001"
+qtype = "discrimination"
+subtopic = "processes-threads"
+levels = ["graduate", "mid", "senior"]
+q = "A process and a thread. What is the difference that matters?"
+a = "Memory. Processes have separate memory, so they cannot corrupt each other and must copy data to communicate. Threads share memory, so communication is free - and any thread can modify any shared value at any moment, which is where every concurrency bug comes from."
+
+[[q]]
+id = "cc-002"
+qtype = "discrimination"
+subtopic = "processes-threads"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Concurrency and parallelism. Are they the same thing?"
+a = "No. Concurrency is structuring work so tasks can progress independently - a design property. Parallelism is actually executing them at the same instant on multiple cores - a hardware outcome. A single-core machine can be highly concurrent and not parallel at all."
+
+[[q]]
+id = "cc-003"
+qtype = "recall"
+subtopic = "races-locks"
+levels = ["graduate", "mid", "senior"]
+q = "Why is count += 1 not safe from two threads?"
+a = "Because it is three operations - load, add, store - and a thread can be suspended between any two. Both threads read 5, both add one, both write 6, and one increment is lost. It looks atomic in the source and is not."
+
+[[q]]
+id = "cc-004"
+qtype = "recall"
+subtopic = "races-locks"
+levels = ["mid", "senior", "lead", "staff"]
+q = "List the ways to make shared state safe, cheapest first."
+a = "Do not share - immutable data or a per-thread copy removes the problem. Atomic operations for a single variable. A mutex for a general critical section. A read-write lock when reads vastly outnumber writes. Message passing, where one owner holds the data and others send it messages. The first option is always the best one available."
+
+[[q]]
+id = "cc-005"
+qtype = "judgment"
+subtopic = "races-locks"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are adding a lock around a shared counter to fix a race. New information - the counter is incremented on every request across 64 threads. More or less appropriate?"
+a = "Correct but costly, so about 0. The lock fixes the race and becomes a serialisation point that every request queues on. An atomic increment does the same job without the scheduler involvement, and a per-thread counter summed on read removes contention entirely."
+
+[[q]]
+id = "cc-006"
+qtype = "recall"
+subtopic = "deadlock"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a deadlock and what is the simplest reliable prevention?"
+a = "Two threads each holding a lock the other needs, so neither proceeds. The simplest reliable prevention is a global lock ordering - if every thread acquires locks in the same order, a cycle cannot form. Second best is a timeout on acquisition, which turns a hang into an error you can retry."
+
+[[q]]
+id = "cc-007"
+qtype = "discrimination"
+subtopic = "deadlock"
+levels = ["senior", "lead", "staff"]
+q = "Deadlock, livelock and starvation. How do they look different from outside?"
+a = "Deadlock - everything stops and CPU is idle. Livelock - everything is busy and nothing completes, because threads keep reacting to each other. Starvation - most work completes and one participant never gets a turn. All three look like it is stuck, and they need different fixes."
+
+[[q]]
+id = "cc-008"
+qtype = "diagnostic"
+subtopic = "deadlock"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service works fine in testing and hangs occasionally under production load. Restarting fixes it for a while. What class of bug should you suspect?"
+a = "A deadlock or lock contention. It needs a specific interleaving that only concurrent load produces, which is exactly what testing lacks. Take a thread dump while it is hung - that shows which threads hold which locks and usually names the cycle immediately."
+
+[[q]]
+id = "cc-009"
+qtype = "recall"
+subtopic = "async-io"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does async I/O actually buy you, and what does it not?"
+a = "It removes the memory and context-switch cost of one thread per waiting operation, so one thread can manage thousands of in-flight I/Os. It does not make anything compute faster - CPU-bound work is exactly as slow, and worse, it blocks the loop and stalls every other request."
+
+[[q]]
+id = "cc-010"
+qtype = "judgment"
+subtopic = "async-io"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are moving an image-resizing service to an async framework for throughput. More or less appropriate?"
+a = "Less, -2. Resizing is CPU-bound, and async helps only with waiting. One resize blocks the event loop and stalls every other request on it, so latency gets worse rather than better. Use a process or thread pool sized to your cores, and keep async for the I/O around it."
+
+[[q]]
+id = "cc-011"
+qtype = "recall"
+subtopic = "atomicity"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name three things people assume are atomic and are not."
+a = "Check-then-act - if not exists, create - which races between the two steps. Appending to a shared collection. Any sequence of two individually atomic operations, because the gap between them is where another thread runs. Reading a 64-bit value on a 32-bit platform is a fourth."
+
+[[q]]
+id = "cc-012"
+qtype = "recall"
+subtopic = "atomicity"
+levels = ["senior", "lead", "staff"]
+q = "How do you replace a file's contents safely with no locks?"
+a = "Write to a temporary file in the same directory, fsync it, then rename it over the target. Rename within a filesystem is atomic, so any reader sees either the whole old file or the whole new one and never a partial write. Same directory matters, because rename across filesystems is not atomic."

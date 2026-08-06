@@ -1,0 +1,114 @@
+# Question bank: data-and-encoding
+topic = "data-and-encoding"
+
+[[q]]
+id = "de-001"
+qtype = "discrimination"
+subtopic = "text-encoding"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Unicode and UTF-8. What is the relationship?"
+a = "Unicode is the character set - it assigns a number, a code point, to every character. UTF-8 is an encoding - it says how to turn those numbers into bytes. Unicode is the vocabulary, UTF-8 is the spelling. Confusing them is why people say a file is in Unicode, which does not specify enough to read it."
+
+[[q]]
+id = "de-002"
+qtype = "diagnostic"
+subtopic = "text-encoding"
+levels = ["graduate", "mid", "senior"]
+q = "A name appears as cafÃ© instead of café. What happened, and what must you not do?"
+a = "The bytes were encoded as UTF-8 and decoded as something else, usually Latin-1. Do not try to fix the mangled output by re-encoding it - find where the wrong decoding happened and set the encoding explicitly there. Patching the symptom produces a second layer of corruption."
+
+[[q]]
+id = "de-003"
+qtype = "recall"
+subtopic = "text-encoding"
+levels = ["senior", "lead", "staff"]
+q = "Why can truncating a string to 20 characters corrupt it?"
+a = "Because a character in the user's sense is not one unit in the string's sense. A code point can be multiple bytes, a visible character can be multiple code points - e plus a combining accent, or an emoji with a modifier - so cutting at an arbitrary index can split a character in half and produce invalid text."
+
+[[q]]
+id = "de-004"
+qtype = "recall"
+subtopic = "time-and-zones"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "State the rule for storing timestamps, and the one important exception."
+a = "Store UTC, display local, convert only at the boundary. The exception is a future event tied to a place - store the local time and the zone NAME, not an offset, so that if the government moves the daylight saving date, a 09:00 meeting is still at 09:00."
+
+[[q]]
+id = "de-005"
+qtype = "judgment"
+subtopic = "time-and-zones"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are computing tomorrow at 09:00 by adding 86400 seconds to now. More or less appropriate?"
+a = "Less, -2. Local days are not always 24 hours - a daylight saving change makes one 23 and another 25 - so the result lands an hour out twice a year. Use the library's calendar arithmetic, which understands that adding a day is not adding a fixed duration."
+
+[[q]]
+id = "de-006"
+qtype = "recall"
+subtopic = "time-and-zones"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name two local times that are problematic, and why."
+a = "The hour skipped when clocks go forward, which does not exist - so a parse of it must fail or be adjusted. And the hour repeated when clocks go back, which happens twice - so a local timestamp in it is ambiguous and cannot be converted to UTC without extra information."
+
+[[q]]
+id = "de-007"
+qtype = "recall"
+subtopic = "numbers-money"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Why must you not store money in a float?"
+a = "Because binary floating point cannot represent 0.1 exactly, so arithmetic accumulates error - 0.1 plus 0.2 is not 0.3. In a financial system those errors are not cosmetic. Use a decimal type, or store integer minor units and format at the edges."
+
+[[q]]
+id = "de-008"
+qtype = "discrimination"
+subtopic = "numbers-money"
+levels = ["senior", "lead", "staff"]
+q = "Half-up and half-even rounding. Why does the choice need to be explicit?"
+a = "Half-up always rounds .5 away from zero, which biases totals upward over many operations. Half-even, banker's rounding, alternates and avoids that systematic bias. It matters because two systems using different rules will disagree by pennies, and reconciling those pennies costs more than choosing deliberately."
+
+[[q]]
+id = "de-009"
+qtype = "diagnostic"
+subtopic = "numbers-money"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A JavaScript client shows an id ending in 000 where the server sent something else. Why?"
+a = "JSON numbers become doubles in JavaScript, which lose precision above 2 to the 53. A large 64-bit id gets rounded. Send large ids as strings - this is the standard fix and the reason many APIs quote their ids."
+
+[[q]]
+id = "de-010"
+qtype = "recall"
+subtopic = "serialisation"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Which schema changes are safe during a rolling deploy, and why does rolling matter?"
+a = "Adding an optional field is safe. Removing, renaming, changing a type, or making an optional field required is not. Rolling matters because both versions are live simultaneously and traffic hits either, so a change must be safe in both directions - old code reading new data and new code reading old data."
+
+[[q]]
+id = "de-011"
+qtype = "judgment"
+subtopic = "serialisation"
+levels = ["graduate", "mid", "senior"]
+q = "You are parsing a CSV by splitting each line on commas. More or less appropriate?"
+a = "Less, -2. CSV is a family of conventions, not a format - fields can be quoted, quotes can be escaped, and a quoted field can contain commas and newlines. A single address field will break it. Use a library; the edge cases are not worth rediscovering."
+
+[[q]]
+id = "de-012"
+qtype = "recall"
+subtopic = "validation"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Where should validation happen, and why only there?"
+a = "At the boundary, once, as data enters the system. Then the interior can trust its own types instead of re-checking defensively at every layer. Validating everywhere means every layer has a slightly different idea of valid, and one of them is wrong."
+
+[[q]]
+id = "de-013"
+qtype = "recall"
+subtopic = "validation"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name four things that must be bounded on any input, and why."
+a = "String length, collection size, request body size, and page size. An unbounded input is a denial-of-service vector and eventually an out-of-memory error, and the bound is much easier to add before there is data relying on its absence."
+
+[[q]]
+id = "de-014"
+qtype = "discrimination"
+subtopic = "validation"
+levels = ["senior", "lead", "staff"]
+q = "Parse, do not validate. What does that actually mean?"
+a = "Convert input into a type that cannot represent an invalid state - an Email type rather than a string you checked - so the check happens once and downstream code cannot forget it. A validated string is still a string, and nothing stops the next function receiving an unvalidated one."

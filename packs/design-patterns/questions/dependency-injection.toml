@@ -1,0 +1,90 @@
+# Question bank: dependency-injection
+topic = "dependency-injection"
+
+[[q]]
+id = "di-001"
+qtype = "discrimination"
+subtopic = "inversion"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Dependency inversion, dependency injection and inversion of control. Are they the same?"
+a = "No. Inversion is a PRINCIPLE about which way the dependency arrow points across a boundary. Injection is a TECHNIQUE - pass dependencies in rather than constructing them. Inversion of control is a STYLE where the framework calls you. You can do injection without inversion by injecting a concrete class, and inversion without any framework."
+
+[[q]]
+id = "di-002"
+qtype = "recall"
+subtopic = "inversion"
+levels = ["graduate", "mid", "senior"]
+q = "Why is constructor injection the default form?"
+a = "Because the signature states exactly what the class needs, so you can see its dependencies by reading one line, and an object cannot exist in a half-configured state. Setter injection allows a partially built object; a service locator hides the dependency again behind a different global."
+
+[[q]]
+id = "di-003"
+qtype = "judgment"
+subtopic = "inversion"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A class asks a static registry for what it needs, so nothing has to be passed in. More or less like dependency injection?"
+a = "Not injection at all, -2. That is a service locator - the dependency is hidden again, just behind a different global, so a constructor tells you nothing about what the class needs and a test must mutate a global to substitute anything. It is occasionally the only option in a framework you do not control, and it is not a design goal."
+
+[[q]]
+id = "di-004"
+qtype = "recall"
+subtopic = "inversion"
+levels = ["senior", "lead", "staff"]
+q = "What is the real benefit of DI, beyond testability?"
+a = "The constructor becomes an honest declaration of what a class needs, so a class with nine dependencies is visibly doing too much. DI makes bad cohesion legible - which is why the fix for a long constructor is splitting the class, not introducing a parameter object to hide the count."
+
+[[q]]
+id = "di-005"
+qtype = "recall"
+subtopic = "wiring"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a composition root and why should there be exactly one?"
+a = "The single place, as close to the entry point as possible, where concrete types are chosen and the object graph is built. One, because only it knows about implementations - so swapping one is a single edit. If wiring is spread across the codebase there is no composition root and the benefit is gone, even with constructor injection everywhere."
+
+[[q]]
+id = "di-006"
+qtype = "judgment"
+subtopic = "wiring"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are adding a DI container to a service with twenty classes. More or less appropriate?"
+a = "Less, -1. Manual wiring at twenty classes is twenty lines in one file, readable and checked by the compiler. A container earns its place at a few hundred registrations, and its cost is that a missing registration becomes a runtime failure far from the cause."
+
+[[q]]
+id = "di-007"
+qtype = "recall"
+subtopic = "lifetimes"
+levels = ["mid", "senior", "lead", "staff"]
+q = "State the two lifetime rules that prevent most DI bugs."
+a = "A longer-lived object must never capture a shorter-lived one - that is a captive dependency, and it keeps a request-scoped session alive for the life of the process. And anything registered as a singleton must be thread-safe, because it will be used concurrently."
+
+[[q]]
+id = "di-008"
+qtype = "diagnostic"
+subtopic = "lifetimes"
+levels = ["senior", "lead", "staff"]
+q = "After moving a class from scoped to singleton to reduce allocations, users occasionally see another user's data. What happened?"
+a = "The class held per-request state. As a scoped object that was safe, since each request got its own; as a singleton it is shared across concurrent requests, so one request's data leaks into another's response. Singleton registration is only safe for stateless objects."
+
+[[q]]
+id = "di-009"
+qtype = "recall"
+subtopic = "test-seams"
+levels = ["graduate", "mid", "senior"]
+q = "Which three dependencies most often need injecting to make code testable?"
+a = "Time, randomness and I/O. All three make behaviour non-deterministic, all three are trivially injectable as a Clock, a random source and a repository or client interface, and injecting them turns an untestable function into a deterministic one."
+
+[[q]]
+id = "di-010"
+qtype = "judgment"
+subtopic = "test-seams"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Every internal collaborator is behind an interface so it can be mocked in tests. More or less appropriate?"
+a = "Less, -2. Mocking internal collaborators produces tests coupled to the implementation, so any refactor breaks them and the suite starts resisting the change it was meant to enable. Put seams at boundaries you do not own; use the real thing inside your own code."
+
+[[q]]
+id = "di-011"
+qtype = "recall"
+subtopic = "test-seams"
+levels = ["senior", "lead", "staff"]
+q = "What is the signal that DI has been over-applied?"
+a = "An interface with exactly one implementation, that will only ever have one, existing solely so a test can mock it. If you would never swap it in production, ask whether the test should just use the real thing - the interface is buying nothing and costing a file and a level of indirection."

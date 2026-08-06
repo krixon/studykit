@@ -1,0 +1,98 @@
+# Question bank: boundaries
+topic = "boundaries"
+
+[[q]]
+id = "bo-001"
+qtype = "recall"
+subtopic = "layering"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does traditional layering get wrong at the bottom of the stack?"
+a = "The domain ends up depending on the database, so business rules are expressed in terms of the persistence technology and change when it does. That is backwards - the rules of the business change far more slowly than the database vendor, so they should be depended on rather than depend."
+
+[[q]]
+id = "bo-002"
+qtype = "recall"
+subtopic = "layering"
+levels = ["senior", "lead", "staff"]
+q = "State the single rule that fixes most layering arguments."
+a = "Dependencies point towards stability. The business rules change more slowly than the database, which changes more slowly than the UI framework, so the arrows should run from the volatile towards the stable - which is what makes the domain depend on nothing."
+
+[[q]]
+id = "bo-003"
+qtype = "diagnostic"
+subtopic = "layering"
+levels = ["mid", "senior", "lead", "staff"]
+q = "The domain layer contains only classes with getters and setters, and all the logic lives in service classes above it. What is this called and why does it happen?"
+a = "An anaemic domain model. It happens when layering is applied without asking where behaviour belongs - the layer names tell you where to put data and where to put services, and nothing pushes rules onto the objects they govern. The result is a domain layer that models nothing."
+
+[[q]]
+id = "bo-004"
+qtype = "recall"
+subtopic = "ports-adapters"
+levels = ["mid", "senior", "lead", "staff"]
+q = "In ports and adapters, who owns the port and which way does the dependency point?"
+a = "The domain owns the port - it declares the interface it needs, in its own vocabulary. The adapter implements it, so the adapter depends on the domain and not the reverse. That inversion is the whole pattern; without it you have interfaces without a boundary."
+
+[[q]]
+id = "bo-005"
+qtype = "recall"
+subtopic = "ports-adapters"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does hexagonal architecture actually buy you, most often?"
+a = "The domain can be tested with no infrastructure at all - no database, no network, milliseconds per test. That is the everyday return. Deferring or swapping infrastructure decisions is real and much rarer, and it is a mistake to justify the structure primarily on that."
+
+[[q]]
+id = "bo-006"
+qtype = "judgment"
+subtopic = "ports-adapters"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are applying hexagonal architecture to a CRUD service whose domain is four fields and a create method. More or less appropriate?"
+a = "Less, -2. With no business rules there is nothing to protect, so ports and adapters is mapping code between three representations of the same four fields. The pattern earns its cost where the domain has rules worth isolating and testing without infrastructure."
+
+[[q]]
+id = "bo-007"
+qtype = "diagnostic"
+subtopic = "domain-purity"
+levels = ["senior", "lead", "staff"]
+q = "A codebase claims to be hexagonal, and a use case catches StripeException. What went wrong?"
+a = "The adapter is not translating. Everything crossing the boundary should be converted into the domain's own vocabulary, including exceptions and error codes - the vendor's types must stop at the adapter. That translation is the actual work of the pattern, and skipping it leaves the coupling exactly where it was."
+
+[[q]]
+id = "bo-008"
+qtype = "recall"
+subtopic = "domain-purity"
+levels = ["senior", "lead", "staff"]
+q = "Why are time and randomness treated as dependencies in a pure domain?"
+a = "Because they are ambient inputs that make behaviour non-deterministic and therefore untestable. Injecting a Clock and a random source as ports means the domain's decisions can be tested exactly, which is most of what domain purity is for."
+
+[[q]]
+id = "bo-009"
+qtype = "judgment"
+subtopic = "domain-purity"
+levels = ["senior", "lead", "staff"]
+q = "A domain method sends a confirmation email directly. More or less appropriate?"
+a = "Less, -2. That takes infrastructure inside the wall - the domain now cannot be tested without a mail transport, and the send cannot be retried or deferred separately from the decision. The domain should return a decision that something be sent, and an adapter at the edge performs it."
+
+[[q]]
+id = "bo-010"
+qtype = "recall"
+subtopic = "module-seams"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What makes a module boundary real rather than aspirational?"
+a = "A mechanism that fails when it is crossed - a separate build module, package visibility, an import linter, an architecture test in CI. A boundary that is only a folder is a convention, and conventions erode under deadline pressure. If nothing fails, it is not a boundary."
+
+[[q]]
+id = "bo-011"
+qtype = "discrimination"
+subtopic = "module-seams"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Organising top-level modules by feature versus by layer. Which and why?"
+a = "By feature - orders, billing, shipping, each containing its own handlers, domain and persistence. Changes arrive by feature, so grouping by feature makes them local. Grouping by layer means every feature change touches three top-level folders, which is shotgun surgery designed in."
+
+[[q]]
+id = "bo-012"
+qtype = "judgment"
+subtopic = "module-seams"
+levels = ["senior", "lead", "staff"]
+q = "A tangled monolith is being split into microservices to improve modularity. More or less likely to work?"
+a = "Less, -2 as stated. Splitting a tangle distributes the tangle and adds a network between the pieces, so every implicit coupling becomes a runtime failure mode. Get the boundary right in-process first, where moving it costs a refactor rather than a migration, then extract when there is a reason - independent scaling, deployment, or a team boundary - worth the operational cost."

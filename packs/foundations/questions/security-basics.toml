@@ -1,0 +1,106 @@
+# Question bank: security-basics
+topic = "security-basics"
+
+[[q]]
+id = "sc-001"
+qtype = "discrimination"
+subtopic = "authn-authz"
+levels = ["graduate", "mid", "senior"]
+q = "Authentication and authorisation. Which one causes more real bugs, and why?"
+a = "Authentication is who you are; authorisation is what you may do. Authorisation causes more bugs because it must be checked on every operation and every resource, so one missed check is a hole - whereas login is one place you get right once."
+
+[[q]]
+id = "sc-002"
+qtype = "diagnostic"
+subtopic = "authn-authz"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "GET /orders/1234 returns the order. Changing the number returns someone else's order. What is this called and what is the fix?"
+a = "Insecure direct object reference - a missing authorisation check. The fix is to scope the query by the authenticated principal, WHERE id = ? AND customer_id = ?, so an unauthorised id simply returns nothing. That is more reliable than a separate check that can be forgotten on the next endpoint."
+
+[[q]]
+id = "sc-003"
+qtype = "judgment"
+subtopic = "authn-authz"
+levels = ["mid", "senior", "lead", "staff"]
+q = "The delete button is hidden for non-admin users, so the delete endpoint has no permission check. More or less safe?"
+a = "Not safe at all, -2. The UI is a convenience and anyone can call the endpoint directly. Authorisation is enforced on the server, always, regardless of what any client shows or hides."
+
+[[q]]
+id = "sc-004"
+qtype = "recall"
+subtopic = "injection"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "State the one principle that prevents SQL injection, command injection and XSS."
+a = "Never build an instruction by concatenating a string with untrusted data. Use the mechanism that keeps code and data on separate channels - parameterised queries, argument arrays for exec, context-aware output encoding in templates. Escaping by hand is competing against every encoding trick in existence."
+
+[[q]]
+id = "sc-005"
+qtype = "judgment"
+subtopic = "injection"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are stripping quotes and semicolons from input to prevent SQL injection. More or less appropriate?"
+a = "Much less, -2. Filtering is a guessing game against encodings, unicode variants and contexts you have not thought of, and it corrupts legitimate input like O'Brien. Parameterised queries make the problem structurally impossible. Validation is a useful second layer and a poor first one."
+
+[[q]]
+id = "sc-006"
+qtype = "recall"
+subtopic = "injection"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Where does path traversal come from and what stops it?"
+a = "Untrusted input used to build a file path, so ../../etc/passwd escapes the intended directory. Resolve the path to its canonical form and check it is still inside the permitted root - do not try to filter dot-dot sequences out, because there are many encodings of them."
+
+[[q]]
+id = "sc-007"
+qtype = "recall"
+subtopic = "password-storage"
+levels = ["graduate", "mid", "senior"]
+q = "Why is SHA-256 the wrong choice for storing passwords?"
+a = "Because it is fast, which is the wrong property here - a GPU tries billions per second against a stolen hash. Password storage wants a deliberately slow, memory-hard function with a tunable cost: Argon2id, scrypt or bcrypt."
+
+[[q]]
+id = "sc-008"
+qtype = "recall"
+subtopic = "password-storage"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a salt for, given that it is stored next to the hash?"
+a = "It makes identical passwords produce different hashes, so an attacker cannot precompute one rainbow table and crack everyone at once, and cannot see which users share a password. It is not secret; it is a per-user uniqueness device."
+
+[[q]]
+id = "sc-009"
+qtype = "judgment"
+subtopic = "password-storage"
+levels = ["senior", "lead", "staff"]
+q = "Your policy forces a password change every 90 days. More or less appropriate under current guidance?"
+a = "Less, -2. Current NIST guidance dropped forced rotation because it produces predictable variations - Summer2026, Autumn2026 - with no measured security benefit, and it trains users to write passwords down. Rotate on evidence of compromise, check against breached-password lists, and allow long passphrases."
+
+[[q]]
+id = "sc-010"
+qtype = "recall"
+subtopic = "secrets"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "A secret was committed and then removed in the next commit. Is it safe?"
+a = "No. It is in the history on every clone that ever fetched it, and history is not private. The only real remediation is to rotate the secret. Removing or rewriting the commit does not help once it has been pushed."
+
+[[q]]
+id = "sc-011"
+qtype = "recall"
+subtopic = "secrets"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does least privilege mean in practice for a service's database credentials?"
+a = "The service gets a user that can do exactly what its code needs and nothing more - a reporting service gets read-only, a service that never drops tables cannot. Most of the damage in a breach comes from credentials that could do far more than the code required."
+
+[[q]]
+id = "sc-012"
+qtype = "judgment"
+subtopic = "transport"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are using plain HTTP between services because the traffic never leaves your private network. More or less appropriate?"
+a = "Less, -2. It assumes an attacker never gets inside the network, which is the assumption every breach report retires - one compromised host can then read everything. TLS internally is cheap now, and it also gives you service identity, which the private network does not."
+
+[[q]]
+id = "sc-013"
+qtype = "recall"
+subtopic = "transport"
+levels = ["senior", "lead", "staff"]
+q = "What does TLS protect, and what does it say nothing about?"
+a = "It protects data in transit between two endpoints. It says nothing about storage, backups, logs, or what the other end does with the data once it arrives - and nothing at all if certificate validation has been disabled to make something work."

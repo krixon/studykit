@@ -1,0 +1,106 @@
+# Question bank: refactoring
+topic = "refactoring"
+
+[[q]]
+id = "rf-001"
+qtype = "recall"
+subtopic = "smells"
+levels = ["graduate", "mid", "senior"]
+q = "What is a code smell, and what is it not?"
+a = "A hint that something may be wrong and a question worth asking. It is not a verdict - plenty of long methods are fine and plenty of short ones are not. Treating smells as rules produces mechanical changes that make code worse."
+
+[[q]]
+id = "rf-002"
+qtype = "recall"
+subtopic = "smells"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Feature envy - what is it and what is the usual fix?"
+a = "A method more interested in another class's data than its own, calling several getters on it and doing the work itself. The fix is usually to move the method to the class whose data it uses, so behaviour sits with the state it operates on."
+
+[[q]]
+id = "rf-003"
+qtype = "recall"
+subtopic = "smells"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is speculative generality and how do you recognise it?"
+a = "Abstraction built for a case that never arrived. Recognise it by an interface with one implementation, a parameter always passed the same value, an abstract base with one subclass, or a configuration hook nobody sets. The fix is to delete it - it costs comprehension every day and returns nothing."
+
+[[q]]
+id = "rf-004"
+qtype = "diagnostic"
+subtopic = "smells"
+levels = ["senior", "lead", "staff"]
+q = "Half a class's methods use one group of fields and the other half use a different group, with no overlap. What is that?"
+a = "Two classes wearing one name. The field clustering is the evidence - it says the responsibilities are already separate and only the file boundary is wrong. Extract class along the cluster line."
+
+[[q]]
+id = "rf-005"
+qtype = "recall"
+subtopic = "safe-steps"
+levels = ["graduate", "mid", "senior"]
+q = "What makes refactoring safe, and what is the one property that must hold?"
+a = "Behaviour is preserved. That is what makes the safety argument work - the tests should still pass, so a failing test means you made a mistake. Mixing a behaviour change in destroys that signal and turns the refactor into a rewrite with a rewrite's risk."
+
+[[q]]
+id = "rf-006"
+qtype = "recall"
+subtopic = "safe-steps"
+levels = ["mid", "senior", "lead", "staff"]
+q = "There are no tests. What is the first step?"
+a = "A characterisation test - one asserting what the code currently does, right or wrong. It is not a specification, it is a tripwire, and it is what lets you change structure and know you have not changed behaviour. If there is no seam to test through, creating one by injecting a dependency is a legitimate first change."
+
+[[q]]
+id = "rf-007"
+qtype = "judgment"
+subtopic = "safe-steps"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are including a small bug fix in a large refactoring commit since you spotted it while moving the code. More or less appropriate?"
+a = "Less, -2. A reviewer cannot see a behaviour change inside a thousand lines of moved code, and neither can bisect later. Commit the refactor, then commit the fix. It costs one extra commit and saves an afternoon in six months."
+
+[[q]]
+id = "rf-008"
+qtype = "recall"
+subtopic = "safe-steps"
+levels = ["senior", "lead", "staff"]
+q = "Describe the strangler fig approach and what it buys."
+a = "Put the new implementation alongside the old, route a slice of calls to it, verify, widen the slice, then delete the old one. It buys a working system throughout and a rollback at every step, which a big-bang rewrite does not - and it forces you to keep the interface honest because both must satisfy it."
+
+[[q]]
+id = "rf-009"
+qtype = "recall"
+subtopic = "naming"
+levels = ["graduate", "mid", "senior"]
+q = "Give two rules for naming that improve most code immediately."
+a = "Name by what it means, not how it is done - activeCustomers rather than filteredList. And scale name length to scope - i in a three-line loop is fine, d as a class field is not. Also avoid noise words like data, info, manager and process, which would still fit if the class did something else entirely."
+
+[[q]]
+id = "rf-010"
+qtype = "recall"
+subtopic = "naming"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You cannot think of a good name for a class. What is that telling you?"
+a = "That it probably has no single responsibility. Struggling to name something is information, not a vocabulary problem - if you cannot say what it is in a few words, it is likely several things, and splitting it makes the names obvious."
+
+[[q]]
+id = "rf-011"
+qtype = "judgment"
+subtopic = "duplication"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Two functions are textually identical, so you are extracting a shared one. New information - one implements a tax rule and the other a shipping rule that happen to compute the same way today. More or less appropriate?"
+a = "Less, -2. DRY is about knowledge, not text. These encode different rules that will diverge, and merging them couples two things that should change independently - so the next change adds a flag, and then another. The test is whether a change to one rule must change both."
+
+[[q]]
+id = "rf-012"
+qtype = "recall"
+subtopic = "duplication"
+levels = ["senior", "lead", "staff"]
+q = "Why is a wrong abstraction worse than duplication?"
+a = "Duplication is visible and mechanical to fix. A wrong abstraction is shared, so everyone bends it with special cases and flags rather than removing it, and unwinding it means understanding every caller. When you find one, inline it back to the concrete cases and re-abstract from there."
+
+[[q]]
+id = "rf-013"
+qtype = "judgment"
+subtopic = "duplication"
+levels = ["senior", "lead", "staff"]
+q = "Two services each have their own copy of the customer model, so you are extracting a shared library. More or less appropriate?"
+a = "Less, -1 to -2. Duplication across a module or service boundary is often correct - the copies let the services deploy and evolve independently, whereas a shared model couples their release cycles and turns every change into a cross-team negotiation. Remove duplication inside a boundary; think hard before removing it across one."

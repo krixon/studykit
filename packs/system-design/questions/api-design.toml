@@ -1,0 +1,114 @@
+# Question bank: api-design
+topic = "api-design"
+
+[[q]]
+id = "ap-001"
+qtype = "discrimination"
+subtopic = "styles"
+levels = ["mid", "senior", "lead", "staff"]
+q = "REST and GraphQL. What does the choice actually decide?"
+a = "Who owns the round trips and who owns the query cost. REST fixes the response shape server-side, so caching by URL works and cost is predictable. GraphQL lets the client specify what it needs, which removes round trips for varied clients and moves query-cost control into your resolvers, where you now need depth limits, complexity budgets and persisted queries."
+
+[[q]]
+id = "ap-002"
+qtype = "judgment"
+subtopic = "styles"
+levels = ["senior", "lead", "staff"]
+q = "You are choosing GraphQL for a public API. New information - it is read-heavy, mostly the same few queries, and you were relying on CDN caching. More or less appropriate?"
+a = "Less, -2. GraphQL typically POSTs to a single URL, so shared HTTP caching stops working and you have to rebuild caching inside the resolver layer. With few distinct queries you get little of GraphQL's benefit and lose a caching layer that was doing real work. Persisted queries over GET recover some of it."
+
+[[q]]
+id = "ap-003"
+qtype = "recall"
+subtopic = "styles"
+levels = ["graduate", "mid"]
+q = "When would you use a webhook instead of having the client poll?"
+a = "When the event is rare and the client would otherwise poll constantly for nothing, or when the work outlives a request timeout. The cost is that delivery becomes your problem - retries, signing, ordering, and a replay path for when the receiver was down."
+
+[[q]]
+id = "ap-004"
+qtype = "recall"
+subtopic = "versioning"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is the genuinely hard part of API versioning?"
+a = "Retiring the old version, not issuing the new one. That needs per-version per-client usage telemetry, a deprecation window with real communication, and someone whose job is chasing the last few callers. Issuing v2 is an afternoon; removing v1 is a quarter."
+
+[[q]]
+id = "ap-005"
+qtype = "judgment"
+subtopic = "versioning"
+levels = ["senior", "lead", "staff"]
+q = "You are bumping the whole API to /v2 to change one field on one endpoint. New information - there are 40 endpoints and 200 external consumers. More or less appropriate?"
+a = "Much less, -2. A global version forces every consumer through a migration for a change none of them use. Version at the granularity of what changes, or better, make the change additive - add the new field, deprecate the old one, and remove it after telemetry shows nobody reads it."
+
+[[q]]
+id = "ap-006"
+qtype = "discrimination"
+subtopic = "pagination"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Offset pagination and cursor pagination. What separates them?"
+a = "Stability under concurrent writes, and cost. An insert shifts every subsequent offset page, so items are skipped or repeated; a cursor anchors to a sort key so pages stay stable. Offset cost also grows with depth because the database walks the skipped rows, while keyset cost is constant per page. Offset buys the ability to jump to page 40, which is rarely a real requirement."
+
+[[q]]
+id = "ap-007"
+qtype = "recall"
+subtopic = "pagination"
+levels = ["senior", "lead", "staff"]
+q = "Why should a pagination cursor be opaque?"
+a = "Because the moment clients parse it, its structure becomes part of your contract and you can never change the sort key or the encoding. Opaque means you can switch from a timestamp cursor to a composite key without a breaking change."
+
+[[q]]
+id = "ap-008"
+qtype = "diagnostic"
+subtopic = "pagination"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A nightly export job using page-number pagination consistently misses a few records, and the count varies. The query and data look correct. Why?"
+a = "Rows are being inserted or deleted while the job pages through. Each insert before the current offset shifts everything down by one, so a record slides from page N+1 to page N after page N was already read. Cursor pagination on a stable sort key fixes it; so does exporting from a snapshot."
+
+[[q]]
+id = "ap-009"
+qtype = "discrimination"
+subtopic = "errors-status"
+levels = ["mid", "senior", "lead", "staff"]
+q = "401, 403, 404 and 409. What does each tell the caller to do differently?"
+a = "401 - you are not authenticated, get credentials and retry. 403 - you are authenticated and still not allowed, retrying will never help. 404 - the resource is not there, though it may be deliberately masking a 403 to avoid leaking existence. 409 - your request conflicts with current state, re-read and try again with fresh state. The point is that each implies a different client action."
+
+[[q]]
+id = "ap-010"
+qtype = "judgment"
+subtopic = "errors-status"
+levels = ["senior", "lead", "staff"]
+q = "You are returning 200 with an error object in the body so clients get consistent parsing. More or less appropriate?"
+a = "Much less, -2. Every intermediary - proxies, CDNs, retry policies, dashboards, alerting - reads the status code. A 200 means caches may store the error, retries never fire, and error rate reads as zero during an outage. Use the status for the class of outcome and the body for detail."
+
+[[q]]
+id = "ap-011"
+qtype = "recall"
+subtopic = "errors-status"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What should an error response contain besides a status code?"
+a = "A stable machine-readable code the client can branch on, a human message for logs, and a correlation id so a support conversation can find the request. Never make clients regex the message - that makes your prose part of the contract."
+
+[[q]]
+id = "ap-012"
+qtype = "discrimination"
+subtopic = "compatibility"
+levels = ["senior", "lead", "staff"]
+q = "Backward and forward compatibility. Why does a rolling deploy need both?"
+a = "Backward compatible means old clients work against the new server. Forward compatible means new clients work against the old server. During a rolling deploy both versions are live simultaneously, and traffic hits either, so a change safe in only one direction breaks during the rollout window even though it is fine before and after."
+
+[[q]]
+id = "ap-013"
+qtype = "recall"
+subtopic = "compatibility"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name four changes that look additive but are breaking."
+a = "Making an optional field required. Tightening validation on an existing field. Adding an enum value when clients were never told to tolerate unknown values. Changing a type, including integer ids to strings. Changing the meaning of an existing value without changing its name is the worst of them, because nothing fails loudly."
+
+[[q]]
+id = "ap-014"
+qtype = "recall"
+subtopic = "compatibility"
+levels = ["senior", "lead", "staff"]
+q = "Describe expand-migrate-contract for a breaking field change."
+a = "Expand - add the new field alongside the old, write both, read the old. Migrate - switch reads to the new field, backfill history, move consumers across, and prove with telemetry that nobody reads the old one. Contract - remove the old field. There is no shortcut for the middle step; the telemetry is what makes the last step safe rather than hopeful."

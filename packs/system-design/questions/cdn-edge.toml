@@ -1,0 +1,106 @@
+# Question bank: cdn-edge
+topic = "cdn-edge"
+
+[[q]]
+id = "cd-001"
+qtype = "recall"
+subtopic = "what-it-caches"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What makes a response cacheable at a shared edge?"
+a = "The same bytes must be correct for many users. Anything keyed to one user's identity is not shareable, which is why personalisation and Set-Cookie kill edge caching unless you split the response into a shared shell and a client-fetched personal fragment."
+
+[[q]]
+id = "cd-002"
+qtype = "discrimination"
+subtopic = "what-it-caches"
+levels = ["mid", "senior", "lead", "staff"]
+q = "max-age and s-maxage. What separates them and why does it matter?"
+a = "max-age applies to any cache including the browser; s-maxage applies only to shared caches and overrides max-age there. It matters because you usually want a long edge TTL and a short browser TTL - the edge you can purge, the browser you cannot."
+
+[[q]]
+id = "cd-003"
+qtype = "diagnostic"
+subtopic = "what-it-caches"
+levels = ["senior", "lead", "staff"]
+q = "You put a CDN in front of a site and the hit rate is close to zero, though the pages are identical for everyone. What do you check first?"
+a = "The Vary header and Set-Cookie. Vary: Cookie means each distinct cookie value is a separate cache entry, so with any per-user cookie the hit rate collapses to nothing. Analytics cookies set on the origin response are the usual culprit. Strip or normalise cookies at the edge for cacheable paths."
+
+[[q]]
+id = "cd-004"
+qtype = "recall"
+subtopic = "what-it-caches"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does stale-while-revalidate buy you, and what problem is it solving?"
+a = "It serves the expired copy immediately while exactly one refresh runs behind it, so nobody waits for the origin and the origin sees one request instead of a wall. It is stampede protection you get by writing a header rather than building coalescing."
+
+[[q]]
+id = "cd-005"
+qtype = "discrimination"
+subtopic = "invalidation"
+levels = ["senior", "lead", "staff"]
+q = "Purge, short TTL, and content-addressed URLs. Rank them and say why."
+a = "Content-addressed URLs first - a hash in the filename means the URL changes when the content does, so you cache for a year and never invalidate anything. Short TTL second - bounded staleness, no coordination. Purge last - it is seconds to a minute to propagate globally, so it is a cleanup mechanism, not a consistency mechanism. Purge is only for content whose URL must stay stable, like an article page."
+
+[[q]]
+id = "cd-006"
+qtype = "judgment"
+subtopic = "invalidation"
+levels = ["senior", "lead", "staff"]
+q = "You are relying on CDN purge to make a price change visible immediately worldwide. More or less appropriate?"
+a = "Less, -2. Purge propagation is seconds to a minute across a global network and is not transactional, so for a window some users see the old price and some the new. If the price must be correct at read time, do not cache it at the edge - cache the page shell and fetch the price from origin, or use a very short TTL and accept the bounded window explicitly."
+
+[[q]]
+id = "cd-007"
+qtype = "recall"
+subtopic = "origin-shield"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What problem does an origin shield solve?"
+a = "Without one, every edge location that misses goes to origin independently, so a purge or a cold start produces as many origin requests as you have populated locations. A shield is a designated mid-tier cache that all edges miss through, collapsing those into one origin request."
+
+[[q]]
+id = "cd-008"
+qtype = "numeric"
+subtopic = "origin-shield"
+levels = ["senior", "lead", "staff"]
+q = "You purge one hot object. The CDN has 200 populated locations and the object gets 50k requests per second globally. Without a shield, roughly what does origin see in the first instant?"
+a = "Up to 200 concurrent origin requests, one per location, not 50k - each location coalesces its own misses but they do not coalesce with each other. With a shield it collapses to one. The number to notice is that the fan-out is the location count, which is why the shield matters more as the network grows."
+
+[[q]]
+id = "cd-009"
+qtype = "judgment"
+subtopic = "edge-compute"
+levels = ["senior", "lead", "staff"]
+q = "You are moving a request handler to edge compute for latency. New information - it reads the user's order history from your primary database in one region. More or less appropriate?"
+a = "Much less, -2. You have moved the compute but not the data, so every edge invocation makes a cross-region call to your database - adding a hop rather than removing one. Edge compute wins when the data is also at the edge or the function needs no data at all. This is data gravity."
+
+[[q]]
+id = "cd-010"
+qtype = "recall"
+subtopic = "edge-compute"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name three things edge compute is genuinely good at."
+a = "Auth and token validation before the request travels further. A/B assignment and header rewriting so the response behind it stays cacheable. Redirects, bot filtering and request routing. The pattern is a cheap decision that turns an uncacheable response into a cacheable one."
+
+[[q]]
+id = "cd-011"
+qtype = "numeric"
+subtopic = "tls-latency"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How many round trips for a new HTTPS connection under TLS 1.2, TLS 1.3, and TLS 1.3 with session resumption?"
+a = "TLS 1.2 - two round trips for the handshake plus one for TCP. TLS 1.3 - one, plus TCP. TLS 1.3 with resumption - zero, data goes in the first flight. A CDN terminating that handshake 20ms away instead of 150ms away is one of its largest and least discussed wins."
+
+[[q]]
+id = "cd-012"
+qtype = "numeric"
+subtopic = "tls-latency"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Roughly how long does light take to cross 1000km of fibre, and what does that imply for London to Sydney?"
+a = "About 5ms each way per 1000km, so around 200km per millisecond. London to Sydney is roughly 17,000km, so about 85ms one way and 170ms round trip before any processing. That is a floor set by physics, not by engineering."
+
+[[q]]
+id = "cd-013"
+qtype = "judgment"
+subtopic = "tls-latency"
+levels = ["senior", "lead", "staff"]
+q = "Someone argues a CDN is pointless for your API because responses are dynamic and uncacheable. More or less appropriate as an argument?"
+a = "Weaker than it sounds, -1. Even with a zero hit rate, terminating TLS near the user removes handshake round trips, and the CDN keeps warm long-lived connections back to origin so the request skips connection setup entirely. For first-time visitors on mobile networks that can dominate total time."

@@ -1,0 +1,90 @@
+# Question bank: creational
+topic = "creational"
+
+[[q]]
+id = "cr-001"
+qtype = "recall"
+subtopic = "factory"
+levels = ["graduate", "mid", "senior"]
+q = "What problem does a factory solve that calling a constructor does not?"
+a = "A constructor hard-codes exactly which class is created, at that spot. A factory moves that decision somewhere it can vary - by configuration, by environment, or by test - so callers depend on the abstraction and never name the concrete type."
+
+[[q]]
+id = "cr-002"
+qtype = "recall"
+subtopic = "factory"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is a static factory method and why is it undersold?"
+a = "A named constructor - Duration.ofSeconds(30), User.fromLegacyRecord(row). It gives construction a name, can return a cached instance or a subtype, and needs no hierarchy or extra class. It solves most of what people reach for a factory object to solve, at almost no cost."
+
+[[q]]
+id = "cr-003"
+qtype = "discrimination"
+subtopic = "factory"
+levels = ["mid", "senior", "lead", "staff"]
+q = "When is an abstract factory justified rather than several separate factories?"
+a = "When the products form a family that must be consistent - you must not mix a Windows button with a Mac scrollbar. The consistency constraint is the entire justification. Without one, an abstract factory is several factories with a shared interface for no reason."
+
+[[q]]
+id = "cr-004"
+qtype = "recall"
+subtopic = "builder"
+levels = ["graduate", "mid", "senior"]
+q = "What does a builder fix, and how do you recognise the problem?"
+a = "The telescoping constructor - four overloads and a call site reading new Report(true, false, null, true) that nobody can decode. A builder names each value at the call site and lets validation of the whole object happen at build(), where cross-field rules can live."
+
+[[q]]
+id = "cr-005"
+qtype = "judgment"
+subtopic = "builder"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are adding a builder for a class with three optional parameters. New information - the language has named arguments with defaults. More or less appropriate?"
+a = "Less, -2. The language already solved it: named arguments give you readable call sites and defaults with no extra class to maintain and no window in which a half-built object exists. A builder is for languages that lack this, or for genuinely multi-step construction."
+
+[[q]]
+id = "cr-006"
+qtype = "recall"
+subtopic = "singleton"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name the three real costs of a singleton."
+a = "A hidden dependency - the class needs something its constructor does not declare. Untestability - global mutable state persists between tests, so tests become order-dependent and substituting a fake means mutating a global. Concurrency - lazy initialisation is a race, and the shared mutable state is a race by construction."
+
+[[q]]
+id = "cr-007"
+qtype = "discrimination"
+subtopic = "singleton"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A singleton conflates two things. What are they, and which is harmful?"
+a = "There should be one of these, and anyone may reach it from anywhere. The first is often a legitimate requirement; the second is the harmful half. Create one instance at the composition root and inject it - you keep single-instance semantics and lose the global access."
+
+[[q]]
+id = "cr-008"
+qtype = "diagnostic"
+subtopic = "object-lifetime"
+levels = ["senior", "lead", "staff"]
+q = "A service registered as a singleton holds a database session. After a while it serves stale data and eventually exhausts the connection pool. What is this called?"
+a = "A captive dependency - a longer-lived object capturing a shorter-lived one. The session was meant to be scoped to a request; captured by a singleton it never goes out of scope, so it holds its connection and its stale identity map for the life of the process."
+
+[[q]]
+id = "cr-009"
+qtype = "recall"
+subtopic = "object-lifetime"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Give the two rules that prevent almost every lifetime bug."
+a = "A longer-lived object must never capture a shorter-lived one. And anything registered as a singleton must be thread-safe, because it will be used concurrently whether or not you planned for it."
+
+[[q]]
+id = "cr-010"
+qtype = "discrimination"
+subtopic = "object-lifetime"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Transient, scoped and singleton. What belongs in each?"
+a = "Transient - cheap stateful objects, a new one per request for it. Scoped - anything holding per-request state, a unit of work, a database session, one per request or job. Singleton - stateless services, connection pools, caches, one per process. The mistakes are stateful singletons and captured scoped objects."
+
+[[q]]
+id = "cr-011"
+qtype = "judgment"
+subtopic = "singleton"
+levels = ["graduate", "mid", "senior"]
+q = "You are making the configuration object a singleton so any class can read settings. More or less appropriate?"
+a = "Less, -1 to -2. It works and it hides the dependency: nothing in a class's signature shows that it reads configuration, and a test that needs different settings must mutate a global. Inject the configuration, or better the specific values a class needs, so the requirement is visible."

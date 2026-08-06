@@ -1,0 +1,164 @@
+# Question bank: caching
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "caching"
+
+[[q]]
+id = "ca-001"
+qtype = "recall"
+subtopic = "read-strategies"
+levels = ["graduate", "mid"]
+q = "In cache-aside, what happens on a miss, and who does it?"
+a = "The application checks the cache, gets a miss, reads the database itself, then writes the value into the cache before returning it. The application owns the miss path, which is why a cache outage degrades to slow rather than broken."
+
+[[q]]
+id = "ca-002"
+qtype = "discrimination"
+subtopic = "read-strategies"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Cache-aside versus read-through. Who does what, and what changes operationally?"
+a = "Cache-aside - the application reads the database on a miss and populates the cache. Read-through - the cache fetches from the database itself and the app only ever talks to the cache. Cache-aside keeps the app in control and survives a cache outage by reading the database directly. Read-through centralises the logic and makes the cache a hard dependency."
+
+[[q]]
+id = "ca-003"
+qtype = "discrimination"
+subtopic = "write-strategies"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Cache-aside and write-back get confused constantly. What axis actually separates them?"
+a = "They are on different axes entirely. Cache-aside is a READ strategy - who populates on a miss. Write-back is a WRITE strategy - when the database gets the write. You can run cache-aside reads with write-back writes. Confusing them means missing that read and write policy are chosen independently."
+
+[[q]]
+id = "ca-004"
+qtype = "discrimination"
+subtopic = "write-strategies"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Write-through, write-back, write-around. One sentence each on what you gain and what you risk."
+a = "Write-through - cache and database written synchronously, consistent, pays database latency on every write. Write-back - cache written, database async, fastest, loses acknowledged writes if the cache dies. Write-around - database only, avoids polluting the cache with write-once data but guarantees a cold first read."
+
+[[q]]
+id = "ca-005"
+qtype = "judgment"
+subtopic = "write-strategies"
+levels = ["senior", "lead", "staff"]
+q = "You are running write-back for a session store. New information - the cache is a single Redis node with no replication. Does write-back become more or less appropriate?"
+a = "Much less, -2. Write-back means acknowledged writes exist only in the cache until flushed, so no replication turns any node loss into silent loss of acknowledged writes. Either replicate the cache tier, or move to write-through and accept the latency."
+
+[[q]]
+id = "ca-006"
+qtype = "recall"
+subtopic = "eviction"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Your two main tuning knobs on a cache, and what LRU gets wrong."
+a = "Size and TTL. LRU is fooled by scans - one large sequential pass evicts the genuinely hot working set in favour of items read once. LFU, or a frequency-aware admission policy like TinyLFU, resists that."
+
+[[q]]
+id = "ca-007"
+qtype = "discrimination"
+subtopic = "eviction"
+levels = ["senior", "lead", "staff"]
+q = "TinyLFU decides admission rather than eviction. Why does that distinction matter?"
+a = "An eviction policy only chooses a victim once the new item is already in. Admission control asks whether the new item deserves to displace anything at all, so a one-off scan read never evicts a hot key in the first place. It is the difference between recovering from cache pollution and not suffering it."
+
+[[q]]
+id = "ca-008"
+qtype = "discrimination"
+subtopic = "stampede-penetration"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Cache stampede and cache penetration. What is the difference, and does the same fix work for both?"
+a = "Stampede is many concurrent misses on a key that EXISTS, usually at TTL expiry. Penetration is repeated misses on keys that do NOT exist, often hostile. Different fixes - stampede wants single-flight, TTL jitter, stale-while-revalidate. Penetration wants negative caching or a bloom filter. Single-flight does nothing for penetration when every key is distinct."
+
+[[q]]
+id = "ca-009"
+qtype = "recall"
+subtopic = "stampede-penetration"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Three mitigations for a stampede on a hot key."
+a = "Request coalescing or single-flight so only one caller populates. TTL jitter so keys populated together do not expire together. Stale-while-revalidate so the old value is served while one refresh runs. Longer TTLs where the data is near-immutable."
+
+[[q]]
+id = "ca-010"
+qtype = "judgment"
+subtopic = "stampede-penetration"
+levels = ["senior", "lead", "staff"]
+q = "You are about to add a distributed lock so only one node repopulates an expired hot key. New information - the key is read by 500 app nodes and the repopulate takes 40ms. More or less appropriate?"
+a = "Less, -1. Local single-flight per node cuts thousands of concurrent callers down to 500 requests, one per node, with no coordination cost. A distributed lock adds a network round trip and a new failure mode on the hot path to save 499 of those. Prefer local coalescing plus stale-while-revalidate."
+
+[[q]]
+id = "ca-011"
+qtype = "diagnostic"
+subtopic = "stampede-penetration"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Database load shows sharp spikes every 10 minutes, exactly. Cache hit rate is 94% overall. What is happening?"
+a = "Synchronised TTL expiry. Everything cached in the same populate wave expires together, so a wall of misses hits the database at the boundary. Fix with TTL jitter, plus stale-while-revalidate so the refresh is not on the critical path."
+
+[[q]]
+id = "ca-012"
+qtype = "diagnostic"
+subtopic = "stampede-penetration"
+levels = ["senior", "lead", "staff"]
+q = "Cache hit rate has collapsed from 95% to 30% over an hour. Traffic volume is flat, latency is up, and the cache is not evicting more than usual. What do you look at first?"
+a = "Key distribution. Flat traffic with a collapsed hit rate and no extra eviction means the requested keys have changed, not the cache. Most likely a client is generating keys that do not exist - penetration, possibly hostile, possibly a bug appending a random parameter. Check the miss key distribution for a long tail of never-seen keys; cache negatives or filter at the edge."
+
+[[q]]
+id = "ca-013"
+qtype = "judgment"
+subtopic = "hot-key"
+levels = ["senior", "lead", "staff"]
+q = "You are replicating a hot key across 10 cache nodes to spread load. New information - the key is a single viral item taking 40 percent of all reads. Does key replication solve it?"
+a = "Partially, 0 to +1. Replication with a fixed factor helps but has a ceiling, and choosing the replica is itself a read. For the extreme tail the answer is an in-process L1 on each app node, so the hottest keys never leave the process."
+
+[[q]]
+id = "ca-014"
+qtype = "recall"
+subtopic = "hot-key"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why does an in-process L1 cache solve a hot key when a distributed cache cannot?"
+a = "Because a hot key is by definition read by everyone, so every app node benefits from its own copy and the read never crosses the network. The distributed cache still has one owner per key no matter how you shard, so the hot key pins one node."
+
+[[q]]
+id = "ca-015"
+qtype = "discrimination"
+subtopic = "hot-key"
+levels = ["lead", "staff"]
+q = "Three imbalances that look identical on a dashboard. A - one celebrity key takes 40 percent of cache reads. B - one shard takes 30 percent of writes because the shard key is a timestamp. C - one ring node owns twice the keyspace of its neighbours. What separates them, and why does the remedy differ?"
+a = "They sit in different layers. A is WORKLOAD skew - keys are distributed fine, requests are not. No hashing scheme helps because every scheme maps that key to one owner; fix by replicating the value. B is KEY-DESIGN skew - the key correlates with time, so the hot range moves but is always singular; rebalancing chases it forever, fix the key. C is ASSIGNMENT skew - keys and workload are uniform and the ring divided the space badly; this is the only one virtual nodes fix. The separating question is whether the KEY, the RANGE, or the SLOT is hot."
+
+[[q]]
+id = "ca-016"
+qtype = "numeric"
+subtopic = "cache-economics"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Hit rate goes from 90 percent to 99 percent. By what factor does origin load drop?"
+a = "10x. Misses go from 10 percent to 1 percent. The gain is non-linear because what matters is the miss rate, not the hit rate - each extra nine divides origin load by ten."
+
+[[q]]
+id = "ca-017"
+qtype = "numeric"
+subtopic = "cache-economics"
+levels = ["mid", "senior", "lead", "staff"]
+q = "RAM read versus a same-datacentre network round trip - roughly what is the ratio, and why still bother with a distributed cache?"
+a = "About 100ns versus 0.5ms, so roughly 5000x. Still worth it because the comparison that matters is against the database read it replaces, not against local RAM, and a distributed cache holds far more than any single process can."
+
+[[q]]
+id = "ca-018"
+qtype = "judgment"
+subtopic = "cache-economics"
+levels = ["mid", "senior", "lead", "staff"]
+q = "You are proposing a cache in front of a service. New information - access is uniform across 50M keys with no skew. More or less appropriate?"
+a = "Much less, -2. Caching pays off because access is skewed and reads dominate. With uniform access over a large keyspace the hit rate approaches cache size over keyspace size, which is tiny. You would add a failure domain, memory cost and staleness for almost no hit rate."
+
+[[q]]
+id = "ca-019"
+qtype = "recall"
+subtopic = "placement"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Name the cache layers from client to storage, and what each buys."
+a = "Client or browser cache, CDN or edge, in-process L1 on the app, distributed cache such as Redis, then the database buffer pool. Each layer only sees traffic the layer in front missed, so hit rates compound and the deepest layers see only the true tail."
+
+[[q]]
+id = "ca-020"
+qtype = "judgment"
+subtopic = "placement"
+levels = ["senior", "lead", "staff"]
+q = "You are adding a CDN in front of an API. New information - responses are per-user personalised. More or less appropriate?"
+a = "Less, -2 for the personalised responses themselves, which are uncacheable at a shared edge and would just be a pass-through you pay for. Still +1 for the static or shared subset if you can split the response, which is the actual design move - separate the personalised fragment from the cacheable shell."

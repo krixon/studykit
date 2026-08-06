@@ -1,0 +1,122 @@
+# Question bank: storage-engines
+topic = "storage-engines"
+
+[[q]]
+id = "se-001"
+qtype = "discrimination"
+subtopic = "btree-vs-lsm"
+levels = ["mid", "senior", "lead", "staff"]
+q = "B-tree and LSM tree. What is the core mechanical difference, and what follows from it?"
+a = "A B-tree modifies pages in place, so writes are random I/O with low amplification. An LSM appends to memory, flushes sorted immutable runs, and compacts in the background, so writes are sequential with high amplification. From that follows everything else - LSM wins write-heavy workloads and compresses better, B-tree gives more predictable read latency with no compaction spikes."
+
+[[q]]
+id = "se-002"
+qtype = "judgment"
+subtopic = "btree-vs-lsm"
+levels = ["senior", "lead", "staff"]
+q = "You are choosing an LSM engine for write throughput. New information - the workload also needs a tight p99 read latency under continuous write load. More or less appropriate?"
+a = "Less, -1. LSM medians are good but compaction competes with foreground traffic for I/O and CPU, so the tail spikes exactly when write load is high. It is manageable with rate-limited compaction and enough headroom, but if a tight p99 is the hard requirement a B-tree is the more predictable choice."
+
+[[q]]
+id = "se-003"
+qtype = "recall"
+subtopic = "btree-vs-lsm"
+levels = ["senior", "lead", "staff"]
+q = "Why do bloom filters matter so much for LSM reads?"
+a = "A read may have to check several levels of sorted runs. A bloom filter per run answers definitely-not-present in memory, so absent keys are cheap and present keys usually only touch the run that has them. Without them, a read for a missing key touches every level on disk."
+
+[[q]]
+id = "se-004"
+qtype = "recall"
+subtopic = "write-amplification"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Define write amplification and say why it matters operationally."
+a = "Bytes actually written to the device per byte of logical data. It matters because it consumes device write bandwidth and SSD endurance, so a workload with modest logical throughput can saturate a disk that looks idle in application metrics. LSM is typically 10-30x, B-tree about 2x but random."
+
+[[q]]
+id = "se-005"
+qtype = "recall"
+subtopic = "write-amplification"
+levels = ["senior", "lead", "staff"]
+q = "Name the three amplifications and state the rule about them."
+a = "Write amplification, read amplification and space amplification. The rule is that no engine wins all three - every design trades one against the others, and choosing an engine is choosing which one you can afford to lose."
+
+[[q]]
+id = "se-006"
+qtype = "numeric"
+subtopic = "write-amplification"
+levels = ["senior", "lead", "staff"]
+q = "You update one 200-byte row in a B-tree with 8KB pages. Roughly how many bytes hit the disk?"
+a = "Around 8KB for the page plus the write-ahead log entry, so roughly 40-50x the logical size for a single small update. This is why batching small updates into fewer pages, or choosing an append-oriented engine, changes throughput by an order of magnitude."
+
+[[q]]
+id = "se-007"
+qtype = "discrimination"
+subtopic = "oltp-vs-olap"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Row-oriented and column-oriented storage. Why does the layout decide the workload?"
+a = "Row-oriented keeps a whole record contiguous, so fetching one record by key is one seek - ideal for transactional access. Column-oriented keeps a column contiguous, so a scan reads only the columns needed and like values compress 10x or more - ideal for aggregating millions of rows over few columns. The same SQL runs on both and differs by an order of magnitude."
+
+[[q]]
+id = "se-008"
+qtype = "diagnostic"
+subtopic = "oltp-vs-olap"
+levels = ["senior", "lead", "staff"]
+q = "Transactional p99 degrades badly every night at 2am. The application is idle. Database CPU is moderate. What do you look for?"
+a = "An analytical job scanning large tables and evicting the hot working set from the buffer pool. The transactional workload then reads from disk instead of memory, so its latency rises for a reason invisible in its own metrics. Move reporting to a replica or an export into a columnar store."
+
+[[q]]
+id = "se-009"
+qtype = "recall"
+subtopic = "index-cost"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "What does each additional index cost you?"
+a = "A write. Every insert, update or delete must maintain every index on the table, so five indexes turn one insert into six writes, plus the storage and the buffer-pool space they occupy. Indexes that are never used are pure cost, and databases can tell you which those are."
+
+[[q]]
+id = "se-010"
+qtype = "recall"
+subtopic = "index-cost"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A composite index on (a, b). Which queries does it help?"
+a = "Queries filtering on a, and on a plus b. It does nothing for a query filtering only on b, because the index is ordered by a first - there is no way to seek into it without knowing a. The leading column rule is the single most useful thing to know about composite indexes."
+
+[[q]]
+id = "se-011"
+qtype = "judgment"
+subtopic = "index-cost"
+levels = ["senior", "lead", "staff"]
+q = "You are adding an index on a boolean is_active column to speed up a slow query. More or less appropriate?"
+a = "Less, -2 in the usual case. With two distinct values, most rows match whichever one you filter on, so the planner will choose a table scan anyway - the index is maintained on every write and never used. If active rows are a tiny minority, a partial index on just those rows is the shape that works."
+
+[[q]]
+id = "se-012"
+qtype = "recall"
+subtopic = "index-cost"
+levels = ["senior", "lead", "staff"]
+q = "What is a covering index and why is it often the biggest available win?"
+a = "An index that contains every column the query returns, so the engine answers from the index alone and never touches the table. It removes an entire random I/O per row, which on a query returning many rows is frequently a larger improvement than any other single change."
+
+[[q]]
+id = "se-013"
+qtype = "recall"
+subtopic = "durability"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What does a write-ahead log actually guarantee, and when is the guarantee made?"
+a = "It guarantees that a committed change can be replayed after a crash, because the sequential log entry is durable before the data pages are updated. The guarantee is made at fsync - a write acknowledged before fsync survives process death but not machine death. Group commit batches fsyncs, trading a millisecond of latency for a large throughput gain."
+
+[[q]]
+id = "se-014"
+qtype = "judgment"
+subtopic = "durability"
+levels = ["senior", "lead", "staff"]
+q = "You are lengthening the checkpoint interval to reduce steady-state I/O. More or less appropriate?"
+a = "It depends on your RTO, so roughly 0 without that number. Longer intervals genuinely cut background I/O, and they lengthen crash recovery because replay starts from an older point. It is a direct trade of steady-state throughput against recovery time, and it should be set by the recovery target rather than by the I/O graph alone."
+
+[[q]]
+id = "se-015"
+qtype = "discrimination"
+subtopic = "durability"
+levels = ["senior", "lead", "staff"]
+q = "Local fsync and quorum acknowledgement. Which failures does each survive?"
+a = "fsync survives process death and machine restart, and not disk failure or machine loss. Quorum acknowledgement survives losing that machine and its disk entirely, because the log entry exists on other machines. They are different guarantees, and the question to ask any datastore is which one it makes when it returns success."

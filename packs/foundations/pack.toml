@@ -1,0 +1,144 @@
+[pack]
+name = "foundations"
+title = "Engineering foundations"
+description = "The things every backend engineer is assumed to know. Written for graduates and useful as a refresher well beyond that."
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+areas = ["fundamentals", "web", "data", "concurrency", "quality", "tooling", "security", "systems"]
+
+[calibration.graduate]
+bar = "Names the concept correctly and can describe the mechanism in their own words. A worked example beats a definition."
+assume = "Has written code, possibly only at university or in a first job. Vocabulary is still being built."
+push_on = ["what it is", "why it exists", "a concrete example", "one thing that goes wrong"]
+avoid = "Do not demand production war stories or scale numbers. Building the vocabulary correctly is the goal."
+
+[calibration.mid]
+bar = "Correct mechanism plus the tradeoff, and can say when the obvious choice is the wrong one."
+assume = "Has shipped and maintained real code. Has debugged something in production."
+push_on = ["the tradeoff", "when not to", "how you would test it", "what it costs"]
+avoid = "Do not require architectural or organisational reasoning."
+
+[calibration.senior]
+bar = "Correct, with the failure mode named and a sense of what it costs at scale or over time."
+assume = "Has operated systems and reviewed a lot of other people's code."
+push_on = ["the failure mode", "what breaks under load or over years", "what you would measure", "how you would explain it to a junior"]
+avoid = "Do not accept a textbook definition with no experience attached."
+
+[calibration.lead]
+bar = "Everything at senior, plus how you would get a team to do this consistently."
+assume = "Sets standards for others. Cares about what survives staff turnover."
+push_on = ["how you make this the default", "what you would automate", "what convention you would pick and why"]
+avoid = "Do not reward cleverness that only works when the author is present."
+
+[calibration.staff]
+bar = "Fluent, with the boundaries of the advice named and the cases where the usual guidance is wrong."
+assume = "Everything below is assumed."
+push_on = ["where the received wisdom fails", "what you would delete", "the second-order cost"]
+avoid = "Do not accept advice stated without its boundary conditions."
+
+[[topic]]
+id = "complexity"
+title = "Complexity and data structures"
+area = "fundamentals"
+prefix = "cx"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["big-o", "structure-choice", "hashing", "sorting-searching", "memory-locality"]
+
+[[topic]]
+id = "http-and-web"
+title = "HTTP and the web"
+area = "web"
+prefix = "ht"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["request-response", "methods-status", "headers-caching", "cookies-sessions", "cors-origins"]
+
+[[topic]]
+id = "sql-and-indexes"
+title = "SQL and indexes"
+area = "data"
+prefix = "sq"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["joins", "normalisation", "indexes", "n-plus-one", "transactions"]
+
+[[topic]]
+id = "concurrency"
+title = "Concurrency basics"
+area = "concurrency"
+prefix = "cc"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["processes-threads", "races-locks", "deadlock", "async-io", "atomicity"]
+
+[[topic]]
+id = "testing"
+title = "Testing"
+area = "quality"
+prefix = "ts"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["test-levels", "doubles", "what-to-assert", "flakiness", "coverage"]
+
+[[topic]]
+id = "version-control"
+title = "Version control"
+area = "tooling"
+prefix = "vc"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["commits-history", "branching", "merge-vs-rebase", "conflicts", "finding-bugs"]
+
+[[topic]]
+id = "errors-and-logging"
+title = "Errors and logging"
+area = "quality"
+prefix = "er"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["error-handling", "exceptions-vs-results", "log-levels", "structured-logs", "what-not-to-log"]
+
+[[topic]]
+id = "security-basics"
+title = "Security basics"
+area = "security"
+prefix = "sc"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["authn-authz", "injection", "password-storage", "secrets", "transport"]
+
+[[topic]]
+id = "data-and-encoding"
+title = "Data and encoding"
+area = "data"
+prefix = "de"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["text-encoding", "time-and-zones", "numbers-money", "serialisation", "validation"]
+
+[[topic]]
+id = "processes-and-os"
+title = "Processes and the OS"
+area = "systems"
+prefix = "os"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["process-model", "memory", "files-descriptors", "signals-shutdown", "environment-config"]
+
+[[problem]]
+slug = "csv-import"
+title = "CSV import endpoint"
+areas = ["data", "quality"]
+levels = ["graduate", "mid", "senior"]
+minutes = 30
+
+[[problem]]
+slug = "login-flow"
+title = "Login and session flow"
+areas = ["security", "web"]
+levels = ["graduate", "mid", "senior"]
+minutes = 35
+
+[[problem]]
+slug = "slow-endpoint"
+title = "The endpoint that got slow"
+areas = ["data", "systems"]
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+minutes = 30
+
+[[problem]]
+slug = "scheduled-job"
+title = "A job that runs every night"
+areas = ["systems", "quality"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 35

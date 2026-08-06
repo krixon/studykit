@@ -1,0 +1,167 @@
+"""Paths, levels and the user profile.
+
+Everything the user owns lives under the data directory, which is git-ignored.
+Nothing in `packs/` is ever mutated by a session.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import json
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+
+SCHEMA = 1
+
+#: Ordered from least to most senior. Order matters: reports and level bands
+#: are rendered in this sequence and `at_least` compares by index.
+LEVELS: tuple[str, ...] = ("graduate", "mid", "senior", "lead", "staff")
+
+LEVEL_TITLES: dict[str, str] = {
+    "graduate": "Graduate",
+    "mid": "Mid",
+    "senior": "Senior",
+    "lead": "Lead",
+    "staff": "Staff+",
+}
+
+MODES: tuple[str, ...] = ("coaching", "interview")
+
+
+class StudykitError(Exception):
+    """Anything the user can fix, reported without a traceback."""
+
+
+class ProfileMissing(StudykitError):
+    def __init__(self) -> None:
+        super().__init__("No profile yet. Run `./study setup` first.")
+
+
+def repo_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def packs_dir() -> Path:
+    env = os.environ.get("STUDYKIT_PACKS")
+    return Path(env).expanduser().resolve() if env else repo_root() / "packs"
+
+
+def data_dir() -> Path:
+    env = os.environ.get("STUDYKIT_DATA")
+    return Path(env).expanduser().resolve() if env else repo_root() / "data"
+
+
+def profile_path() -> Path:
+    return data_dir() / "profile.json"
+
+
+def ledger_path() -> Path:
+    return data_dir() / "ledger.jsonl"
+
+
+def state_path() -> Path:
+    return data_dir() / "state.json"
+
+
+def metrics_path() -> Path:
+    return data_dir() / "metrics.json"
+
+
+def bank_dir() -> Path:
+    """User-authored questions, banked mid-session. Overlays the shipped packs."""
+    return data_dir() / "bank"
+
+
+def attempts_dir() -> Path:
+    return data_dir() / "attempts"
+
+
+def dashboard_path() -> Path:
+    return data_dir() / "dashboard.html"
+
+
+def today() -> str:
+    """Today as ISO. `STUDYKIT_TODAY` overrides, for tests and backfills."""
+    override = os.environ.get("STUDYKIT_TODAY")
+    if override:
+        return valid_date(override)
+    return dt.date.today().isoformat()
+
+
+def valid_date(value: str) -> str:
+    try:
+        return dt.date.fromisoformat(value).isoformat()
+    except ValueError as exc:
+        raise StudykitError(f"Not an ISO date (YYYY-MM-DD): {value!r}") from exc
+
+
+def add_days(iso: str, days: int) -> str:
+    return (dt.date.fromisoformat(iso) + dt.timedelta(days=days)).isoformat()
+
+
+def days_between(start: str, end: str) -> int:
+    return (dt.date.fromisoformat(end) - dt.date.fromisoformat(start)).days
+
+
+def at_least(level: str, floor: str) -> bool:
+    """True when `level` is at or above `floor` in the ladder."""
+    return LEVELS.index(level) >= LEVELS.index(floor)
+
+
+def check_level(level: str) -> str:
+    if level not in LEVELS:
+        raise StudykitError(f"Unknown level {level!r}. One of: {', '.join(LEVELS)}")
+    return level
+
+
+@dataclass
+class Profile:
+    level: str = "senior"
+    packs: list[str] = field(default_factory=list)
+    budget: str = "25m"
+    mode: str = "coaching"
+    confidence_prompt: bool = True
+    created: str = ""
+    schema: int = SCHEMA
+
+    @classmethod
+    def load(cls) -> "Profile":
+        path = profile_path()
+        if not path.exists():
+            raise ProfileMissing()
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        known = {f for f in cls.__dataclass_fields__}
+        profile = cls(**{k: v for k, v in raw.items() if k in known})
+        check_level(profile.level)
+        return profile
+
+    def save(self) -> Path:
+        path = profile_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "schema": SCHEMA,
+            "level": self.level,
+            "packs": self.packs,
+            "budget": self.budget,
+            "mode": self.mode,
+            "confidence_prompt": self.confidence_prompt,
+            "created": self.created or today(),
+        }
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        return path
+
+
+def write_json(path: Path, payload: object) -> Path:
+    """Atomic-enough write: temp file in the same directory, then rename."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    tmp.replace(path)
+    return path
+
+
+def read_json(path: Path, default: object = None) -> object:
+    if not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))

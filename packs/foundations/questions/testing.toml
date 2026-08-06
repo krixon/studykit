@@ -1,0 +1,98 @@
+# Question bank: testing
+topic = "testing"
+
+[[q]]
+id = "ts-001"
+qtype = "recall"
+subtopic = "test-levels"
+levels = ["graduate", "mid"]
+q = "Why prefer many unit tests and few end-to-end tests?"
+a = "Feedback speed and diagnosis cost. A failing unit test runs in milliseconds and names the broken function. A failing end-to-end test takes minutes and tells you that something, somewhere, is wrong. The pyramid is about how quickly you learn what broke."
+
+[[q]]
+id = "ts-002"
+qtype = "judgment"
+subtopic = "test-levels"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Every component has thorough unit tests with mocked dependencies, so integration tests were skipped. More or less safe?"
+a = "Much less, -2. Components mocked into agreement can each be correct and collectively broken - the mocks encode your assumption about the other side, and the assumption is what is wrong. Integration tests against a real database and real wiring catch exactly the class of bug unit tests cannot see."
+
+[[q]]
+id = "ts-003"
+qtype = "discrimination"
+subtopic = "doubles"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A stub, a mock and a fake. What separates them?"
+a = "A stub returns canned answers. A mock is a stub that also asserts how it was called. A fake is a real working implementation that is not production-grade, such as an in-memory repository. The fake is usually best, because it exercises real behaviour rather than your assumption about it."
+
+[[q]]
+id = "ts-004"
+qtype = "judgment"
+subtopic = "doubles"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Your test asserts that the service called the repository's findById then save, in that order. More or less useful?"
+a = "Less, -2. That tests the implementation, not the behaviour. Any refactor that produces the same outcome by different calls breaks the test even though nothing observable changed, so the suite becomes a tax on improving the code. Assert on the outcome instead."
+
+[[q]]
+id = "ts-005"
+qtype = "recall"
+subtopic = "doubles"
+levels = ["senior", "lead", "staff"]
+q = "Where should you mock, and where should you not?"
+a = "Mock at boundaries you do not own - a third-party HTTP API, a payment provider, the clock, randomness. Do not mock your own internal collaborators; use the real thing or a fake, so the test exercises real behaviour and survives refactoring."
+
+[[q]]
+id = "ts-006"
+qtype = "recall"
+subtopic = "what-to-assert"
+levels = ["graduate", "mid", "senior"]
+q = "Which inputs should a test cover beyond the obvious happy path?"
+a = "The edges - empty, one, many, the maximum, null, negative, duplicate, and both sides of any boundary value. Plus the error paths, which are the least-tested code in most systems and also the code that runs when things are already going wrong."
+
+[[q]]
+id = "ts-007"
+qtype = "recall"
+subtopic = "what-to-assert"
+levels = ["graduate", "mid", "senior"]
+q = "What makes a good test name?"
+a = "It states the claim, so a failure tells you what broke without reading the body. rejects_expired_token beats test_auth_2. The name is the specification; the body is just how you checked it."
+
+[[q]]
+id = "ts-008"
+qtype = "recall"
+subtopic = "flakiness"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Name the four usual causes of a flaky test."
+a = "Time - depending on the clock, or a sleep that is long enough locally and not on CI. Order dependence - shared state not reset between tests. Concurrency - a real race, often in the code rather than the test. External dependencies - a real network call where there should be none."
+
+[[q]]
+id = "ts-009"
+qtype = "judgment"
+subtopic = "flakiness"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A test fails about one run in twenty, so the team re-runs CI when it happens. More or less acceptable?"
+a = "Not acceptable, -2, and the cost is not the wasted minutes. It teaches everyone to re-run rather than investigate, so a genuine intermittent failure gets re-run too and ships. Quarantine it immediately, then fix or delete it - a flaky test in the suite is worth less than no test."
+
+[[q]]
+id = "ts-010"
+qtype = "recall"
+subtopic = "flakiness"
+levels = ["senior", "lead", "staff"]
+q = "How do you expose order-dependent tests?"
+a = "Randomise the test execution order, and run tests in isolation as well as together. If a test passes alone and fails in the suite, or vice versa, it is depending on state another test left behind."
+
+[[q]]
+id = "ts-011"
+qtype = "judgment"
+subtopic = "coverage"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Your team is mandating 100 percent line coverage. More or less appropriate?"
+a = "Less, -2 as a mandate. Coverage measures which lines ran, not whether the assertions were right, so it is trivially satisfied by tests that assert nothing. Mandating a number produces tests written to touch lines. Use coverage to find untested areas - a file at zero is worth a look - and judge quality some other way."
+
+[[q]]
+id = "ts-012"
+qtype = "discrimination"
+subtopic = "coverage"
+levels = ["senior", "lead", "staff"]
+q = "Line coverage and branch coverage. Why is the difference worth knowing?"
+a = "A line containing a condition can be fully line-covered with only one side of the condition ever taken, so the untested branch is invisible. Branch coverage counts both outcomes, which is much closer to the question you actually care about."

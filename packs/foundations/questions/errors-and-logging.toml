@@ -1,0 +1,106 @@
+# Question bank: errors-and-logging
+topic = "errors-and-logging"
+
+[[q]]
+id = "er-001"
+qtype = "recall"
+subtopic = "error-handling"
+levels = ["graduate", "mid", "senior"]
+q = "What is the first question to ask when deciding how to handle an error?"
+a = "Can this code do anything useful about it. If yes, handle it here. If no, let it propagate to a caller who can, adding context on the way. Catching something you cannot act on just hides it."
+
+[[q]]
+id = "er-002"
+qtype = "judgment"
+subtopic = "error-handling"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "A catch block is empty with a comment saying this should never happen. More or less acceptable?"
+a = "Not acceptable, -2. If it never happens, the block costs nothing to log. If it does happen, you have destroyed the only evidence and converted a loud failure into a quiet wrong answer. Empty catch blocks are where the hardest production bugs come from."
+
+[[q]]
+id = "er-003"
+qtype = "discrimination"
+subtopic = "error-handling"
+levels = ["mid", "senior", "lead", "staff"]
+q = "An expected condition and a bug. Why handle them differently?"
+a = "An expected condition - invalid email, record not found, remote rate limit - is part of your design and deserves a modelled outcome and a useful message. A bug - a null where the type says non-null - should fail loudly and fast, because a bug handled gracefully is a bug that ships and corrupts data quietly."
+
+[[q]]
+id = "er-004"
+qtype = "recall"
+subtopic = "error-handling"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What is lost when you wrap an exception without chaining the original?"
+a = "The stack trace that names the actual failing line, and the original type and message. You are left with your own wrapper pointing at the wrapping code, which tells you where you caught it, not where it broke."
+
+[[q]]
+id = "er-005"
+qtype = "discrimination"
+subtopic = "exceptions-vs-results"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Exceptions and result types. What does each get right?"
+a = "Exceptions keep the happy path clean and readable, at the cost of failure being invisible in the signature so callers do not know it can happen. Result types put failure in the type so the compiler forces you to handle it, at the cost of noise at every call site. Neither is universally right; consistency within a codebase is."
+
+[[q]]
+id = "er-006"
+qtype = "recall"
+subtopic = "exceptions-vs-results"
+levels = ["senior", "lead", "staff"]
+q = "Three audiences see an error. What does each need?"
+a = "The user needs a message they can act on and no stack trace. The developer needs the stack, the type, and the inputs. Support needs a correlation id linking the user's report to the developer's log line. Giving any of them the wrong one is a real cost."
+
+[[q]]
+id = "er-007"
+qtype = "recall"
+subtopic = "log-levels"
+levels = ["graduate", "mid", "senior"]
+q = "What is the test for whether something should be logged at ERROR?"
+a = "Would you want to be told about it. If nobody would act on it, it is not an error. Level inflation - everything logged as ERROR because it felt important - is why the error log stops being read, and then the real one is missed."
+
+[[q]]
+id = "er-008"
+qtype = "discrimination"
+subtopic = "log-levels"
+levels = ["mid", "senior", "lead", "staff"]
+q = "WARN and ERROR. Where is the line?"
+a = "WARN means something was wrong and the code handled it - a retry succeeded, a fallback was used. ERROR means something failed and needs attention. The practical test is whether the outcome was still correct: if it was, it is a WARN."
+
+[[q]]
+id = "er-009"
+qtype = "recall"
+subtopic = "structured-logs"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Why log key-value pairs instead of a sentence?"
+a = "Because structured logs can be filtered, grouped, counted and graphed, so you can answer questions you did not anticipate. A prose message can only be grepped, and the grep breaks the moment someone rewords it."
+
+[[q]]
+id = "er-010"
+qtype = "recall"
+subtopic = "structured-logs"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What should every log line carry, and where should it be attached?"
+a = "A correlation or trace id, the identifiers needed to find the affected record, a duration for anything that took time, and the outcome. Attach them once at the request boundary rather than threading them through every function."
+
+[[q]]
+id = "er-011"
+qtype = "judgment"
+subtopic = "structured-logs"
+levels = ["mid", "senior", "lead", "staff"]
+q = "An exception is logged at each level as it propagates, so no context is lost. More or less appropriate?"
+a = "Less, -2. You get five log lines describing one event, error counts become meaningless, and the noise buries the useful line. Log once, where the decision about what to do is made, and add context by chaining the exception rather than by logging again."
+
+[[q]]
+id = "er-012"
+qtype = "recall"
+subtopic = "what-not-to-log"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+q = "Name five things that must never appear in a log."
+a = "Passwords, tokens and API keys, session ids, full card numbers, and national or health identifiers. Logs are copied, shipped to third parties, retained for years and read by more people than you expect, so treat them as semi-public."
+
+[[q]]
+id = "er-013"
+qtype = "diagnostic"
+subtopic = "what-not-to-log"
+levels = ["senior", "lead", "staff"]
+q = "You redact secrets carefully, and an audit still finds tokens in the logs. Where did they come from?"
+a = "Exception messages and stack traces. An error raised while parsing or validating often includes the offending input verbatim, which is exactly the data you were careful not to log. Sanitise error messages at the boundary, not just the fields you log deliberately."

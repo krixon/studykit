@@ -1,0 +1,114 @@
+# Question bank: realtime-delivery
+topic = "realtime-delivery"
+
+[[q]]
+id = "rt-001"
+qtype = "discrimination"
+subtopic = "transports"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Server-sent events and WebSocket. What actually decides between them?"
+a = "Whether the client needs to send. SSE is server-to-client only over ordinary HTTP, with automatic reconnect and event ids built in, and it works through proxies without special handling. WebSocket is full duplex and costs you a separate protocol, your own reconnect and resume logic, and more awkward infrastructure. Choose SSE unless the client genuinely needs to push."
+
+[[q]]
+id = "rt-002"
+qtype = "numeric"
+subtopic = "transports"
+levels = ["mid", "senior", "lead", "staff"]
+q = "1M clients polling every 5 seconds. What request rate does that produce, and what replaces it?"
+a = "200,000 requests per second, almost all returning nothing new. Replacing it with persistent connections means 1M idle connections and only real events on the wire - connections are cheap to hold and expensive to establish, so you pay once."
+
+[[q]]
+id = "rt-003"
+qtype = "recall"
+subtopic = "transports"
+levels = ["senior", "lead", "staff"]
+q = "Why do you still need APNs or FCM even with a working WebSocket layer?"
+a = "Because when the app is closed or backgrounded there is no socket to deliver on, and the operating system will not let you keep one. Vendor push is the only path to a closed app, and it comes with no ordering guarantees and a payload limit, so it usually carries a wake-up rather than the data."
+
+[[q]]
+id = "rt-004"
+qtype = "discrimination"
+subtopic = "fan-out"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Fan-out on write and fan-out on read. What does each cost, and where?"
+a = "On write, you materialise the item into every recipient's feed at publish time - reads become one cheap lookup, and a publish by a high-follower account becomes millions of writes. On read, you store once and assemble at read time - writes are cheap, and reads become a scatter-gather that degrades as the following list grows. You are choosing when to pay, not whether."
+
+[[q]]
+id = "rt-005"
+qtype = "numeric"
+subtopic = "fan-out"
+levels = ["mid", "senior", "lead", "staff"]
+q = "An account with 10M followers posts. Under pure fan-out on write, how many writes, and what does that force?"
+a = "10 million writes for one publish. That single number forces the hybrid - push for ordinary accounts, pull for the small set of high-fan-out ones, merged at read time. The distribution is heavily skewed, so the cost concentrates in a handful of accounts you can special-case."
+
+[[q]]
+id = "rt-006"
+qtype = "judgment"
+subtopic = "fan-out"
+levels = ["senior", "lead", "staff"]
+q = "You are setting the celebrity threshold at 100,000 followers. New information - one account has 1M mostly-inactive followers and another has 200k highly active ones. More or less appropriate?"
+a = "Less, -1. Follower count is a proxy for fan-out cost, not the cost itself. The 200k-active account may cost more to serve on pull and be cheaper to push than the 1M-inactive one. Base the threshold on measured cost - active followers, read rate - rather than raw count."
+
+[[q]]
+id = "rt-007"
+qtype = "recall"
+subtopic = "presence"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why is presence modelled as soft state with a TTL rather than set on connect and cleared on disconnect?"
+a = "Because a crashed or network-partitioned client never sends a disconnect, so it would appear online forever. A heartbeat with a TTL expires naturally and requires no clean shutdown, which is the only assumption you can make about clients."
+
+[[q]]
+id = "rt-008"
+qtype = "recall"
+subtopic = "presence"
+levels = ["senior", "lead", "staff"]
+q = "What is actually expensive about presence, and how is it contained?"
+a = "Not storing it - notifying watchers. Naively, every status change notifies every contact, so N users with F contacts each is N times F notifications per churn event. Contain it by only tracking presence for users someone is actively watching, batching and debouncing changes, and coarsening the state to online, away, offline."
+
+[[q]]
+id = "rt-009"
+qtype = "diagnostic"
+subtopic = "backpressure"
+levels = ["senior", "lead", "staff"]
+q = "A push server's memory climbs steadily until it is OOM-killed, taking every connection with it. CPU is low and event volume is normal. What is happening?"
+a = "Unbounded per-connection send buffers with slow consumers. A client that cannot keep up makes its buffer grow, and enough of them exhaust memory - low CPU because nothing is being processed, just accumulated. Bound every buffer explicitly and decide what happens when one fills: drop, coalesce, or disconnect."
+
+[[q]]
+id = "rt-010"
+qtype = "discrimination"
+subtopic = "backpressure"
+levels = ["senior", "lead", "staff"]
+q = "Dropping, coalescing and disconnecting a slow consumer. When is each right?"
+a = "Drop when messages are independent samples and losing some is invisible - telemetry, presence. Coalesce when only the latest state per key matters - prices, dashboards, counters - which bounds the buffer at one entry per key regardless of how far behind the client is. Disconnect when every message matters, so the client reconnects and resynchronises from a snapshot plus sequence number."
+
+[[q]]
+id = "rt-011"
+qtype = "judgment"
+subtopic = "backpressure"
+levels = ["senior", "lead", "staff"]
+q = "You are using an unbounded queue per connection so no message is ever lost. More or less appropriate?"
+a = "Much less, -2. An unbounded queue does not remove the failure, it converts a slow consumer into an out-of-memory kill that takes every other connection on the server with it. Losing one slow client's messages is a much smaller failure than losing all clients. Bound it and choose the drop policy deliberately."
+
+[[q]]
+id = "rt-012"
+qtype = "discrimination"
+subtopic = "connection-scaling"
+levels = ["senior", "lead", "staff"]
+q = "A connection registry versus broadcasting to every node. What does each cost?"
+a = "A registry maps user to node in a shared store, so routing is exact and one message goes to one node - at the cost of a lookup on every event and a hot dependency that must be kept current through every reconnect. Broadcast sends every event to every node which filters locally - trivially correct, no registry, and O(nodes) work per message, which stops scaling as either dimension grows."
+
+[[q]]
+id = "rt-013"
+qtype = "recall"
+subtopic = "connection-scaling"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why do heartbeats exist on a connection that is working correctly?"
+a = "Because load balancers, NAT devices and proxies close idle connections, and neither end learns the connection is dead until it tries to use it. A heartbeat keeps the path open and gives both ends a liveness signal, which is also what makes presence TTLs work."
+
+[[q]]
+id = "rt-014"
+qtype = "diagnostic"
+subtopic = "connection-scaling"
+levels = ["senior", "lead", "staff"]
+q = "After every deploy, the push tier takes ten minutes to stabilise and briefly serves errors, even though the deploy itself is quick. Why?"
+a = "Every connection on a replaced node reconnects at once, so the surviving and new nodes take a synchronised reconnect spike on top of normal load, each reconnect costing a TLS handshake and a state resynchronisation. Fix with jittered reconnect backoff on the client, an accept-rate cap on the server, and draining connections gradually before terminating a node."

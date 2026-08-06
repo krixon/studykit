@@ -1,0 +1,106 @@
+# Question bank: cap-pacelc
+topic = "cap-pacelc"
+
+[[q]]
+id = "cp-001"
+qtype = "recall"
+subtopic = "cap"
+levels = ["mid", "senior", "lead", "staff"]
+q = "State CAP precisely, and say why pick two is the wrong summary."
+a = "For a system that may be partitioned, you cannot have both linearizability and a response from every non-failed node. Pick two is wrong because P is not a choice - networks partition, so real systems are CP or AP. CA describes a single-node system or a wish."
+
+[[q]]
+id = "cp-002"
+qtype = "discrimination"
+subtopic = "cap"
+levels = ["senior", "lead", "staff"]
+q = "The C in CAP and the C in ACID. What is the relationship?"
+a = "None. CAP's C is linearizability - every read sees the latest completed write, in real time. ACID's C is that the database enforces your declared invariants across a transaction. They share a word and nothing else, and conflating them is the most common source of confusion on this topic."
+
+[[q]]
+id = "cp-003"
+qtype = "judgment"
+subtopic = "cap"
+levels = ["senior", "lead", "staff"]
+q = "Someone justifies a design choice with we chose AP because partitions are common. More or less sound?"
+a = "Weak as stated, -1. CAP only governs behaviour DURING a partition, which is rare. The choice you make on every request, all the time, is the latency-versus-consistency one. Cite PACELC's else half - that is what actually shapes the system's daily behaviour."
+
+[[q]]
+id = "cp-004"
+qtype = "recall"
+subtopic = "pacelc"
+levels = ["mid", "senior", "lead", "staff"]
+q = "State PACELC and say what the else half adds."
+a = "If Partition, then Availability or Consistency; Else, Latency or Consistency. The else half covers the 99.9 percent of the time there is no partition, where waiting for a quorum or a synchronous replica still costs latency and skipping the wait still costs consistency. It is the half that shapes normal operation."
+
+[[q]]
+id = "cp-005"
+qtype = "discrimination"
+subtopic = "pacelc"
+levels = ["senior", "lead", "staff"]
+q = "Classify Cassandra and etcd in PACELC terms and say what that predicts."
+a = "Cassandra is PA/EL - stays available under partition and defaults to fast, eventually consistent reads. etcd is PC/EC - the minority side stops serving writes, and even with no partition it pays a consensus round trip. It predicts that etcd is the wrong place for high-volume application data and the right place for configuration and leases."
+
+[[q]]
+id = "cp-006"
+qtype = "numeric"
+subtopic = "quorum"
+levels = ["mid", "senior", "lead", "staff"]
+q = "N=5. Give a W and R that survive two node failures for both reads and writes, and check the overlap condition."
+a = "W=3, R=3. With two nodes down, three remain, so both quorums are still assemblable. W + R = 6 > 5, so the read and write sets must overlap in at least one node. W=3 also exceeds N/2, so two concurrent writes cannot both succeed."
+
+[[q]]
+id = "cp-007"
+qtype = "recall"
+subtopic = "quorum"
+levels = ["senior", "lead", "staff"]
+q = "Why is W + R > N not the same as linearizability?"
+a = "Overlap guarantees a read touches a node that took the last acknowledged write, which is weaker than it sounds. Concurrent writes, partial writes that never reached W nodes, and reads that arrive between the two phases can still produce anomalies, and there is no ordering of the returned values without extra machinery. Systems that claim linearizability layer a consensus protocol on top."
+
+[[q]]
+id = "cp-008"
+qtype = "judgment"
+subtopic = "quorum"
+levels = ["senior", "lead", "staff"]
+q = "You are setting W=N for maximum durability. New information - N=5 and nodes are restarted for patching weekly. More or less appropriate?"
+a = "Much less, -2. W=N means a single node down stops all writes, so routine maintenance becomes a write outage. Availability under W=N is the product of all five nodes being up. W=3 keeps the overlap guarantee and tolerates two failures."
+
+[[q]]
+id = "cp-009"
+qtype = "recall"
+subtopic = "tunability"
+levels = ["senior", "lead", "staff"]
+q = "What does LOCAL_QUORUM mean and what does it give up?"
+a = "A quorum within the local datacentre only, so reads and writes stay at regional latency. It gives up any cross-region guarantee - another region may not have the write, and a region loss can lose acknowledged writes. It is the right default for multi-region Cassandra and it must be a deliberate choice, not a copied setting."
+
+[[q]]
+id = "cp-010"
+qtype = "judgment"
+subtopic = "tunability"
+levels = ["senior", "lead", "staff"]
+q = "You are setting strongly consistent reads globally so nothing can ever be stale. More or less appropriate?"
+a = "Less, -2 as a blanket policy. Consistency should be chosen per operation, not per system. Payment authorisation should read at quorum; a profile avatar should not. Applying the strictest requirement everywhere makes the whole system slow and expensive for the sake of a small number of operations."
+
+[[q]]
+id = "cp-011"
+qtype = "discrimination"
+subtopic = "examples"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A single-leader SQL database with async followers. Is it CP or AP?"
+a = "Both, depending on which node you read. Leader reads are consistent and unavailable when the leader is unreachable, so CP. Follower reads are available and stale, so AP. This is why classifying a whole system is less useful than classifying an access path, and it is the shape most real systems have."
+
+[[q]]
+id = "cp-012"
+qtype = "recall"
+subtopic = "examples"
+levels = ["senior", "lead", "staff"]
+q = "What does Spanner pay to be PC/EC, and what makes it possible?"
+a = "It pays commit-wait - transactions wait out the uncertainty interval of TrueTime before committing, so timestamps are guaranteed ordered. It is possible because of tightly bounded clock uncertainty from GPS and atomic clocks, which is infrastructure most systems do not have. That is the honest reason you cannot simply copy the design."
+
+[[q]]
+id = "cp-013"
+qtype = "numeric"
+subtopic = "pacelc"
+levels = ["senior", "lead", "staff"]
+q = "Same-region quorum versus cross-region quorum. What is the latency gap and why does it settle the EL versus EC argument?"
+a = "Roughly 1-3ms same-region against 50-150ms cross-region, so one to two orders of magnitude. That gap is the entire else half of PACELC - it is why a globally consistent write is a product decision, not a configuration one, and why most systems keep consistency regional and accept eventual consistency between regions."
