@@ -195,6 +195,22 @@ class TestReportsAndArtefacts(CliTestCase):
         args = cli.build_parser().parse_args(["test"])
         self.assertIs(args.func, cli.cmd_test)
 
+    def test_packs_all_marks_packs_outside_the_profile_as_off(self):
+        """`--all` loads every pack, which must not make every pack look enabled."""
+        code, out = self.run_cli("packs", "--all")
+        self.assertEqual(code, 0, self.stderr)
+        flags = {
+            line.split()[1]: line.split()[0]
+            for line in out.splitlines()
+            if line.startswith(("on ", "off"))
+        }
+        self.assertEqual(flags.get("system-design"), "on")
+        self.assertTrue(len(flags) > 1, "expected more than one installed pack")
+        self.assertTrue(
+            all(flag == "off" for name, flag in flags.items() if name != "system-design"),
+            flags,
+        )
+
     def test_status_and_progress_run_on_an_empty_ledger(self):
         for command in ("status", "progress", "queue", "packs", "levels"):
             code, out = self.run_cli(command)

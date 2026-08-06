@@ -488,7 +488,9 @@ def cmd_packs(args) -> int:
             }
         )
     else:
-        print(report.render_packs(library, profile.level, state))
+        # An empty pack list in the profile means every installed pack is in
+        # rotation, which is how `library_for` reads it too.
+        print(report.render_packs(library, profile.level, state, profile.packs or list(library.all)))
     return 0
 
 
