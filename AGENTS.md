@@ -6,14 +6,14 @@ studykit: a spaced-repetition study kit. The engine is Python; the content is da
 
 The session protocols live in `.agents/skills/<name>/SKILL.md`: `study` (the default entry point), `quiz`, `practice`, `learn`, `progress`. Follow the one that matches; do not improvise a session. If your harness does not surface them as skills, read the file.
 
-**Drive the CLI, do not read the pack files.** `./study plan 25m` returns the whole session — calibration brief, blocks, questions already drawn and interleaved. Reading `packs/` yourself costs a hundred times the tokens and re-derives selection logic that already exists in code.
+**Drive the CLI, do not read the pack files.** `./study plan 25m` returns the whole session: calibration brief, blocks, questions already drawn and interleaved. Reading `packs/` yourself costs a hundred times the tokens and re-derives selection logic that already exists in code.
 
 | Need | Command |
 |---|---|
 | a session | `./study plan 25m` |
 | just questions | `./study questions --count 8` |
 | the material | `./study card <topic>` |
-| a problem | `./study problem [slug]` — notes need `--notes` and come **after** the attempt |
+| a problem | `./study problem [slug]`. Notes need `--notes` and come **after** the attempt |
 | record it | `./study bank add ...` then `./study record ...` |
 | report | `./study progress` |
 
@@ -32,7 +32,7 @@ Full model: `docs/scoring.md`. Warrants: `docs/research.md`.
 
 ## Working on the code
 
-- Python 3.12+, **standard library only**. No dependencies, ever — clone-and-run is the point.
+- Python 3.12+, **standard library only**. No dependencies, ever. Clone-and-run is the point.
 - `studykit/schedule.py` is the only implementation of the interval algorithm. If you change it, update `docs/scoring.md` in the same commit.
 - The ledger is append-only and is the only source of truth. `state.json` and `metrics.json` are pure functions of it, rebuilt on every `record`.
 - Never write user data into `packs/`. Session-generated questions go to `data/bank/` unless `--into-pack` is passed.
@@ -42,10 +42,10 @@ Full model: `docs/scoring.md`. Warrants: `docs/research.md`.
 
 `docs/authoring-packs.md` has the full guide. In short: `pack.toml` declares the taxonomy, `cards/<topic>.md` carries the material structured by sub-topic, `questions/<topic>.toml` holds the bank, problems are two files so the notes cannot leak.
 
-Question ids are stable forever. Sub-topic names are effectively permanent — renaming one orphans its history.
+Question ids are stable forever. Sub-topic names are effectively permanent: renaming one orphans its history.
 
 ## House style
 
 British English. No em-dashes. Lead with the conclusion. Concrete over abstract.
 
-Name gaps directly; do not cheerlead. Documents state current facts — no changelog paragraphs, no "previously", no explaining what a file used to say. Git holds the history.
+Name gaps directly; do not cheerlead. Documents state current facts: no changelog paragraphs, no "previously", no explaining what a file used to say. Git holds the history.

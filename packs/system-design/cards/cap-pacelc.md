@@ -10,8 +10,8 @@ The theorem, stated carefully because the casual version is wrong.
 
 For a distributed system that may be **partitioned** (P), you cannot have both:
 
-- **C** — linearizability: every read sees the most recent completed write.
-- **A** — every request to a **non-failed** node gets a non-error response.
+- **C**: linearizability: every read sees the most recent completed write.
+- **A**: every request to a **non-failed** node gets a non-error response.
 
 The proof is one sentence: if two nodes cannot communicate and both must answer, they must answer from their own state, and their states can differ.
 
@@ -74,6 +74,6 @@ The design move is to make this choice **per operation, not per system**. Paymen
 
 ## Related
 
-- [consistency-models](consistency-models.md) — the spectrum CAP's "C" sits at one end of
-- [replication](replication.md) — where these choices are implemented
-- [multi-region](multi-region.md) — where the latency term dominates
+- [consistency-models](consistency-models.md): the spectrum CAP's "C" sits at one end of
+- [replication](replication.md): where these choices are implemented
+- [multi-region](multi-region.md): where the latency term dominates

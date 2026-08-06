@@ -66,6 +66,6 @@ Isolation levels are the transactional half of this: read committed permits lost
 
 ## Related
 
-- [cap-pacelc](cap-pacelc.md) — why you cannot have it all
-- [replication](replication.md) — where lag comes from
-- [idempotency](idempotency.md) — the practical face of retry-safety
+- [cap-pacelc](cap-pacelc.md): why you cannot have it all
+- [replication](replication.md): where lag comes from
+- [idempotency](idempotency.md): the practical face of retry-safety

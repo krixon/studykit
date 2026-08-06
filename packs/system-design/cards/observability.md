@@ -23,10 +23,10 @@ They compose: an alert fires on a **metric**, a **trace** localises which servic
 
 ## slo-sli
 
-- **SLI** — the measurement. "Proportion of requests served in under 300 ms."
-- **SLO** — the target. "99.9% over 28 days."
-- **SLA** — the contract, with money attached. Should be strictly looser than the SLO.
-- **Error budget** — `1 - SLO`. At 99.9% over 28 days that is ~40 minutes of failure you are *allowed*. Spend it deliberately: ship risk while budget remains, freeze and stabilise when it is gone.
+- **SLI**: the measurement. "Proportion of requests served in under 300 ms."
+- **SLO**: the target. "99.9% over 28 days."
+- **SLA**: the contract, with money attached. Should be strictly looser than the SLO.
+- **Error budget**: `1 - SLO`. At 99.9% over 28 days that is ~40 minutes of failure you are *allowed*. Spend it deliberately: ship risk while budget remains, freeze and stabilise when it is gone.
 
 Rules worth holding:
 
@@ -68,6 +68,6 @@ The dominant cost driver in any metrics system, and the one that surprises peopl
 
 ## Related
 
-- [message-queues](message-queues.md) — consumer lag is the metric that matters there
-- [load-balancing](load-balancing.md) — health signals and what they hide
-- [multi-region](multi-region.md) — measuring per-region, not globally
+- [message-queues](message-queues.md): consumer lag is the metric that matters there
+- [load-balancing](load-balancing.md): health signals and what they hide
+- [multi-region](multi-region.md): measuring per-region, not globally

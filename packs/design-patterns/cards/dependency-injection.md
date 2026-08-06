@@ -8,18 +8,18 @@
 
 Three related ideas that get used interchangeably and are not the same:
 
-- **Dependency inversion (DIP)** — a *principle*: high-level policy and low-level detail both depend on an abstraction, and the abstraction belongs to the policy. This is about the direction of the arrow.
-- **Dependency injection (DI)** — a *technique*: pass dependencies in rather than constructing or locating them internally. This is about where `new` happens.
-- **Inversion of control (IoC)** — a *style*: the framework calls you rather than you calling it. DI is one instance of it.
+- **Dependency inversion (DIP)**: a *principle*: high-level policy and low-level detail both depend on an abstraction, and the abstraction belongs to the policy. This is about the direction of the arrow.
+- **Dependency injection (DI)**: a *technique*: pass dependencies in rather than constructing or locating them internally. This is about where `new` happens.
+- **Inversion of control (IoC)**: a *style*: the framework calls you rather than you calling it. DI is one instance of it.
 
 You can do DI without DIP (injecting a concrete class), and DIP without a framework (hand-wired constructors). Neither requires a container.
 
 The forms, in order of preference:
 
-- **Constructor injection** — dependencies are parameters. The signature states exactly what the class needs, and an object cannot exist in a half-configured state. **The default.**
-- **Method injection** — pass it to the one method that needs it. Right when the dependency varies per call, such as the current user.
-- **Property/setter injection** — assign afterwards. Allows a partially built object and makes the dependency optional in a way that is rarely intended. Use for genuinely optional collaborators only.
-- **Service locator** — the object asks a registry for what it needs. This is not DI: the dependency is hidden again, just behind a different global. Usually an anti-pattern, and the honest counter-argument is that it is sometimes the only option in a framework you do not control.
+- **Constructor injection**: dependencies are parameters. The signature states exactly what the class needs, and an object cannot exist in a half-configured state. **The default.**
+- **Method injection**: pass it to the one method that needs it. Right when the dependency varies per call, such as the current user.
+- **Property/setter injection**: assign afterwards. Allows a partially built object and makes the dependency optional in a way that is rarely intended. Use for genuinely optional collaborators only.
+- **Service locator**: the object asks a registry for what it needs. This is not DI: the dependency is hidden again, just behind a different global. Usually an anti-pattern, and the honest counter-argument is that it is sometimes the only option in a framework you do not control.
 
 The real benefit is not testability, though that is the one people cite. It is that **a constructor signature becomes an honest declaration of what the class needs**, so a class with nine dependencies is visibly doing too much. DI makes bad cohesion legible.
 
@@ -59,6 +59,6 @@ The signal that DI has been over-applied: an interface with exactly one implemen
 
 ## Related
 
-- [solid](solid.md) — DIP is the principle this technique serves
-- [creational](creational.md) — where construction goes instead
-- [boundaries](boundaries.md) — the composition root sits outside every boundary
+- [solid](solid.md): DIP is the principle this technique serves
+- [creational](creational.md): where construction goes instead
+- [boundaries](boundaries.md): the composition root sits outside every boundary

@@ -27,9 +27,9 @@ Choose SSE unless the client genuinely needs to send. It rides on ordinary HTTP,
 
 One event, many recipients. The decision is **when** you do the work.
 
-- **Fan-out on write (push)** — write the item into every recipient's materialised feed at publish time. Reads become a single cheap lookup; a publish by a user with 10M followers becomes 10M writes.
-- **Fan-out on read (pull)** — store once, and assemble a recipient's view at read time by querying who they follow. Writes are cheap; reads are a scatter-gather that gets slower as the following list grows.
-- **Hybrid** — push for ordinary accounts, pull for a small set of high-fan-out ones, merged at read time. This is what every large system converges on, and knowing *why* it converges there is the point: the distribution is heavily skewed, so the cost is concentrated in a handful of accounts you can special-case.
+- **Fan-out on write (push)**: write the item into every recipient's materialised feed at publish time. Reads become a single cheap lookup; a publish by a user with 10M followers becomes 10M writes.
+- **Fan-out on read (pull)**: store once, and assemble a recipient's view at read time by querying who they follow. Writes are cheap; reads are a scatter-gather that gets slower as the following list grows.
+- **Hybrid**: push for ordinary accounts, pull for a small set of high-fan-out ones, merged at read time. This is what every large system converges on, and knowing *why* it converges there is the point: the distribution is heavily skewed, so the cost is concentrated in a handful of accounts you can special-case.
 
 The threshold ("celebrity" cutoff) is a tunable, and it should be based on measured fan-out cost, not on follower count alone: an account with 1M mostly-inactive followers is cheaper to push than one with 200k active ones.
 
@@ -68,6 +68,6 @@ A slow consumer with a fast producer is the defining failure of push systems, an
 
 ## Related
 
-- [message-queues](message-queues.md) — what carries events to the delivery tier
-- [caching](caching.md) — materialised feeds are caches with the same invalidation problem
-- [load-balancing](load-balancing.md) — long-lived connections break naive balancing
+- [message-queues](message-queues.md): what carries events to the delivery tier
+- [caching](caching.md): materialised feeds are caches with the same invalidation problem
+- [load-balancing](load-balancing.md): long-lived connections break naive balancing

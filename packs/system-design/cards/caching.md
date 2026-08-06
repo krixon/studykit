@@ -41,10 +41,10 @@ Write-back without replication on the cache tier is silent data loss waiting for
 
 Size and TTL are the two knobs. Everything else is a policy for choosing the victim.
 
-- **LRU** — evict least recently used. The default, and fooled by scans: one large sequential pass evicts the genuinely hot working set in favour of items read once.
-- **LFU** — evict least frequently used. Resists scans, adapts slowly to a changing working set.
-- **TinyLFU / W-TinyLFU** — a frequency sketch decides *admission*, not just eviction, so a one-off read never displaces a hot key. This is what modern in-process caches use.
-- **TTL** — bounds staleness rather than size. Independent of the eviction policy and usually needed as well as one.
+- **LRU**: evict least recently used. The default, and fooled by scans: one large sequential pass evicts the genuinely hot working set in favour of items read once.
+- **LFU**: evict least frequently used. Resists scans, adapts slowly to a changing working set.
+- **TinyLFU / W-TinyLFU**: a frequency sketch decides *admission*, not just eviction, so a one-off read never displaces a hot key. This is what modern in-process caches use.
+- **TTL**: bounds staleness rather than size. Independent of the eviction policy and usually needed as well as one.
 
 ## stampede-penetration
 
@@ -93,6 +93,6 @@ Each layer only sees the traffic the layer in front of it missed, so hit rates c
 
 ## Related
 
-- [consistent-hashing](consistent-hashing.md) — how a distributed cache places keys
-- [cdn-edge](cdn-edge.md) — the outermost cache layer
-- [consistency-models](consistency-models.md) — what staleness actually means
+- [consistent-hashing](consistent-hashing.md): how a distributed cache places keys
+- [cdn-edge](cdn-edge.md): the outermost cache layer
+- [consistency-models](consistency-models.md): what staleness actually means

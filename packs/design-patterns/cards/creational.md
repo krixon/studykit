@@ -10,9 +10,9 @@ A `new` in the middle of business logic hard-codes a choice: this exact class, w
 
 ## factory
 
-- **Factory method** — a method whose job is to create the object, so subclasses or configuration decide which concrete type. Callers ask for the abstraction and never name the implementation.
-- **Abstract factory** — a family of related products created together, so you cannot accidentally mix a Windows button with a Mac scrollbar. The consistency constraint is the whole point; without one, an abstract factory is over-engineering.
-- **Static factory method** — a named constructor: `Duration.ofSeconds(30)`, `User.fromLegacyRecord(row)`. Cheap, immediately useful, and undersold. It gives construction a name, can return a cached instance or a subtype, and does not need a class hierarchy.
+- **Factory method**: a method whose job is to create the object, so subclasses or configuration decide which concrete type. Callers ask for the abstraction and never name the implementation.
+- **Abstract factory**: a family of related products created together, so you cannot accidentally mix a Windows button with a Mac scrollbar. The consistency constraint is the whole point; without one, an abstract factory is over-engineering.
+- **Static factory method**: a named constructor: `Duration.ofSeconds(30)`, `User.fromLegacyRecord(row)`. Cheap, immediately useful, and undersold. It gives construction a name, can return a cached instance or a subtype, and does not need a class hierarchy.
 
 Reach for the static factory method by default. Reach for a factory *object* when the decision genuinely varies at runtime.
 
@@ -55,5 +55,5 @@ Two rules that prevent most lifetime bugs: a longer-lived object must never capt
 
 ## Related
 
-- [dependency-injection](dependency-injection.md) — where construction decisions belong
-- [solid](solid.md) — DIP is why factories exist at all
+- [dependency-injection](dependency-injection.md): where construction decisions belong
+- [solid](solid.md): DIP is why factories exist at all

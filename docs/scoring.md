@@ -4,7 +4,7 @@ The measurement model. The mechanism is implemented in `studykit/schedule.py` an
 
 ## Why the rules are this strict
 
-An earlier version of this system conflated a self-reported confidence with a measurement, and let problem-level scores propagate onto topics. A session scoring 4 overall raised `caching` from 3 to 4 and `consistent-hashing` from 4 to 5 — while the same attempt recorded caching **failures**. Direct measurement the next day returned caching **2**. Both inferred bumps were wrong, and both were optimistic in the same direction.
+An earlier version of this system conflated a self-reported confidence with a measurement, and let problem-level scores propagate onto topics. A session scoring 4 overall raised `caching` from 3 to 4 and `consistent-hashing` from 4 to 5, while the same attempt recorded caching **failures**. Direct measurement the next day returned caching **2**. Both inferred bumps were wrong, and both were optimistic in the same direction.
 
 They self-corrected only because a later session happened to hit those topics. Had it not, caching would have sat at 4 and next surfaced a week later. The rules below exist to make that failure impossible rather than lucky, and they are enforced in code: `studykit/ledger.py` rejects a row that names a facet the pack does not declare, and rejects any attempt to write a derived field.
 
@@ -46,7 +46,7 @@ Problems are a separate item type: `pack / problem:<slug>`, always with `subtopi
 
 `strength` is the **most recent** measured score for that sub-topic. Not an average: an old 5 does not offset a fresh 2. History lives in the ledger and drives the trend chart, not current state.
 
-Where several measurements land on one date — several quiz questions on one facet — they collapse to the **mean of that date, rounded half up, counted as one rep**. Eight questions about caching is one piece of evidence about caching, not eight.
+Where several measurements land on one date (several quiz questions on one facet), they collapse to the **mean of that date, rounded half up, counted as one rep**. Eight questions about caching is one piece of evidence about caching, not eight.
 
 ## Evidence quality
 
@@ -94,7 +94,7 @@ A cold score is a diagnosis, and the three bands need different treatment. Teach
 
 | Cold `measured` | What follows | Why |
 |---:|---|---|
-| 4-5 | One line confirming, or the boundary they did not volunteer. Move on. | Guidance at this level is redundant and costs working memory — expertise reversal. |
+| 4-5 | One line confirming, or the boundary they did not volunteer. Move on. | Guidance at this level is redundant and costs working memory: expertise reversal. |
 | 3 | Name the specific gap. Move on. | The schema is there; only the missing piece needs supplying. |
 | 1-2 | **Worked example**, then a **variant** re-test later in the same session, logged as `post`. | A 1-2 means there was nothing to generate from. Correction alone produces fluency without encoding. |
 
@@ -128,7 +128,7 @@ It earns its place as a diagnostic of the **teaching**, not the learner. A 2 tha
 
 ## Technique selection by strength
 
-Worked examples help at low strength and actively hurt at high strength — expertise reversal, see [research.md](research.md). The composer picks accordingly:
+Worked examples help at low strength and actively hurt at high strength: expertise reversal, see [research.md](research.md). The composer picks accordingly:
 
 | Strength | Default technique |
 |---:|---|
@@ -146,4 +146,4 @@ If a question is worth asking and the card lacks its grounding, **the card is wh
 
 ## The ledger is the only source of truth
 
-`data/ledger.jsonl` is history. It is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`) and are never hand-edited — deleting them loses nothing.
+`data/ledger.jsonl` is history. It is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`) and are never hand-edited. Deleting them loses nothing.

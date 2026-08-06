@@ -26,7 +26,7 @@ The subject keeps a list of observers and calls them on a change. Events, callba
   - **Control flow becomes invisible.** Reading the publisher tells you nothing about what happens next; you have to find the subscribers.
   - **Ordering is usually unspecified**, and code that quietly depends on it is fragile.
   - **Errors in one observer** can break the notification loop, or be swallowed, depending on implementation. Decide which.
-  - **Lifecycle leaks** — an observer that never unsubscribes keeps the subject alive and keeps being called. This is one of the most common memory leaks in long-lived applications.
+  - **Lifecycle leaks**: an observer that never unsubscribes keeps the subject alive and keeps being called. This is one of the most common memory leaks in long-lived applications.
 - Synchronous in-process observers make the publisher wait for every subscriber, so one slow listener slows the write path. Asynchronous ones trade that for the delivery problems in a [message queue](../../system-design/cards/message-queues.md).
 
 ## template-method
@@ -74,5 +74,5 @@ An operation with its parameters, packaged so it can be stored, queued, logged, 
 
 ## Related
 
-- [structural](structural.md) — patterns about composition rather than interaction
-- [solid](solid.md) — most of these are open-closed applied to one axis
+- [structural](structural.md): patterns about composition rather than interaction
+- [solid](solid.md): most of these are open-closed applied to one axis

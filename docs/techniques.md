@@ -21,13 +21,13 @@ Selection is implemented in `studykit/select.py`. This document explains the cho
 
 **Contrasting cases.** Present two or three things that share surface features and differ in deep structure, and ask what separates them *before* explaining anything. Novices miss important distinctions because their knowledge is not differentiated the way an expert's is; systematic variation is what induces the distinction. This is the direct remedy for a score-2 conflation, and it works better than a correction because a correction addresses the wrong answer rather than the missing axis.
 
-**Teach-back.** Explain the concept as if to a competent engineer who has not met it. The gap between feeling able to explain something and actually explaining it is large and invisible from the inside. Cheap to run, brutal as a diagnostic — which is why the composer fires it on a calibration signal rather than on a strength signal.
+**Teach-back.** Explain the concept as if to a competent engineer who has not met it. The gap between feeling able to explain something and actually explaining it is large and invisible from the inside. Cheap to run, brutal as a diagnostic, which is why the composer fires it on a calibration signal rather than on a strength signal.
 
 **Design critique.** Present a deliberately flawed design and ask what breaks. Evaluation is cheaper than generation for the same signal, so it fits budgets where a full problem does not, and critiquing architecture is a real senior activity in its own right rather than a proxy for one.
 
 **Faded worked example.** Show a complete worked design, then re-run a variant with parts removed for the user to fill. Only for weak facets: worked examples help at low strength and actively hurt at high strength, so fade them out as strength rises.
 
-**Full problem.** The only block that measures integration, and the only place the **transfer gap** can be observed — the difference between a facet's strength in isolation and its strength when it has to be recognised inside a larger problem. Worth the time cost for that alone, and the reason the composer will spend most of a 60-minute budget on one.
+**Full problem.** The only block that measures integration, and the only place the **transfer gap** can be observed: the difference between a facet's strength in isolation and its strength when it has to be recognised inside a larger problem. Worth the time cost for that alone, and the reason the composer will spend most of a 60-minute budget on one.
 
 **Cold re-attempt.** The same problem, without showing the previous attempt first. Durability is a different property from performance, and it is the one that predicts whether the knowledge is there in three months.
 
@@ -39,7 +39,7 @@ Selection is implemented in `studykit/select.py`. This document explains the cho
 |---|---|
 | 10m | one quiz set, 4-6 questions, mixed types, most-due facets |
 | 25m | quiz set of 10-12, plus a targeted block chosen by the weakest facet |
-| 45-60m | one full problem, plus a short set — or three targeted blocks |
+| 45-60m | one full problem plus a short set, or three targeted blocks |
 | half day | a problem, the blocks its gaps expose, and card writing |
 | full day | two problems in different areas, consolidation, and a cold re-attempt |
 

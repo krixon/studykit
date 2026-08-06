@@ -8,9 +8,9 @@
 
 Three distinct goals, and confusing them produces the wrong topology:
 
-- **Durability** — the data survives losing a machine, a rack or a region.
-- **Availability** — the service survives losing a machine.
-- **Read scale** — more copies means more read capacity.
+- **Durability**: the data survives losing a machine, a rack or a region.
+- **Availability**: the service survives losing a machine.
+- **Read scale**: more copies means more read capacity.
 
 Only the third is about performance, and it is the one that fails silently when replication lag is ignored.
 
@@ -26,9 +26,9 @@ Single leader is the default and should be argued *out of*, not into. Multi-lead
 
 ## sync-vs-async
 
-- **Synchronous** — the leader waits for the follower to acknowledge. No data loss on failover, and the write latency is the slow follower's latency. One stalled follower stalls all writes unless you can fall back.
-- **Asynchronous** — the leader acknowledges immediately and ships changes behind. Fast, and a failover loses whatever had not shipped.
-- **Semi-synchronous** — wait for *one* follower (or a quorum), not all. The usual compromise: bounded loss, bounded latency cost. This is what "wait for a quorum" means in practice.
+- **Synchronous**: the leader waits for the follower to acknowledge. No data loss on failover, and the write latency is the slow follower's latency. One stalled follower stalls all writes unless you can fall back.
+- **Asynchronous**: the leader acknowledges immediately and ships changes behind. Fast, and a failover loses whatever had not shipped.
+- **Semi-synchronous**: wait for *one* follower (or a quorum), not all. The usual compromise: bounded loss, bounded latency cost. This is what "wait for a quorum" means in practice.
 
 The honest way to state the choice is in terms of **RPO**: async replication has a non-zero recovery point objective equal to the lag at the moment of failure, and you should know that number.
 
@@ -36,9 +36,9 @@ The honest way to state the choice is in terms of **RPO**: async replication has
 
 Asynchronous followers are behind, and the anomalies that produces have names and standard fixes:
 
-- **Read-your-writes** — a user writes, then reads from a lagging follower and sees the old value. Fix: route that user's reads to the leader for a bounded window, or track the write position and require a follower at least that current.
-- **Monotonic reads** — successive reads hit followers with different lag and time appears to move backwards. Fix: pin a user to one replica.
-- **Consistent prefix** — with sharded replication, causally related writes arrive out of order and an answer appears before its question. Fix: keep causally related data in one partition, or carry causal metadata.
+- **Read-your-writes**: a user writes, then reads from a lagging follower and sees the old value. Fix: route that user's reads to the leader for a bounded window, or track the write position and require a follower at least that current.
+- **Monotonic reads**: successive reads hit followers with different lag and time appears to move backwards. Fix: pin a user to one replica.
+- **Consistent prefix**: with sharded replication, causally related writes arrive out of order and an answer appears before its question. Fix: keep causally related data in one partition, or carry causal metadata.
 
 These are exactly the [session guarantees](consistency-models.md). Replication lag is where they stop being theory.
 
@@ -58,10 +58,10 @@ Automatic failover trades a rarer, larger, human-timed outage for more frequent,
 Only arises with multi-leader or leaderless writes.
 
 - **Last-write-wins** by timestamp. Simple, and silently discards data; clock skew decides which write survives. Acceptable only when losing a concurrent update is genuinely fine.
-- **Version vectors** — detect that two writes were concurrent rather than ordered. Detection is not resolution: you still have to decide.
-- **CRDTs** — data types whose merge is commutative, associative and idempotent, so any order converges. Real, and they constrain what operations you can offer: counters, sets, and text sequences are solved; "transfer money" is not.
-- **Application resolution** — keep both versions and let the user or a domain rule decide. The most honest answer, and the most work.
-- **Avoid conflicts** — route all writes for a given key to one region. Almost always cheaper than resolving them.
+- **Version vectors**: detect that two writes were concurrent rather than ordered. Detection is not resolution: you still have to decide.
+- **CRDTs**: data types whose merge is commutative, associative and idempotent, so any order converges. Real, and they constrain what operations you can offer: counters, sets, and text sequences are solved; "transfer money" is not.
+- **Application resolution**: keep both versions and let the user or a domain rule decide. The most honest answer, and the most work.
+- **Avoid conflicts**: route all writes for a given key to one region. Almost always cheaper than resolving them.
 
 ## Numbers to know
 
@@ -71,6 +71,6 @@ Only arises with multi-leader or leaderless writes.
 
 ## Related
 
-- [cap-pacelc](cap-pacelc.md) — the formal version of this tradeoff
-- [consistency-models](consistency-models.md) — what the anomalies are called
-- [sharding](sharding.md) — the orthogonal axis
+- [cap-pacelc](cap-pacelc.md): the formal version of this tradeoff
+- [consistency-models](consistency-models.md): what the anomalies are called
+- [sharding](sharding.md): the orthogonal axis

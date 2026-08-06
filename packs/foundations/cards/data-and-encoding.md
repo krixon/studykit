@@ -62,5 +62,5 @@ The parts people get wrong:
 
 ## Related
 
-- [security-basics](security-basics.md) — validation is a security boundary
-- [errors-and-logging](errors-and-logging.md) — how to report a rejection usefully
+- [security-basics](security-basics.md): validation is a security boundary
+- [errors-and-logging](errors-and-logging.md): how to report a rejection usefully

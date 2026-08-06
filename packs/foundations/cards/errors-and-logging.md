@@ -25,12 +25,12 @@ The useful distinction is between **expected** conditions (the user typed an inv
 
 Two ways to signal failure, and languages differ on which they favour.
 
-**Exceptions** — a failure unwinds the stack until someone catches it.
+**Exceptions.** A failure unwinds the stack until someone catches it.
 - Keeps the happy path clean and readable.
 - Failure is invisible in the signature, so callers do not know what can go wrong or that anything can.
 - Cheap to write, and easy to leave uncaught.
 
-**Result types** — the function returns success-or-failure as a value.
+**Result types.** The function returns success-or-failure as a value.
 - Failure is in the type, so the compiler makes you deal with it.
 - Callers cannot forget, and every call site gets noisier.
 - Composing many fallible calls needs language support to stay readable.
@@ -82,5 +82,5 @@ The awkward one: an exception message often contains the input that caused it, w
 
 ## Related
 
-- [testing](testing.md) — error paths are the least-tested code
-- [security-basics](security-basics.md) — logs are a common leak path
+- [testing](testing.md): error paths are the least-tested code
+- [security-basics](security-basics.md): logs are a common leak path

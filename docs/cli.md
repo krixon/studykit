@@ -6,8 +6,8 @@
 
 Global options work on either side of the command name:
 
-- `--date YYYY-MM-DD` — treat this as today. For backfilling, or for testing.
-- `--json` — machine-readable output where a human view also exists.
+- `--date YYYY-MM-DD`: treat this as today. For backfilling, or for testing.
+- `--json`: machine-readable output where a human view also exists.
 - `--version`
 
 Environment:
@@ -74,7 +74,7 @@ One screen: overdue count, due today, never tested, coverage, mean strength, and
 
 ### `progress`
 
-The full report — due now, never measured, weakest facets, score by question type, calibration, thin evidence, uncovered areas, problems, and a recommendation. `--json` gives state, metrics and recommendation together.
+The full report: due now, never measured, weakest facets, score by question type, calibration, thin evidence, uncovered areas, problems, and a recommendation. `--json` gives state, metrics and recommendation together.
 
 ### `queue`
 
@@ -160,7 +160,7 @@ Banks questions generated during a session. Assigns ids; never write ids yoursel
 
 Top-level `pack`, `topic` and `levels` act as defaults for every question; each question may override them. `levels` defaults to your level and everything above it.
 
-Writes to `data/bank/<pack>/<topic>.toml` — your private overlay, which merges with the shipped pack at load time. `--into-pack` writes into the pack itself instead, for pack authors.
+Writes to `data/bank/<pack>/<topic>.toml`, your private overlay, which merges with the shipped pack at load time. `--into-pack` writes into the pack itself instead, for pack authors.
 
 Also accepts `--file` or piped stdin.
 
@@ -197,7 +197,7 @@ Appends measurements, then rebuilds `state.json` and `metrics.json`.
 
 Rejected: unknown topics or subtopics, unknown question ids, scores outside 1-5, and any attempt to set a derived field (`strength`, `interval`, `due`, `reps`). `--dry-run` validates without writing.
 
-Several rows for one facet on one date collapse to their mean and count as **one** rep — that is intended, not a bug.
+Several rows for one facet on one date collapse to their mean and count as **one** rep. That is intended, not a bug.
 
 ### `rebuild`
 
@@ -211,7 +211,7 @@ Recomputes `state.json` and `metrics.json` from the ledger. `record` does this a
 ./study dashboard --out ~/study.html
 ```
 
-Writes a self-contained HTML page — inline CSS, inline SVG, no network requests. Light and dark, with a theme toggle.
+Writes a self-contained HTML page: inline CSS, inline SVG, no network requests. Light and dark, with a theme toggle.
 
 ---
 
@@ -229,7 +229,7 @@ Backs the data directory up to a git remote of your own. The tool repo and the d
 ./study sync status
 ```
 
-`init` makes the data directory its own git repository, points it at the remote, writes a `.gitignore` for the derived files, and pushes. It refuses when the remote already has history — clone that into your data directory instead:
+`init` makes the data directory its own git repository, points it at the remote, writes a `.gitignore` for the derived files, and pushes. It refuses when the remote already has history. Clone that into your data directory instead:
 
 ```
 rm -rf data && git clone git@github.com:you/studykit-data.git data
@@ -237,7 +237,7 @@ rm -rf data && git clone git@github.com:you/studykit-data.git data
 
 Only the source of truth is tracked: `ledger.jsonl`, `profile.json`, `bank/` and `attempts/`. `state.json`, `metrics.json` and `dashboard.html` are rebuilt on every write, so committing them would produce a diff on every command and a conflict on every second machine.
 
-With `sync_auto` on, every `record` and `bank add` pushes. A failed push never fails the session — the measurement is already on disk, and a warning tells you to run `./study sync` later.
+With `sync_auto` on, every `record` and `bank add` pushes. A failed push never fails the session: the measurement is already on disk, and a warning tells you to run `./study sync` later.
 
 `doctor` reports whether anything is unpushed, and flags a configured remote whose data directory is not a repository.
 

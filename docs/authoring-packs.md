@@ -1,6 +1,6 @@
 # Authoring a pack
 
-A pack is content. It declares what there is to learn and says nothing about scheduling, scoring or session structure — the engine owns those, so a pack is portable and can be shared without carrying anyone's history.
+A pack is content. It declares what there is to learn and says nothing about scheduling, scoring or session structure. The engine owns those, so a pack is portable and can be shared without carrying anyone's history.
 
 ## Layout
 
@@ -49,7 +49,7 @@ levels = ["mid", "senior", "lead", "staff"]
 minutes = 45                     # what the composer budgets for it
 ```
 
-A calibration brief per level is optional but strongly recommended — without one the agent falls back on its own judgement, which drifts. `./study doctor --verbose` lists missing ones.
+A calibration brief per level is optional but strongly recommended: without one the agent falls back on its own judgement, which drifts. `./study doctor --verbose` lists missing ones.
 
 ## Sub-topics are the unit of everything
 
@@ -58,7 +58,7 @@ Sub-topics are the atom of measurement, scheduling and reporting. Get them right
 - **Four to seven per topic.** Fewer and the topic is too coarse to schedule usefully; more and each one is measured too rarely to mean anything.
 - **Name them by what is known, not by section heading.** `stampede-penetration` is a facet you can be right or wrong about. `overview` is not.
 - **They must be independently assessable.** If you cannot write a question that tests one without testing another, they are one facet.
-- **Adding a sub-topic makes it appear as unmeasured**, so the addition immediately shows up in everyone's queue. That is intended, and it is why renaming one is a breaking change — the old name's history is orphaned. Choose carefully, and prefer adding to renaming.
+- **Adding a sub-topic makes it appear as unmeasured**, so the addition immediately shows up in everyone's queue. That is intended, and it is why renaming one is a breaking change: the old name's history is orphaned. Choose carefully, and prefer adding to renaming.
 
 ## Cards
 
@@ -127,12 +127,12 @@ Two files, deliberately.
 
 `prompt.md` is everything the candidate sees: a one-line ask, deliberately under-specified so they have to ask clarifying questions, and nothing else.
 
-`notes.md` is never shown before an attempt. `./study problem <slug>` cannot return it — you need `--notes`. Include:
+`notes.md` is never shown before an attempt. `./study problem <slug>` cannot return it; you need `--notes`. Include:
 
 - **Hidden requirements**, functional and non-functional, that a good candidate extracts by asking.
 - **Back-of-envelope numbers** they should reach, with the arithmetic.
 - **Two or three deep-dive areas**, each with what to push on.
-- **Strong-answer signals** — what separates a good answer from a correct one.
+- **Strong-answer signals**: what separates a good answer from a correct one.
 - **Common traps.**
 - **Level calibration**, if the problem spans several levels and the bar differs meaningfully.
 - **Follow-up questions.**
@@ -145,7 +145,7 @@ A good prompt is under-specified on purpose. If a candidate can start designing 
 ./study doctor --verbose
 ```
 
-Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, and every ledger row still validates against the taxonomy. `--verbose` adds notes — topics with no card, missing calibration briefs, and any topic with no questions at one of its declared levels, which is the usual authoring gap.
+Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, and any topic with no questions at one of its declared levels, which is the usual authoring gap.
 
 Then use it:
 

@@ -72,6 +72,6 @@ Ask of any datastore: what exactly is durable when it returns success, and again
 
 ## Related
 
-- [sharding](sharding.md) — when one engine is not enough
-- [replication](replication.md) — durability beyond one disk
-- [caching](caching.md) — the buffer pool is a cache with the same failure modes
+- [sharding](sharding.md): when one engine is not enough
+- [replication](replication.md): durability beyond one disk
+- [caching](caching.md): the buffer pool is a cache with the same failure modes

@@ -20,19 +20,19 @@ Cacheable at a shared edge means **the same bytes are correct for many users**.
 
 The controls are HTTP headers, and they are the API between you and the CDN:
 
-- `Cache-Control: max-age` — how long a client may reuse it.
-- `s-maxage` — how long a *shared* cache may, overriding `max-age`.
-- `stale-while-revalidate` — serve the stale copy while one refresh runs behind it. This is stampede protection you get by writing a header.
-- `Vary` — which request headers change the response. `Vary: Cookie` on a cookie-bearing site means an effective hit rate of zero, and this is the most common accidental cache defeat.
-- `ETag` / `If-None-Match` — revalidation without re-transferring the body. Saves bandwidth, not the round trip.
+- `Cache-Control: max-age`: how long a client may reuse it.
+- `s-maxage`: how long a *shared* cache may, overriding `max-age`.
+- `stale-while-revalidate`: serve the stale copy while one refresh runs behind it. This is stampede protection you get by writing a header.
+- `Vary`: which request headers change the response. `Vary: Cookie` on a cookie-bearing site means an effective hit rate of zero, and this is the most common accidental cache defeat.
+- `ETag` / `If-None-Match`: revalidation without re-transferring the body. Saves bandwidth, not the round trip.
 
 ## invalidation
 
 Three mechanisms, in increasing order of how much you should prefer them:
 
-1. **Purge** — tell the CDN to drop a key. Global propagation is seconds to a minute, so it is not a consistency mechanism. Purging by wildcard or tag is far more usable than purging by URL, and tag support varies by vendor.
-2. **Short TTL** — accept bounded staleness and stop coordinating. Cheap and predictable.
-3. **Immutable content-addressed URLs** — put a content hash in the filename, cache for a year, and never invalidate anything. The URL changes when the content does, so there is nothing to purge.
+1. **Purge**: tell the CDN to drop a key. Global propagation is seconds to a minute, so it is not a consistency mechanism. Purging by wildcard or tag is far more usable than purging by URL, and tag support varies by vendor.
+2. **Short TTL**: accept bounded staleness and stop coordinating. Cheap and predictable.
+3. **Immutable content-addressed URLs**: put a content hash in the filename, cache for a year, and never invalidate anything. The URL changes when the content does, so there is nothing to purge.
 
 Option 3 is the design that removes the problem instead of managing it. Reach for purge only for content whose URL genuinely must stay stable, such as an article page.
 
@@ -67,6 +67,6 @@ For a first-time visitor on a fresh connection, handshakes can dominate total pa
 
 ## Related
 
-- [caching](caching.md) — the same mechanics, further in
-- [multi-region](multi-region.md) — when the data has to move too
-- [load-balancing](load-balancing.md) — anycast and the front door
+- [caching](caching.md): the same mechanics, further in
+- [multi-region](multi-region.md): when the data has to move too
+- [load-balancing](load-balancing.md): anycast and the front door

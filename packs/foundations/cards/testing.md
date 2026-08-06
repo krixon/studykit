@@ -20,10 +20,10 @@ The common counter-argument has force: a system of perfectly unit-tested compone
 
 Replacements for real dependencies, and the names are not interchangeable:
 
-- **Stub** — returns canned answers. "This lookup returns a user."
-- **Mock** — a stub that also asserts it was called correctly. "The email service was called once with this address."
-- **Fake** — a real working implementation that is not production-grade. An in-memory repository. Usually the best of the three, because it exercises real behaviour.
-- **Spy** — records calls for inspection afterwards, without prescribing them up front.
+- **Stub**: returns canned answers. "This lookup returns a user."
+- **Mock**: a stub that also asserts it was called correctly. "The email service was called once with this address."
+- **Fake**: a real working implementation that is not production-grade. An in-memory repository. Usually the best of the three, because it exercises real behaviour.
+- **Spy**: records calls for inspection afterwards, without prescribing them up front.
 
 The failure mode is **over-mocking**: a test asserting that your code called three methods in a particular order tests the implementation, not the behaviour. Any refactor breaks it even though nothing observable changed, so the test suite becomes a tax on improvement rather than a licence for it.
 
@@ -45,10 +45,10 @@ A test that passes and fails on the same code. The most corrosive problem a suit
 
 Usual causes:
 
-- **Time** — a test that depends on the current time, or a sleep that is long enough on your laptop and not on CI. Inject a clock; wait for a condition rather than a duration.
-- **Order dependence** — a test that passes only after another test has run. Caused by shared mutable state that is not reset. Randomise test order to expose it.
-- **Concurrency** — a genuine race, in the test or in the code. Often the test is right and the code is broken.
-- **External dependencies** — a real network call in a unit test.
+- **Time**: a test that depends on the current time, or a sleep that is long enough on your laptop and not on CI. Inject a clock; wait for a condition rather than a duration.
+- **Order dependence**: a test that passes only after another test has run. Caused by shared mutable state that is not reset. Randomise test order to expose it.
+- **Concurrency**: a genuine race, in the test or in the code. Often the test is right and the code is broken.
+- **External dependencies**: a real network call in a unit test.
 
 The policy that works: quarantine a flaky test immediately, then fix or delete it. A flaky test left in the suite costs more than no test.
 
@@ -63,5 +63,5 @@ Coverage measures which lines executed while tests ran. That is all it measures.
 
 ## Related
 
-- [errors-and-logging](errors-and-logging.md) — the error paths are the ones nobody tests
-- [version-control](version-control.md) — bisect only works if the tests are trustworthy
+- [errors-and-logging](errors-and-logging.md): the error paths are the ones nobody tests
+- [version-control](version-control.md): bisect only works if the tests are trustworthy

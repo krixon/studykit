@@ -66,6 +66,6 @@ All five earn their keep in code that has been alive long enough to change repea
 
 ## Related
 
-- [coupling-cohesion](coupling-cohesion.md) — what these principles are really managing
-- [dependency-injection](dependency-injection.md) — how DIP is wired up in practice
-- [boundaries](boundaries.md) — DIP at architectural scale
+- [coupling-cohesion](coupling-cohesion.md): what these principles are really managing
+- [dependency-injection](dependency-injection.md): how DIP is wired up in practice
+- [boundaries](boundaries.md): DIP at architectural scale

@@ -62,5 +62,5 @@ DRY is about **knowledge**, not text. Two pieces of code that look identical but
 
 ## Related
 
-- [coupling-cohesion](coupling-cohesion.md) — what most smells are measuring
-- [solid](solid.md) — the direction most refactors move in
+- [coupling-cohesion](coupling-cohesion.md): what most smells are measuring
+- [solid](solid.md): the direction most refactors move in

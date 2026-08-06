@@ -68,5 +68,5 @@ Big-O ignores constants, and on modern hardware the constants span two orders of
 
 ## Related
 
-- [sql-and-indexes](sql-and-indexes.md) — an index is a data structure choice made in a database
-- [data-and-encoding](data-and-encoding.md) — how much memory your data actually takes
+- [sql-and-indexes](sql-and-indexes.md): an index is a data structure choice made in a database
+- [data-and-encoding](data-and-encoding.md): how much memory your data actually takes

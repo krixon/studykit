@@ -47,10 +47,10 @@ One class exposing the two operations callers actually need, hiding six collabor
 
 Same interface, and the wrapper decides whether, when or how the real call happens.
 
-- **Virtual proxy** — defer expensive creation until first use (ORM lazy loading).
-- **Protection proxy** — check permissions before delegating.
-- **Remote proxy** — the real object is on another machine; the proxy handles the transport. Every RPC client stub is this.
-- **Caching proxy** — return a stored result instead of calling.
+- **Virtual proxy**: defer expensive creation until first use (ORM lazy loading).
+- **Protection proxy**: check permissions before delegating.
+- **Remote proxy**: the real object is on another machine; the proxy handles the transport. Every RPC client stub is this.
+- **Caching proxy**: return a stored result instead of calling.
 
 Decorator and proxy have the same shape and differ in purpose: a decorator **adds** to what happens, a proxy **controls whether it happens**. The practical consequence is that a proxy may not call the real object at all.
 
@@ -76,5 +76,5 @@ A `Component` interface implemented by both leaves and containers, where the con
 
 ## Related
 
-- [behavioural](behavioural.md) — patterns about how objects interact
-- [boundaries](boundaries.md) — adapters are how a hexagonal architecture meets the outside
+- [behavioural](behavioural.md): patterns about how objects interact
+- [boundaries](boundaries.md): adapters are how a hexagonal architecture meets the outside

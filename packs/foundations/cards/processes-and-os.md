@@ -17,8 +17,8 @@ A process is a running program with its own virtual memory, file descriptors, en
 
 Virtual memory means each process sees a private address space; the OS maps pages of it to physical memory on demand.
 
-- **Stack** — function frames and locals, small (typically 1-8 MB) and automatically managed. Deep or infinite recursion overflows it.
-- **Heap** — explicitly or garbage-collected allocations, large, and where leaks live.
+- **Stack**: function frames and locals, small (typically 1-8 MB) and automatically managed. Deep or infinite recursion overflows it.
+- **Heap**: explicitly or garbage-collected allocations, large, and where leaks live.
 - **Resident set size (RSS)** is physical memory actually in use, and is the number that gets you killed. **Virtual size** is address space reserved, is frequently enormous, and means little.
 - **Swap** trades a memory shortage for a latency catastrophe: a page fault to disk is roughly 100,000 times slower than RAM. Most server workloads are better off failing fast than swapping.
 - The **OOM killer** picks a process and terminates it, usually the largest, with no chance to clean up. In a container, exceeding the cgroup limit gets you killed the same way. Neither produces a graceful shutdown, so the observable symptom is a process that vanishes with no log line - if a service dies silently, check `dmesg` and the exit code (137 = 128 + 9, killed by SIGKILL).
@@ -37,9 +37,9 @@ A file descriptor is a small integer indexing an open file, socket or pipe. Ever
 
 Signals are the OS's asynchronous notifications to a process.
 
-- `SIGTERM` — please stop. **Catchable, and the one that matters.** This is what orchestrators send first.
-- `SIGKILL` — stop now. Not catchable, no cleanup. Sent after the grace period expires.
-- `SIGINT` — Ctrl-C. `SIGHUP` — traditionally "reload configuration". `SIGSTOP`/`SIGCONT` — pause and resume.
+- `SIGTERM`: please stop. **Catchable, and the one that matters.** This is what orchestrators send first.
+- `SIGKILL`: stop now. Not catchable, no cleanup. Sent after the grace period expires.
+- `SIGINT`: Ctrl-C. `SIGHUP`: traditionally "reload configuration". `SIGSTOP`/`SIGCONT`: pause and resume.
 
 **Graceful shutdown** is the part people skip, and it is what makes deploys invisible:
 
@@ -68,5 +68,5 @@ Without it, every deploy drops the requests in flight, and you see a small error
 
 ## Related
 
-- [concurrency](concurrency.md) — threads live inside a process
-- [errors-and-logging](errors-and-logging.md) — stdout, stderr and buffering
+- [concurrency](concurrency.md): threads live inside a process
+- [errors-and-logging](errors-and-logging.md): stdout, stderr and buffering

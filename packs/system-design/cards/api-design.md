@@ -22,9 +22,9 @@ The choice is mostly about **who owns the round trips** and **who owns the schem
 
 ## versioning
 
-- **URL version** (`/v2/orders`) — obvious, greppable, and encourages copying the whole surface for one field change.
-- **Header or media-type version** — keeps URLs stable and is easy for clients to get wrong by omission.
-- **No version, additive only** — the discipline most large APIs converge on: never remove or repurpose a field, only add optional ones.
+- **URL version** (`/v2/orders`): obvious, greppable, and encourages copying the whole surface for one field change.
+- **Header or media-type version**: keeps URLs stable and is easy for clients to get wrong by omission.
+- **No version, additive only**: the discipline most large APIs converge on: never remove or repurpose a field, only add optional ones.
 
 Version at the granularity of the thing that changes. A global version number for the whole API means every consumer is forced through a migration for a change to one endpoint.
 
@@ -32,8 +32,8 @@ Whatever you choose, the hard part is not issuing v2 but **retiring v1**: you ne
 
 ## pagination
 
-- **Offset / page number** — trivial, and wrong under concurrent writes: an insert shifts every subsequent page, so items are skipped or repeated. Cost also grows with offset, since the database still walks the skipped rows.
-- **Cursor / keyset** (`WHERE (created_at, id) < (?, ?) ORDER BY … LIMIT n`) — stable under writes and constant cost per page. Cannot jump to page 40, which is almost never a real requirement.
+- **Offset / page number**: trivial, and wrong under concurrent writes: an insert shifts every subsequent page, so items are skipped or repeated. Cost also grows with offset, since the database still walks the skipped rows.
+- **Cursor / keyset** (`WHERE (created_at, id) < (?, ?) ORDER BY … LIMIT n`): stable under writes and constant cost per page. Cannot jump to page 40, which is almost never a real requirement.
 
 Return the cursor **opaque**. The moment clients parse it you can never change the sort key. Always cap page size server-side, and return the cap you applied rather than silently truncating.
 
@@ -57,6 +57,6 @@ The reliable pattern for a breaking change is **expand, migrate, contract**: add
 
 ## Related
 
-- [idempotency](idempotency.md) — what makes a retry safe
-- [rate-limiting](rate-limiting.md) — the limit is part of the contract
-- [caching](caching.md) — HTTP caching is an API design decision
+- [idempotency](idempotency.md): what makes a retry safe
+- [rate-limiting](rate-limiting.md): the limit is part of the contract
+- [caching](caching.md): HTTP caching is an API design decision

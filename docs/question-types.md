@@ -8,7 +8,7 @@ Retrieval practice reliably produces near transfer and repeatedly fails to produ
 
 ## The ladder
 
-### `recall` — what is it
+### `recall`: what is it
 
 Straight retrieval. One line.
 
@@ -16,7 +16,7 @@ Straight retrieval. One line.
 
 The floor. Cheap to author, cheap to answer, weakest signal. Necessary at graduate level, where the vocabulary is still being built, and close to worthless on its own at staff.
 
-### `discrimination` — which is it, and what separates them
+### `discrimination`: which is it, and what separates them
 
 Two or more confusable things; name the axis.
 
@@ -24,7 +24,7 @@ Two or more confusable things; name the axis.
 
 Detects **conflation**, which recall cannot. Conflation produces confident wrong answers, so it scores 2 and is the highest-value thing to catch. Author these as contrasting pairs that share surface features and differ in deep structure.
 
-### `judgment` — does this change the answer
+### `judgment`: does this change the answer
 
 A design context, then new information. Does an option become more or less appropriate?
 
@@ -34,9 +34,9 @@ Answered as `-2 -1 0 +1 +2` plus a clause of why. Near-zero typing for a genuine
 
 Adapted from script concordance testing in medical education, which exists to assess reasoning under uncertainty rather than knowledge. Swap diagnosis for design option and it transfers directly. **This is the type that targets far transfer**; weight the bank towards it.
 
-A good judgment question has a defensible answer that is not obvious, and sometimes the honest answer is 0 — "it depends, and here is what on". Questions where the new information trivially settles it are recall in disguise.
+A good judgment question has a defensible answer that is not obvious, and sometimes the honest answer is 0: "it depends, and here is what on". Questions where the new information trivially settles it are recall in disguise.
 
-### `diagnostic` — symptom to cause
+### `diagnostic`: symptom to cause
 
 Give the observation, ask for the mechanism.
 
@@ -44,7 +44,7 @@ Give the observation, ask for the mechanism.
 
 Reverses the direction of reasoning. Forward design and backward diagnosis are different skills, and both show up in real work and in interviews.
 
-### `numeric` — put a number on it
+### `numeric`: put a number on it
 
 > 500 nodes, 10-token leases, a limit of 1,000,000. Overshoot as a percentage?
 
@@ -52,7 +52,7 @@ One number, no prose. Targets the common habit of correct reasoning with the ari
 
 ## Multiple choice
 
-Use sparingly, and only where **the distractors are the content** — picking between five named consistency models, say, because discriminating the alternatives is itself the skill. Everywhere else use free recall: recognition lets you confirm "I knew that" without ever retrieving, and recognition is theorised as the main thing impeding transfer.
+Use sparingly, and only where **the distractors are the content**: picking between five named consistency models, say, because discriminating the alternatives is itself the skill. Everywhere else use free recall: recognition lets you confirm "I knew that" without ever retrieving, and recognition is theorised as the main thing impeding transfer.
 
 ## Levels
 
@@ -62,7 +62,7 @@ Every question declares which levels it suits:
 levels = ["senior", "lead", "staff"]
 ```
 
-The type ladder and the level ladder are correlated but not the same. A graduate-appropriate `judgment` question exists — it just has a smaller design context and a clearer answer. A staff-level `recall` question exists too, and is usually a waste of a slot.
+The type ladder and the level ladder are correlated but not the same. A graduate-appropriate `judgment` question exists; it just has a smaller design context and a clearer answer. A staff-level `recall` question exists too, and is usually a waste of a slot.
 
 As a rough guide to bank composition per level:
 
@@ -97,6 +97,6 @@ a = "Much less, -2. The floor on overshoot is roughly one lease per node, so 500
 Rules:
 
 - `id` is `<topic-prefix>-<nnn>`, stable forever, **never reused**. `./study bank add` assigns them; do not hand-write them.
-- **Anything shown is banked.** Generated a question mid-session? `./study bank add` before the session ends. Not optional — an unbanked question cannot be referenced by a ledger row, and the CLI enforces that.
+- **Anything shown is banked.** Generated a question mid-session? `./study bank add` before the session ends. Not optional: an unbanked question cannot be referenced by a ledger row, and the CLI enforces that.
 - Exposure history (`shown`, `reps`) is **not** stored on the question. It is derived from the ledger, so packs stay pristine and portable and can be shared without carrying anyone's history.
 - Never show the same question twice in one session. `./study questions` handles this; it also prefers unshown or long-unseen items.

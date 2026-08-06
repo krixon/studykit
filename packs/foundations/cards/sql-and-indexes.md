@@ -8,11 +8,11 @@
 
 A join matches rows in one table to rows in another on a condition.
 
-- **INNER** — only rows with a match on both sides.
-- **LEFT** — every row from the left, with nulls where the right has no match. The usual way to ask "customers and their orders, including customers with none".
-- **RIGHT** — the mirror, and rare because you can flip the tables.
-- **FULL OUTER** — everything from both sides.
-- **CROSS** — every combination. Almost always accidental, and the cause of a query that returns a billion rows.
+- **INNER**: only rows with a match on both sides.
+- **LEFT**: every row from the left, with nulls where the right has no match. The usual way to ask "customers and their orders, including customers with none".
+- **RIGHT**: the mirror, and rare because you can flip the tables.
+- **FULL OUTER**: everything from both sides.
+- **CROSS**: every combination. Almost always accidental, and the cause of a query that returns a billion rows.
 
 The trap: adding a `WHERE` condition on the right-hand table of a `LEFT JOIN` silently converts it to an inner join, because a null fails the comparison. Put the condition in the `ON` clause instead.
 
@@ -22,9 +22,9 @@ Joins are not slow. Joins **without an index on the join column** are slow, beca
 
 Store each fact once, and reference it from everywhere else.
 
-- **1NF** — no repeating groups; one value per column.
-- **2NF** — non-key columns depend on the whole key.
-- **3NF** — non-key columns depend on nothing but the key.
+- **1NF**: no repeating groups; one value per column.
+- **2NF**: non-key columns depend on the whole key.
+- **3NF**: non-key columns depend on nothing but the key.
 
 The plain-language version: if changing one fact requires updating many rows, it is not normalised, and eventually the copies will disagree.
 
@@ -54,10 +54,10 @@ Fetch a list of N things, then issue one query per thing to load a related field
 
 A transaction groups statements so they succeed or fail together. **ACID**:
 
-- **Atomicity** — all of it or none of it.
-- **Consistency** — declared constraints hold before and after.
-- **Isolation** — concurrent transactions do not see each other's partial work, to a degree set by the isolation level.
-- **Durability** — once committed, it survives a crash.
+- **Atomicity**: all of it or none of it.
+- **Consistency**: declared constraints hold before and after.
+- **Isolation**: concurrent transactions do not see each other's partial work, to a degree set by the isolation level.
+- **Durability**: once committed, it survives a crash.
 
 Isolation levels trade correctness for concurrency: read committed (the common default) permits lost updates and non-repeatable reads; repeatable read (usually implemented as snapshot isolation) removes those and permits write skew; serializable removes everything at a throughput cost.
 
@@ -74,5 +74,5 @@ Two rules worth holding:
 
 ## Related
 
-- [complexity](complexity.md) — an index is a data structure choice
-- [concurrency](concurrency.md) — isolation is concurrency control for data
+- [complexity](complexity.md): an index is a data structure choice
+- [concurrency](concurrency.md): isolation is concurrency control for data

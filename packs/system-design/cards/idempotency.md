@@ -45,8 +45,8 @@ There is no exactly-once delivery over an unreliable network. The sender cannot 
 
 What is achievable is **exactly-once processing**, and there are exactly two routes:
 
-1. **Idempotent consumer** — at-least-once delivery plus deduplication or a naturally idempotent operation.
-2. **Transactional coupling** — commit the side effect and the consumption marker (the offset) atomically, so replay cannot double-apply. This only works when both live in a system that can commit them together.
+1. **Idempotent consumer**: at-least-once delivery plus deduplication or a naturally idempotent operation.
+2. **Transactional coupling**: commit the side effect and the consumption marker (the offset) atomically, so replay cannot double-apply. This only works when both live in a system that can commit them together.
 
 When a vendor says "exactly-once", the question is which of these two it is, and where the boundary sits. Kafka's is the second, within Kafka; the moment your consumer writes to an external database, you are back to the first.
 
@@ -64,11 +64,11 @@ Deduplication needs state, and state costs memory that grows with traffic.
 Some operations are naturally idempotent and need no key: `PUT` of a full resource, `DELETE` by id, setting a value. Some are not: `POST` a payment, increment a counter, send an email.
 
 - **Increments** are the classic trap: `balance = balance + 10` applied twice is wrong. Replace with a conditional write on a version, or record the *event* with its key and derive the balance.
-- **External side effects you cannot recall** — emails, SMS, third-party charges — need the dedup check before the call, and a durable record that the call was made. If the process dies between calling and recording, you cannot know; the honest mitigations are a provider-side idempotency key (most payment APIs offer one) or accepting a rare duplicate.
+- **External side effects you cannot recall**: emails, SMS, third-party charges. These need the dedup check before the call, and a durable record that the call was made. If the process dies between calling and recording, you cannot know; the honest mitigations are a provider-side idempotency key (most payment APIs offer one) or accepting a rare duplicate.
 - **Ordering plus idempotency** is not the same as either alone. A deduplicated but reordered stream can still apply a stale update over a fresh one. Guard with a version or timestamp on the write, so an older update is rejected rather than merely not-duplicated.
 
 ## Related
 
-- [message-queues](message-queues.md) — at-least-once is the default you must survive
-- [api-design](api-design.md) — the header and status codes that carry this
-- [consistency-models](consistency-models.md) — why ordering and dedup are separate concerns
+- [message-queues](message-queues.md): at-least-once is the default you must survive
+- [api-design](api-design.md): the header and status codes that carry this
+- [consistency-models](consistency-models.md): why ordering and dedup are separate concerns

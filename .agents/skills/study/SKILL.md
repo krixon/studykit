@@ -23,9 +23,9 @@ State the plan in **one line**, then start. No menus, no ceremony.
 
 Each block carries an `instruction` field. Follow it.
 
-- `quiz-set` — run the `quiz` protocol on the supplied questions.
-- `full-problem` / `cold-re-attempt` — run the `practice` protocol on the named problem.
-- `faded-worked-example`, `contrasting-cases`, `diagnostic-inversion`, `teach-back`, `estimation-drill`, `card-writing` — the instruction describes the block. Fetch the card with `./study card <topic> --pack <pack>` only if you need the material.
+- `quiz-set`: run the `quiz` protocol on the supplied questions.
+- `full-problem` / `cold-re-attempt`: run the `practice` protocol on the named problem.
+- `faded-worked-example`, `contrasting-cases`, `diagnostic-inversion`, `teach-back`, `estimation-drill`, `card-writing`: the instruction describes the block. Fetch the card with `./study card <topic> --pack <pack>` only if you need the material.
 
 If a block has `author_for` entries, the bank has no in-level question for those facets. Write one, ask it, and bank it (see below).
 

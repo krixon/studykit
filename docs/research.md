@@ -44,13 +44,13 @@ The re-test must be a variant, never the same question. Recognition lets a learn
 
 ## Fluency is not learning
 
-**Finding.** Learners under active methods judge that they have learned less while measurably learning more (Deslauriers et al. 2019). Separately, people substantially overestimate their ability to explain mechanisms until asked to actually do it — the illusion of explanatory depth (Rozenblit & Keil 2002).
+**Finding.** Learners under active methods judge that they have learned less while measurably learning more (Deslauriers et al. 2019). Separately, people substantially overestimate their ability to explain mechanisms until asked to actually do it: the illusion of explanatory depth (Rozenblit & Keil 2002).
 
 **What it licenses.** Self-report never touches scheduling. `predicted` is captured only to compute calibration error. Teach-back exists in [techniques.md](techniques.md) because the gap between feeling able to explain and explaining is invisible from the inside, and the composer fires it specifically when predicted is running above measured.
 
 ## Recognition impedes transfer
 
-**Finding.** The failure mode at this level is not absent knowledge but unrecognised applicability — the inert knowledge problem. Multiple choice permits confirmation without retrieval.
+**Finding.** The failure mode at this level is not absent knowledge but unrecognised applicability: the inert knowledge problem. Multiple choice permits confirmation without retrieval.
 
 **What it licenses.** Free recall by default. Multiple choice only where discriminating the named alternatives is itself the skill. See [question-types.md](question-types.md).
 
@@ -62,7 +62,7 @@ Recorded so the engine does not present a live dispute as settled.
 
 - **Productive failure versus direct instruction.** Genuinely unresolved. The prior-knowledge boundary above is where the two camps come closest, not a proven constant. Effect sizes vary with domain and with how structured the failure phase is.
 
-- **Optimal spacing intervals.** The SM-2 style multipliers in [scoring.md](scoring.md) are conventional, not derived from this literature. Cepeda et al. support expanding intervals scaled to the retention interval; the specific numbers (1.6 / 2.2 / 3.0) are a guess and should be treated as one. If you have data, change them in `studykit/schedule.py` — they are three constants in one dictionary.
+- **Optimal spacing intervals.** The SM-2 style multipliers in [scoring.md](scoring.md) are conventional, not derived from this literature. Cepeda et al. support expanding intervals scaled to the retention interval; the specific numbers (1.6 / 2.2 / 3.0) are a guess and should be treated as one. If you have data, change them in `studykit/schedule.py`; they are three constants in one dictionary.
 
 ## Where this shows up
 

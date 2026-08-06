@@ -59,6 +59,6 @@ The relationship to services: **a well-bounded module is the precondition for ex
 
 ## Related
 
-- [dependency-injection](dependency-injection.md) — the composition root wires the adapters to the ports
-- [structural](structural.md) — an adapter is exactly the pattern of the same name
-- [solid](solid.md) — this is DIP at architectural scale
+- [dependency-injection](dependency-injection.md): the composition root wires the adapters to the ports
+- [structural](structural.md): an adapter is exactly the pattern of the same name
+- [solid](solid.md): this is DIP at architectural scale

@@ -22,8 +22,8 @@ Weakest to strongest. The goal is to sit as high in this list as the problem all
 
 Two more that matter and do not fit the classic list:
 
-- **Temporal coupling** — A must be called before B, and nothing enforces it. `open()` then `read()` where calling `read()` first fails at runtime. The fix is to make the invalid order unrepresentable: `open()` returns the object that has `read()`.
-- **Semantic coupling** — two modules share an assumption written down nowhere. The worst kind, because nothing in the code shows the connection, and it survives every refactor until it breaks.
+- **Temporal coupling**: A must be called before B, and nothing enforces it. `open()` then `read()` where calling `read()` first fails at runtime. The fix is to make the invalid order unrepresentable: `open()` returns the object that has `read()`.
+- **Semantic coupling**: two modules share an assumption written down nowhere. The worst kind, because nothing in the code shows the connection, and it survives every refactor until it breaks.
 
 **Control coupling** deserves special attention: a boolean parameter that switches behaviour means the function does two things and the call site does not say which. `render(true)` is unreadable at the call site and usually wants to be two functions.
 
@@ -31,12 +31,12 @@ Two more that matter and do not fit the classic list:
 
 How well the parts of a module belong together. Strongest to weakest:
 
-- **Functional** — everything contributes to one well-defined task. The target.
-- **Sequential** — output of one part feeds the next.
-- **Communicational** — parts operate on the same data.
-- **Temporal** — parts happen at the same time. A `startup()` doing six unrelated things.
-- **Logical** — parts are the same *category* of thing, selected by a flag. A `Utils` class, or a `handleEvent(type)` with a switch.
-- **Coincidental** — no relationship. `helpers.py`.
+- **Functional**: everything contributes to one well-defined task. The target.
+- **Sequential**: output of one part feeds the next.
+- **Communicational**: parts operate on the same data.
+- **Temporal**: parts happen at the same time. A `startup()` doing six unrelated things.
+- **Logical**: parts are the same *category* of thing, selected by a flag. A `Utils` class, or a `handleEvent(type)` with a switch.
+- **Coincidental**: no relationship. `helpers.py`.
 
 The names to recognise in the wild are the bottom two. **A class named `Manager`, `Helper`, `Util` or `Service` with no further qualification is usually coincidentally cohesive** - it is a place things were put, not a thing.
 
@@ -67,6 +67,6 @@ The test for whether an abstraction is worth it: **does it let you reason about 
 
 ## Related
 
-- [solid](solid.md) — five heuristics in service of these two properties
-- [boundaries](boundaries.md) — coupling across a module boundary is the expensive kind
-- [refactoring](refactoring.md) — the smells are mostly coupling and cohesion failures
+- [solid](solid.md): five heuristics in service of these two properties
+- [boundaries](boundaries.md): coupling across a module boundary is the expensive kind
+- [refactoring](refactoring.md): the smells are mostly coupling and cohesion failures

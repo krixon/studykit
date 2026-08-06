@@ -27,9 +27,9 @@ Rule of thumb: **queue for work distribution, log for event distribution.** "We 
 
 ## delivery-semantics
 
-- **At-most-once** — acknowledge before processing. Fast; loses messages on a crash.
-- **At-least-once** — acknowledge after processing. Never loses; duplicates whenever an acknowledgement is lost or a worker dies mid-flight. **This is what you will actually run.**
-- **Exactly-once** — the message is processed exactly one time.
+- **At-most-once**: acknowledge before processing. Fast; loses messages on a crash.
+- **At-least-once**: acknowledge after processing. Never loses; duplicates whenever an acknowledgement is lost or a worker dies mid-flight. **This is what you will actually run.**
+- **Exactly-once**: the message is processed exactly one time.
 
 Exactly-once delivery is impossible over an unreliable network: the sender cannot distinguish "the message was lost" from "the acknowledgement was lost", so it must either retry (risking duplicates) or not (risking loss). What systems provide is **exactly-once processing**, which is at-least-once delivery plus either an idempotent consumer or a transactional write that commits the message offset and the side effect atomically. Kafka's exactly-once is this: transactions across the log and the offset store, within Kafka.
 
@@ -80,6 +80,6 @@ A **poison message** fails every time it is processed. Without a limit, it is re
 
 ## Related
 
-- [idempotency](idempotency.md) — how consumers survive at-least-once
-- [sharding](sharding.md) — a partition key is a shard key
-- [observability](observability.md) — lag is the signal that matters
+- [idempotency](idempotency.md): how consumers survive at-least-once
+- [sharding](sharding.md): a partition key is a shard key
+- [observability](observability.md): lag is the signal that matters

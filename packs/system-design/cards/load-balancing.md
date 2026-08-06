@@ -22,12 +22,12 @@ L4 balances **connections**; L7 balances **requests**. With HTTP/2 or gRPC that 
 
 ## algorithms
 
-- **Round robin** — simple, correct only when requests cost roughly the same and backends are identical.
-- **Weighted round robin** — same, with a capacity weight per backend. The usual answer for a heterogeneous fleet.
-- **Least connections** — routes to the backend with the fewest in-flight requests. Adapts to uneven request cost without measuring it.
-- **Least response time / EWMA latency** — the best signal for uneven workloads, and the most sensitive to a backend that is fast because it is failing fast.
-- **Consistent hashing on a key** — sticky routing when a backend holds per-key state (a session, a lease, a warm cache). See [consistent-hashing](consistent-hashing.md).
-- **Power of two choices** — pick two backends at random, send to the less loaded. Almost all the benefit of least-connections with none of the global state; the standard choice for client-side balancing.
+- **Round robin**: simple, correct only when requests cost roughly the same and backends are identical.
+- **Weighted round robin**: same, with a capacity weight per backend. The usual answer for a heterogeneous fleet.
+- **Least connections**: routes to the backend with the fewest in-flight requests. Adapts to uneven request cost without measuring it.
+- **Least response time / EWMA latency**: the best signal for uneven workloads, and the most sensitive to a backend that is fast because it is failing fast.
+- **Consistent hashing on a key**: sticky routing when a backend holds per-key state (a session, a lease, a warm cache). See [consistent-hashing](consistent-hashing.md).
+- **Power of two choices**: pick two backends at random, send to the less loaded. Almost all the benefit of least-connections with none of the global state; the standard choice for client-side balancing.
 
 ## health-checks
 
@@ -39,11 +39,11 @@ The resolution is that a deep check should mark a host unhealthy only while a qu
 
 ## topology
 
-- **DNS** — cheapest global spread, terrible failover: TTLs and resolver caching mean minutes of traffic to a dead site.
-- **Anycast** — the same IP announced from many locations, routed to the nearest by BGP. Fast global failover; you do not control which site a client lands on, and a route flap can break long-lived connections.
-- **Hardware or cloud L4** — the front door, usually anycast behind the scenes.
-- **L7 proxy tier** — routing, retries, canaries, TLS termination.
-- **Client-side / service mesh sidecar** — no extra network hop, per-request balancing over multiplexed connections, and the balancing logic ships with the client rather than the platform.
+- **DNS**: cheapest global spread, terrible failover: TTLs and resolver caching mean minutes of traffic to a dead site.
+- **Anycast**: the same IP announced from many locations, routed to the nearest by BGP. Fast global failover; you do not control which site a client lands on, and a route flap can break long-lived connections.
+- **Hardware or cloud L4**: the front door, usually anycast behind the scenes.
+- **L7 proxy tier**: routing, retries, canaries, TLS termination.
+- **Client-side / service mesh sidecar**: no extra network hop, per-request balancing over multiplexed connections, and the balancing logic ships with the client rather than the platform.
 
 Real systems stack these: anycast to a region, L4 to a proxy tier, L7 proxy to a service, mesh inside it.
 
@@ -62,6 +62,6 @@ Real systems stack these: anycast to a region, L4 to a proxy tier, L7 proxy to a
 
 ## Related
 
-- [consistent-hashing](consistent-hashing.md) — sticky routing
-- [rate-limiting](rate-limiting.md) — what the balancer enforces at the edge
-- [observability](observability.md) — how you see the pool going lopsided
+- [consistent-hashing](consistent-hashing.md): sticky routing
+- [rate-limiting](rate-limiting.md): what the balancer enforces at the edge
+- [observability](observability.md): how you see the pool going lopsided

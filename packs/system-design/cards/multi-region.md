@@ -8,9 +8,9 @@
 
 Three reasons, and they want different architectures. Being unclear which one you are solving is how teams build an expensive system that satisfies none of them.
 
-- **Latency** — users are far away and the round trip is physics. Wants data close to users.
-- **Availability** — a region can fail. Wants a warm copy elsewhere and a tested way to use it.
-- **Compliance** — data must stay in a jurisdiction. Wants strict partitioning, not replication.
+- **Latency**: users are far away and the round trip is physics. Wants data close to users.
+- **Availability**: a region can fail. Wants a warm copy elsewhere and a tested way to use it.
+- **Compliance**: data must stay in a jurisdiction. Wants strict partitioning, not replication.
 
 Ask which one, and whether a multi-AZ single-region deployment already gives you most of it. It usually does, for far less money: AZs are independent failure domains a millisecond apart, which is the good part of multi-region without the expensive part.
 
@@ -45,8 +45,8 @@ The mechanism is straightforward; the failure modes are not.
 
 ## rto-rpo
 
-- **RTO** — recovery *time* objective: how long until service resumes.
-- **RPO** — recovery *point* objective: how much data you may lose, measured in time.
+- **RTO**: recovery *time* objective: how long until service resumes.
+- **RPO**: recovery *point* objective: how much data you may lose, measured in time.
 
 They are set by the business, then the architecture is chosen to meet them. Doing this in the other order is how a team ends up with an expensive design nobody asked for.
 
@@ -77,6 +77,6 @@ They are set by the business, then the architecture is chosen to meet them. Doin
 
 ## Related
 
-- [cap-pacelc](cap-pacelc.md) — the `E`/`L` half is this card
-- [replication](replication.md) — the mechanism underneath
-- [cdn-edge](cdn-edge.md) — solving the latency case without moving the data
+- [cap-pacelc](cap-pacelc.md): the `E`/`L` half is this card
+- [replication](replication.md): the mechanism underneath
+- [cdn-edge](cdn-edge.md): solving the latency case without moving the data

@@ -23,22 +23,22 @@ Hash with a ring (see [consistent-hashing](consistent-hashing.md)) is the common
 
 The single highest-leverage decision, and the hardest to change.
 
-A good key: has high cardinality, spreads writes evenly, and is present on the read path so most queries hit one shard. That last property is what people forget — a perfectly balanced key that is not in the query predicate turns every read into a scatter-gather across the fleet.
+A good key: has high cardinality, spreads writes evenly, and is present on the read path so most queries hit one shard. That last property is what people forget: a perfectly balanced key that is not in the query predicate turns every read into a scatter-gather across the fleet.
 
 Failure patterns:
 
 - **Monotonic key** (timestamp, auto-increment id). Perfectly ordered, perfectly hot: all writes go to the newest shard.
 - **Low cardinality** (country, plan tier). Cannot be spread past the number of distinct values, and the values are not equally sized.
-- **Key not in the query** — every read is a scatter-gather; p99 becomes the slowest shard's p99, and slow-shard risk multiplies by the fan-out.
-- **Composite key ordered wrongly** — `(day, user)` puts a day on one shard; `(user, day)` spreads users and keeps a user's history together.
+- **Key not in the query**: every read is a scatter-gather; p99 becomes the slowest shard's p99, and slow-shard risk multiplies by the fan-out.
+- **Composite key ordered wrongly**: `(day, user)` puts a day on one shard; `(user, day)` spreads users and keeps a user's history together.
 
 ## cross-shard-tx
 
 Once data spans shards, a single transaction spanning them costs a distributed commit.
 
-- **Two-phase commit** — atomic, and blocks: if the coordinator dies after prepare, participants hold locks until it returns. Acceptable at low volume, poor for anything on the request path.
-- **Saga** — a sequence of local transactions with compensating actions on failure. No locks, no atomicity: intermediate states are visible, and compensation is application logic that must itself be idempotent.
-- **Avoid it** — the answer most designs should reach. Choose the shard key so the transactional unit lives on one shard: an order and its lines, an account and its ledger entries. "One shard per transaction boundary" is a design constraint worth paying for.
+- **Two-phase commit**: atomic, and blocks: if the coordinator dies after prepare, participants hold locks until it returns. Acceptable at low volume, poor for anything on the request path.
+- **Saga**: a sequence of local transactions with compensating actions on failure. No locks, no atomicity: intermediate states are visible, and compensation is application logic that must itself be idempotent.
+- **Avoid it**: the answer most designs should reach. Choose the shard key so the transactional unit lives on one shard: an order and its lines, an account and its ledger entries. "One shard per transaction boundary" is a design constraint worth paying for.
 
 Cross-shard **reads** are cheaper but not free: scatter-gather makes tail latency the maximum of N shards, so p99 degrades as fan-out rises even when every shard is healthy.
 
@@ -56,9 +56,9 @@ A live resharding needs: dual writes to old and new placement, a backfill of his
 
 One shard takes disproportionate load. Diagnose the cause before reaching for a remedy, because they need different ones:
 
-- **Hot key** — one key is popular. No partitioning scheme helps, because every scheme maps it to one owner. Replicate the value (in-process cache, N suffixed copies).
-- **Hot range** — the key correlates with time or sequence, so the hot region moves but is always singular. Fix the key design (prefix, hash, or compound).
-- **Assignment skew** — keys and traffic are uniform, the ring simply divided the space badly. Virtual nodes fix this one, and only this one.
+- **Hot key**: one key is popular. No partitioning scheme helps, because every scheme maps it to one owner. Replicate the value (in-process cache, N suffixed copies).
+- **Hot range**: the key correlates with time or sequence, so the hot region moves but is always singular. Fix the key design (prefix, hash, or compound).
+- **Assignment skew**: keys and traffic are uniform, the ring simply divided the space badly. Virtual nodes fix this one, and only this one.
 
 ## replication-vs-sharding
 
@@ -81,6 +81,6 @@ Shards are replicated: each shard is a replica group. Answering "shard or replic
 
 ## Related
 
-- [consistent-hashing](consistent-hashing.md) — the placement function
-- [replication](replication.md) — the other axis
-- [cap-pacelc](cap-pacelc.md) — what a partition costs you
+- [consistent-hashing](consistent-hashing.md): the placement function
+- [replication](replication.md): the other axis
+- [cap-pacelc](cap-pacelc.md): what a partition costs you

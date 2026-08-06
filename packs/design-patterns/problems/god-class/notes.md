@@ -27,11 +27,11 @@ That last point is deliberate. **A strong answer asks what the refactor is for.*
 
 The class mixes at least five kinds of thing, and the split is not the interesting part:
 
-- **Validation** — pure, easy to extract, high test value per unit of effort.
-- **Pricing and discounts** — pure domain logic, changes weekly, and the actual prize.
-- **Payment** — an external boundary, wants an adapter behind an interface the domain owns.
-- **Persistence** — a repository behind an interface.
-- **Notification and analytics** — side effects that should leave the write path, probably as events.
+- **Validation**: pure, easy to extract, high test value per unit of effort.
+- **Pricing and discounts**: pure domain logic, changes weekly, and the actual prize.
+- **Payment**: an external boundary, wants an adapter behind an interface the domain owns.
+- **Persistence**: a repository behind an interface.
+- **Notification and analytics**: side effects that should leave the write path, probably as events.
 
 The shape they should converge on: extract the pure domain logic first, because it needs no test infrastructure and cannot break anything at the edges; then put interfaces in front of the external dependencies; then move side effects off the critical path.
 

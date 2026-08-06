@@ -44,10 +44,10 @@ Ring membership itself has to be agreed. Gossip converges eventually and can ser
 
 ## alternatives
 
-- **Rendezvous hashing (HRW)** — for each key compute `hash(key, node)` for every node and take the highest. Same minimal-disruption property, no ring to maintain, natural weighting, and trivially correct. Lookup is O(N) rather than O(log N), which is fine for tens of nodes and not for thousands.
-- **Jump consistent hash** — O(1) time, no memory, perfectly balanced. Only maps to buckets `0..N-1` and can only add or remove at the *end*, so it cannot express arbitrary node removal. Ideal for a shard count you only ever grow.
-- **Maglev hashing** — a lookup table giving O(1) lookups with near-perfect balance and low disruption; designed for load balancers, where lookups massively outnumber membership changes.
-- **Fixed logical shards** — pre-split into 1024 shards and map shards to nodes with an explicit table. Not a hash at all: rebalancing is moving whole shards, placement is deliberate, and the table is the source of truth. Frequently the most operable answer.
+- **Rendezvous hashing (HRW)**: for each key compute `hash(key, node)` for every node and take the highest. Same minimal-disruption property, no ring to maintain, natural weighting, and trivially correct. Lookup is O(N) rather than O(log N), which is fine for tens of nodes and not for thousands.
+- **Jump consistent hash**: O(1) time, no memory, perfectly balanced. Only maps to buckets `0..N-1` and can only add or remove at the *end*, so it cannot express arbitrary node removal. Ideal for a shard count you only ever grow.
+- **Maglev hashing**: a lookup table giving O(1) lookups with near-perfect balance and low disruption; designed for load balancers, where lookups massively outnumber membership changes.
+- **Fixed logical shards**: pre-split into 1024 shards and map shards to nodes with an explicit table. Not a hash at all: rebalancing is moving whole shards, placement is deliberate, and the table is the source of truth. Frequently the most operable answer.
 
 ## hot-key
 
@@ -71,6 +71,6 @@ Distinguish the three imbalances, because only the third is a hashing problem at
 
 ## Related
 
-- [sharding](sharding.md) — what the ring is placing
-- [caching](caching.md) — the classic use, and where hot keys live
-- [load-balancing](load-balancing.md) — sticky routing to stateful backends
+- [sharding](sharding.md): what the ring is placing
+- [caching](caching.md): the classic use, and where hot keys live
+- [load-balancing](load-balancing.md): sticky routing to stateful backends

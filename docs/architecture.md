@@ -35,7 +35,7 @@ Support a new harness by symlinking, never by copying. Two copies of a protocol 
 
 The agent never reads pack files. That is the design decision that keeps a session cheap.
 
-`./study plan 25m` returns a session: the calibration brief, the blocks in order, and the twelve questions already drawn, filtered by level, and interleaved. A few kilobytes. The alternative — reading a manifest, three cards and four question banks, then choosing — is a hundred times that, and worse, it re-derives selection logic every time.
+`./study plan 25m` returns a session: the calibration brief, the blocks in order, and the twelve questions already drawn, filtered by level, and interleaved. A few kilobytes. The alternative (reading a manifest, three cards and four question banks, then choosing) is a hundred times that, and worse, it re-derives selection logic every time.
 
 The same principle runs through the rest of the surface:
 
@@ -59,7 +59,7 @@ data/ledger ───┤                                              │
 
 `ledger.jsonl` is the only source of truth. It is append-only and never edited. `state.json` and `metrics.json` are pure functions of it plus the pack taxonomy, rebuilt on every `record`, and deleting them loses nothing.
 
-That property is worth protecting. It means a scheduling change is retroactive — fix the interval function, run `./study rebuild`, and every due date is recomputed from the same history. If state were mutated in place, a bug in the scheduler would be baked into the data.
+That property is worth protecting. It means a scheduling change is retroactive: fix the interval function, run `./study rebuild`, and every due date is recomputed from the same history. If state were mutated in place, a bug in the scheduler would be baked into the data.
 
 ## Modules
 
@@ -91,21 +91,21 @@ The scoring model has rules that were previously guidance and were violated anyw
 
 ## Why not a database
 
-The ledger is a few hundred lines of JSONL after a year of daily use. It is greppable, diffable, and trivially portable. A database would add a dependency, a schema migration story, and a file you cannot read — in exchange for query performance nobody needs at this scale.
+The ledger is a few hundred lines of JSONL after a year of daily use. It is greppable, diffable, and trivially portable. A database would add a dependency, a schema migration story, and a file you cannot read, in exchange for query performance nobody needs at this scale.
 
 The same reasoning applies to packs in TOML rather than in a content service, and to a generated HTML file rather than a dashboard server.
 
 ## Extending it
 
-**A new pack** — see [authoring-packs.md](authoring-packs.md). No code changes.
+**A new pack.** See [authoring-packs.md](authoring-packs.md). No code changes.
 
-**A new session type** — a skill in `.agents/skills/`, plus a session name in `ledger.SESSIONS` if it should be distinguishable in reports.
+**A new session type.** A skill in `.agents/skills/`, plus a session name in `ledger.SESSIONS` if it should be distinguishable in reports.
 
-**A new technique block** — add it to `TECHNIQUES` in `select.py` with its cost, then give it a trigger in `_targeted_blocks`. The trigger is the interesting part: a block that fires on preference rather than on a diagnosis is just a menu item.
+**A new technique block.** Add it to `TECHNIQUES` in `select.py` with its cost, then give it a trigger in `_targeted_blocks`. The trigger is the interesting part: a block that fires on preference rather than on a diagnosis is just a menu item.
 
-**A different interval function** — `next_interval` in `schedule.py` is pure and tested. Change it and run `./study rebuild`; history is recomputed rather than migrated.
+**A different interval function.** `next_interval` in `schedule.py` is pure and tested. Change it and run `./study rebuild`; history is recomputed rather than migrated.
 
-**A different dashboard** — `metrics.json` is a stable public artefact. Read it with anything.
+**A different dashboard.** `metrics.json` is a stable public artefact. Read it with anything.
 
 ## Tests
 

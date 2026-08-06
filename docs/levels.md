@@ -8,7 +8,7 @@ One setting, three effects.
 
 **1. Which questions you are asked.** Every question declares the levels it suits. `./study questions` and `./study plan` only draw from questions that include yours.
 
-**2. Which topics and problems are in scope.** A topic declares its levels too. `consistency-models` starts at senior; `multi-region-checkout` starts at lead. Out-of-scope topics do not appear in your queue, are not counted in your coverage percentage, and are not reported as gaps — so a graduate is not told they have 84 unmeasured facets, most of which they should not be studying yet.
+**2. Which topics and problems are in scope.** A topic declares its levels too. `consistency-models` starts at senior; `multi-region-checkout` starts at lead. Out-of-scope topics do not appear in your queue, are not counted in your coverage percentage, and are not reported as gaps, so a graduate is not told they have 84 unmeasured facets, most of which they should not be studying yet.
 
 **3. The bar you are judged against.** Each pack declares a **calibration brief** per level: the bar an answer must clear, what to assume the person already knows, what to push on, and what not to demand. `./study plan` returns it, and the skills instruct the agent to apply it.
 
@@ -38,7 +38,7 @@ Each brief also carries `assume`, `push_on` and `avoid`. The `avoid` field is th
 ./study config set level lead
 ```
 
-Takes effect immediately — state and metrics are rebuilt on the spot. Your ledger is untouched, so nothing is lost and nothing is re-scored. Rows record the level they were taken at, so history stays interpretable after a change.
+Takes effect immediately: state and metrics are rebuilt on the spot. Your ledger is untouched, so nothing is lost and nothing is re-scored. Rows record the level they were taken at, so history stays interpretable after a change.
 
 Two things to expect when you move up:
 

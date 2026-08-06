@@ -6,8 +6,8 @@
 
 ## authn-authz
 
-- **Authentication** — who are you? Establishing identity.
-- **Authorisation** — what may you do? Checking permission.
+- **Authentication**: who are you? Establishing identity.
+- **Authorisation**: what may you do? Checking permission.
 
 They fail differently and the second is where most bugs live. A system with perfect login and no permission check is wide open to anyone who registers.
 
@@ -21,11 +21,11 @@ Sessions: an opaque session id in an `HttpOnly; Secure; SameSite` cookie, or a s
 
 Untrusted input interpreted as code. The same shape recurs in every context:
 
-- **SQL injection** — input concatenated into a query. Fixed **only** by parameterised queries, which send code and data on separate channels. Escaping by hand is a losing game, and an ORM is not automatically safe when you hand it a raw string.
-- **Command injection** — input passed to a shell. Pass an argument array to exec rather than building a command line.
-- **XSS** — input rendered into HTML and executed by the browser. Fixed by context-aware output encoding; a modern template engine does this by default and disabling it "just here" is how it gets in. `HttpOnly` cookies and a Content Security Policy limit the damage.
-- **Path traversal** — input used in a file path, so `../../etc/passwd` escapes the directory. Resolve the path and check it is still inside the permitted root.
-- **Deserialisation** — untrusted bytes turned into objects, which in some languages executes code. Never deserialise untrusted input into arbitrary types.
+- **SQL injection**: input concatenated into a query. Fixed **only** by parameterised queries, which send code and data on separate channels. Escaping by hand is a losing game, and an ORM is not automatically safe when you hand it a raw string.
+- **Command injection**: input passed to a shell. Pass an argument array to exec rather than building a command line.
+- **XSS**: input rendered into HTML and executed by the browser. Fixed by context-aware output encoding; a modern template engine does this by default and disabling it "just here" is how it gets in. `HttpOnly` cookies and a Content Security Policy limit the damage.
+- **Path traversal**: input used in a file path, so `../../etc/passwd` escapes the directory. Resolve the path and check it is still inside the permitted root.
+- **Deserialisation**: untrusted bytes turned into objects, which in some languages executes code. Never deserialise untrusted input into arbitrary types.
 
 The single principle: **never build an instruction by concatenating a string with untrusted data.** Use the mechanism that separates code from data. Validation is a useful second layer and a poor first one, because a filter you wrote is competing against every encoding trick in existence.
 
@@ -63,10 +63,10 @@ The related habit: **least privilege** everywhere. An application that only read
 
 Two more that belong in the basic set:
 
-- **CSRF** — a malicious site causes the user's browser to make an authenticated request to yours. Mitigated by `SameSite` cookies and anti-forgery tokens on state-changing requests.
-- **Dependencies** — most of your code is someone else's. Automated dependency scanning and prompt patching addresses a genuinely common breach path.
+- **CSRF**: a malicious site causes the user's browser to make an authenticated request to yours. Mitigated by `SameSite` cookies and anti-forgery tokens on state-changing requests.
+- **Dependencies**: most of your code is someone else's. Automated dependency scanning and prompt patching addresses a genuinely common breach path.
 
 ## Related
 
-- [http-and-web](http-and-web.md) — cookies, CORS and the same-origin policy
-- [errors-and-logging](errors-and-logging.md) — logs are a leak path
+- [http-and-web](http-and-web.md): cookies, CORS and the same-origin policy
+- [errors-and-logging](errors-and-logging.md): logs are a leak path

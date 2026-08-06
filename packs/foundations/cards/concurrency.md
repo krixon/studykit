@@ -34,9 +34,9 @@ The practical prevention is **lock ordering**: if every thread acquires locks in
 
 Related failures worth naming separately:
 
-- **Livelock** — threads keep changing state in response to each other and no work completes. Everything is running and nothing progresses.
-- **Starvation** — a thread never gets the lock because others keep taking it. Fair locks fix it at a throughput cost.
-- **Priority inversion** — a low-priority thread holds a lock a high-priority thread needs.
+- **Livelock**: threads keep changing state in response to each other and no work completes. Everything is running and nothing progresses.
+- **Starvation**: a thread never gets the lock because others keep taking it. Fair locks fix it at a throughput cost.
+- **Priority inversion**: a low-priority thread holds a lock a high-priority thread needs.
 
 Deadlocks are frequently absent in testing and present in production, because they need an interleaving that only load produces.
 
@@ -58,9 +58,9 @@ Use async for I/O-bound work, threads or processes for CPU-bound work, and be cl
 
 "Atomic" means indivisible: no observer sees a partial state.
 
-- **Hardware atomics** — compare-and-swap on a single word, the primitive every lock is built from.
-- **Database transactions** — atomicity across many rows. See [sql-and-indexes](sql-and-indexes.md).
-- **Filesystem atomic rename** — write to a temp file, then rename over the target. Rename within a filesystem is atomic, so a reader sees either the old file or the new one, never a half-written one. This is the standard way to update a config or data file safely, and it is worth knowing because it needs no locks at all.
+- **Hardware atomics**: compare-and-swap on a single word, the primitive every lock is built from.
+- **Database transactions**: atomicity across many rows. See [sql-and-indexes](sql-and-indexes.md).
+- **Filesystem atomic rename**: write to a temp file, then rename over the target. Rename within a filesystem is atomic, so a reader sees either the old file or the new one, never a half-written one. This is the standard way to update a config or data file safely, and it is worth knowing because it needs no locks at all.
 
 What is **not** atomic and is often assumed to be: reading a 64-bit value on a 32-bit platform, appending to a shared list, checking a condition and then acting on it (`if not exists: create` is a race), and any sequence of two atomic operations.
 
@@ -72,5 +72,5 @@ What is **not** atomic and is often assumed to be: reading a 64-bit value on a 3
 
 ## Related
 
-- [processes-and-os](processes-and-os.md) — what a process actually is
-- [sql-and-indexes](sql-and-indexes.md) — transactions are concurrency control for data
+- [processes-and-os](processes-and-os.md): what a process actually is
+- [sql-and-indexes](sql-and-indexes.md): transactions are concurrency control for data

@@ -21,9 +21,9 @@ Three tools that make history pay off: `git log -p <file>` (how this file got th
 
 A branch is a movable pointer to a commit. It is not a copy of anything, which is why creating one is instant.
 
-- **Trunk-based** — short-lived branches merged into main within a day or two, features hidden behind flags. Fewer conflicts, continuous integration in the literal sense, and requires the discipline to keep main releasable.
-- **Long-lived feature branches** — isolated work, and divergence grows with time. A branch alive for three weeks is three weeks of conflicts arriving at once.
-- **Release branches** — a stabilisation line for a version, with fixes cherry-picked. Necessary when you support released versions, overhead when you deploy continuously.
+- **Trunk-based**: short-lived branches merged into main within a day or two, features hidden behind flags. Fewer conflicts, continuous integration in the literal sense, and requires the discipline to keep main releasable.
+- **Long-lived feature branches**: isolated work, and divergence grows with time. A branch alive for three weeks is three weeks of conflicts arriving at once.
+- **Release branches**: a stabilisation line for a version, with fixes cherry-picked. Necessary when you support released versions, overhead when you deploy continuously.
 
 The general rule: **merge frequency beats merge strategy**. Most painful merges are a scheduling problem wearing a tooling costume.
 
@@ -49,12 +49,12 @@ If a merge or rebase is going badly, `git merge --abort` or `git rebase --abort`
 
 ## finding-bugs
 
-- **`git bisect`** — binary search over history. Mark a known-good and a known-bad commit and Git checks out the midpoint; you say good or bad and it converges in log₂(n) steps. A thousand commits takes ten tests. With a script that exits non-zero on the bug, `git bisect run` does it unattended. This is the highest-leverage Git command most people never use, and it only works if commits are individually buildable.
-- **`git revert`** — creates a new commit undoing an old one. Safe on shared history, unlike `reset`, which rewrites it.
-- **`git reflog`** — every position HEAD has held, including ones no branch points at any more. This is how you recover from a bad reset or a deleted branch, and it is why almost nothing in Git is truly lost for the first 90 days.
-- **`git stash`** — park uncommitted work. Useful, and easy to forget about; a stash is not a branch and nobody reviews it.
+- **`git bisect`**: binary search over history. Mark a known-good and a known-bad commit and Git checks out the midpoint; you say good or bad and it converges in log₂(n) steps. A thousand commits takes ten tests. With a script that exits non-zero on the bug, `git bisect run` does it unattended. This is the highest-leverage Git command most people never use, and it only works if commits are individually buildable.
+- **`git revert`**: creates a new commit undoing an old one. Safe on shared history, unlike `reset`, which rewrites it.
+- **`git reflog`**: every position HEAD has held, including ones no branch points at any more. This is how you recover from a bad reset or a deleted branch, and it is why almost nothing in Git is truly lost for the first 90 days.
+- **`git stash`**: park uncommitted work. Useful, and easy to forget about; a stash is not a branch and nobody reviews it.
 
 ## Related
 
-- [testing](testing.md) — bisect is only as good as the test that defines "bad"
-- [errors-and-logging](errors-and-logging.md) — a commit message is a log entry for humans
+- [testing](testing.md): bisect is only as good as the test that defines "bad"
+- [errors-and-logging](errors-and-logging.md): a commit message is a log entry for humans
