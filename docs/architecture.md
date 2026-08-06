@@ -74,6 +74,7 @@ That property is worth protecting. It means a scheduling change is retroactive �
 | `report.py` | terminal rendering. Reads only |
 | `dashboard.py` | self-contained HTML |
 | `tomlwrite.py` | just enough TOML writing to append a banked question |
+| `sync.py` | backing the data directory up to its own git remote |
 | `cli.py` | argument parsing and command handlers |
 
 Dependencies run one way: `cli` → everything, `select` → `schedule` + `packs` + `ledger`, `schedule` → `ledger` + `packs`, `config` → nothing. No module imports `cli`.

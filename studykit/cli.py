@@ -20,7 +20,7 @@ from pathlib import Path
 
 from . import dashboard as dashboard_mod
 from . import metrics as metrics_mod
-from . import report, select, tomlwrite
+from . import report, select, sync as sync_mod, tomlwrite
 from .config import (
     LEVEL_TITLES,
     LEVELS,
@@ -226,6 +226,11 @@ def cmd_setup(args) -> int:
         budget=budget,
         mode=mode,
         confidence_prompt=not args.no_confidence,
+        # Setup is about the study profile. It must not silently unhook a
+        # configured backup.
+        sync_remote=(existing.sync_remote if existing else ""),
+        sync_branch=(existing.sync_branch if existing else "main"),
+        sync_auto=(existing.sync_auto if existing else False),
         created=(existing.created if existing else today()),
     )
     profile.save()
@@ -591,6 +596,9 @@ def cmd_record(args) -> int:
         "coverage_pct": metrics["summary"]["coverage_pct"],
         "calibration_error": metrics["summary"]["calibration_error"],
     }
+    synced = sync_mod.auto(profile)
+    if synced is not None:
+        result["sync"] = synced
     if args.json:
         emit(result)
     else:
@@ -601,7 +609,14 @@ def cmd_record(args) -> int:
                 f"  {change['item']:<44} {was}{change['strength']}   "
                 f"reps {change['reps']}  next {change['due']} (+{change['interval']}d)"
             )
+    _warn_if_sync_failed(synced)
     return 0
+
+
+def _warn_if_sync_failed(synced: dict | None) -> None:
+    """Never fail a session over the network. Say so and move on."""
+    if synced is not None and not synced.get("ok"):
+        print(f"warning: sync failed ({synced['error']}). Run `./study sync` later.", file=sys.stderr)
 
 
 def _next_ids(pack, prefix: str, count: int) -> list[str]:
@@ -689,7 +704,12 @@ def cmd_bank_add(args) -> int:
 
     # Re-load so a malformed append is caught here rather than next session.
     load_library(profile.packs or None)
-    emit({"ok": True, "banked": len(written), "questions": written})
+    payload_out = {"ok": True, "banked": len(written), "questions": written}
+    synced = sync_mod.auto(profile) if not args.into_pack else None
+    if synced is not None:
+        payload_out["sync"] = synced
+    emit(payload_out)
+    _warn_if_sync_failed(synced)
     return 0
 
 
@@ -736,6 +756,9 @@ def cmd_config(args) -> int:
             "budget": profile.budget,
             "mode": profile.mode,
             "confidence_prompt": profile.confidence_prompt,
+            "sync_remote": profile.sync_remote,
+            "sync_branch": profile.sync_branch,
+            "sync_auto": profile.sync_auto,
             "data_dir": str(data_dir()),
             "packs_dir": str(packs_dir()),
         }
@@ -767,6 +790,17 @@ def cmd_config(args) -> int:
         profile.mode = value
     elif key == "confidence_prompt":
         profile.confidence_prompt = value.lower() in ("1", "true", "yes", "on")
+    elif key == "sync_remote":
+        profile.sync_remote = value
+    elif key == "sync_branch":
+        profile.sync_branch = value
+    elif key == "sync_auto":
+        profile.sync_auto = value.lower() in ("1", "true", "yes", "on")
+        if profile.sync_auto and not profile.sync_remote:
+            raise StudykitError(
+                "Set a remote before turning auto-sync on: "
+                "`./study sync init git@github.com:you/studykit-data.git`."
+            )
     else:
         raise StudykitError(f"Cannot set {key!r}.")
     profile.save()
@@ -774,6 +808,74 @@ def cmd_config(args) -> int:
     rebuild(profile, library, today())
     print(f"{key} = {value}")
     return 0
+
+
+def cmd_sync(args) -> int:
+    profile = Profile.load()
+    action = getattr(args, "sync_action", None)
+
+    if action == "init":
+        result = sync_mod.init(profile, args.remote, args.branch or "", auto=args.auto)
+        if args.json:
+            emit(result)
+        else:
+            print(f"Data directory {data_dir()} now backs up to {result['remote']} ({result['branch']}).")
+            if profile.sync_auto:
+                print("  auto-sync on: every recorded session pushes.")
+            else:
+                print("  auto-sync off. Turn it on with `./study config set sync_auto true`.")
+        return 0
+
+    if action == "status":
+        payload = sync_mod.status(profile)
+        if args.json:
+            emit(payload)
+        else:
+            if not payload["configured"]:
+                print("Sync is off. `./study sync init <git-remote>` to turn it on.")
+                return 0
+            print(f"  remote      {payload['remote']}")
+            print(f"  branch      {payload['branch']}")
+            print(f"  auto        {'on' if payload['auto'] else 'off'}")
+            print(f"  data        {payload['data_dir']}")
+            if not payload["repo"]:
+                print("  state       not a git repository yet - run `./study sync init`")
+            else:
+                pending = len(payload["uncommitted"])
+                unpushed = payload["unpushed"]
+                print(f"  uncommitted {pending}")
+                print(f"  unpushed    {'unknown' if unpushed is None else unpushed}")
+        return 0
+
+    result = sync_mod.push(profile, message=args.message or "")
+    if args.json:
+        emit(result)
+    elif result.get("note"):
+        print(result["note"])
+    else:
+        print(f"Pushed {result['files']} changed file(s) to {profile.sync_remote}.")
+    return 0
+
+
+def _sync_problems(profile: Profile, notes: list[str]) -> list[str]:
+    """An unbacked-up ledger is the one loss the tool cannot recover from."""
+    if not sync_mod.configured(profile):
+        notes.append("sync: off - the ledger exists only on this machine")
+        return []
+    payload = sync_mod.status(profile)
+    if not payload["repo"]:
+        return [f"sync: {payload['remote']} is configured but {payload['data_dir']} is not a git repository"]
+    unpushed = payload["unpushed"]
+    if unpushed is None:
+        notes.append(f"sync: {payload['remote']} configured, remote branch not fetched yet")
+    elif unpushed or payload["uncommitted"]:
+        notes.append(
+            f"sync: {unpushed} commit(s) and {len(payload['uncommitted'])} change(s) "
+            "not pushed - run `./study sync`"
+        )
+    else:
+        notes.append(f"sync: up to date with {payload['remote']}")
+    return []
 
 
 def cmd_doctor(args) -> int:
@@ -820,6 +922,7 @@ def cmd_doctor(args) -> int:
                 problems.append(f"ledger: {exc}")
         notes.append(f"profile: level {profile.level}, packs {', '.join(profile.packs) or 'all'}")
         notes.append(f"ledger: {len(rows)} rows")
+        problems.extend(_sync_problems(profile, notes))
     except ProfileMissing:
         notes.append("no profile yet - run `./study setup`")
 
@@ -980,6 +1083,18 @@ def build_parser() -> argparse.ArgumentParser:
     config_set.add_argument("key")
     config_set.add_argument("value")
     config_set.set_defaults(func=cmd_config, action="set")
+
+    sync_cmd = subparsers.add_parser("sync", help="Back the data directory up to a private git remote.")
+    sync_cmd.add_argument("-m", "--message", help="Commit message. Defaults to a row count.")
+    sync_cmd.set_defaults(func=cmd_sync, sync_action=None)
+    sync_sub = sync_cmd.add_subparsers(dest="sync_action")
+    sync_init = sync_sub.add_parser("init", help="Point the data directory at a git remote and push it.")
+    sync_init.add_argument("remote", help="e.g. git@github.com:you/studykit-data.git")
+    sync_init.add_argument("--branch", help="Default main.")
+    sync_init.add_argument("--auto", action="store_true", help="Also push after every recorded session.")
+    sync_init.set_defaults(func=cmd_sync, sync_action="init", message=None)
+    sync_status = sync_sub.add_parser("status", help="Remote, branch, and anything not yet pushed.")
+    sync_status.set_defaults(func=cmd_sync, sync_action="status", message=None)
 
     doctor = subparsers.add_parser("doctor", help="Validate packs and data.")
     doctor.add_argument("--verbose", "-v", action="store_true")

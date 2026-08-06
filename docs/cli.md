@@ -48,9 +48,21 @@ Options: `--level`, `--packs`, `--budget`, `--mode`, `--no-confidence`, `--non-i
 ./study config set budget 45m
 ./study config set mode interview
 ./study config set confidence_prompt false
+./study config set sync_auto true
 ```
 
 Rebuilds state and metrics on any change.
+
+| Key | Effect |
+|---|---|
+| `level` | the interviewer bar, and which questions are in scope |
+| `packs` | comma-separated, what is in rotation |
+| `budget` | default session length |
+| `mode` | `coaching` or `interview` |
+| `confidence_prompt` | whether to ask for a pre-answer confidence |
+| `sync_remote` | git remote backing up the data directory. Set it with `sync init` |
+| `sync_branch` | branch on that remote. Default `main` |
+| `sync_auto` | push after every session that writes. Needs a remote first |
 
 ---
 
@@ -204,6 +216,30 @@ Writes a self-contained HTML page — inline CSS, inline SVG, no network request
 ---
 
 ## Maintenance
+
+### `sync`
+
+Backs the data directory up to a git remote of your own. The tool repo and the data repo are separate: `studykit` can be public while your ledger is not.
+
+```
+./study sync init git@github.com:you/studykit-data.git
+./study sync init git@github.com:you/studykit-data.git --auto
+./study sync                          # commit what changed, push
+./study sync -m "after the Friday session"
+./study sync status
+```
+
+`init` makes the data directory its own git repository, points it at the remote, writes a `.gitignore` for the derived files, and pushes. It refuses when the remote already has history — clone that into your data directory instead:
+
+```
+rm -rf data && git clone git@github.com:you/studykit-data.git data
+```
+
+Only the source of truth is tracked: `ledger.jsonl`, `profile.json`, `bank/` and `attempts/`. `state.json`, `metrics.json` and `dashboard.html` are rebuilt on every write, so committing them would produce a diff on every command and a conflict on every second machine.
+
+With `sync_auto` on, every `record` and `bank add` pushes. A failed push never fails the session — the measurement is already on disk, and a warning tells you to run `./study sync` later.
+
+`doctor` reports whether anything is unpushed, and flags a configured remote whose data directory is not a repository.
 
 ### `test`
 

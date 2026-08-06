@@ -122,6 +122,10 @@ class Profile:
     budget: str = "25m"
     mode: str = "coaching"
     confidence_prompt: bool = True
+    #: Where the data directory is backed up to. Empty means sync is off.
+    sync_remote: str = ""
+    sync_branch: str = "main"
+    sync_auto: bool = False
     created: str = ""
     schema: int = SCHEMA
 
@@ -146,6 +150,9 @@ class Profile:
             "budget": self.budget,
             "mode": self.mode,
             "confidence_prompt": self.confidence_prompt,
+            "sync_remote": self.sync_remote,
+            "sync_branch": self.sync_branch,
+            "sync_auto": self.sync_auto,
             "created": self.created or today(),
         }
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

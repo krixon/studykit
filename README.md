@@ -85,9 +85,19 @@ data/attempts/         your problem attempts
 data/dashboard.html    generated charts
 ```
 
-Nothing leaves your machine. The ledger is the only source of truth; `state.json` and `metrics.json` are rebuilt from it on every `record`, so they can always be deleted and regenerated.
+Nothing leaves your machine unless you ask it to. The ledger is the only source of truth; `state.json` and `metrics.json` are rebuilt from it on every `record`, so they can always be deleted and regenerated.
 
 Point `STUDYKIT_DATA` somewhere else to keep it out of the repo entirely, or to run more than one profile.
+
+### Backing it up
+
+The ledger is the one thing here that cannot be regenerated. Give it a private repository of its own:
+
+```
+./study sync init git@github.com:you/studykit-data.git --auto
+```
+
+That makes `data/` its own git repository, separate from this one, and pushes after every session that writes. `./study sync` does it by hand; `./study sync status` says what is outstanding. Derived files stay untracked. On a second machine, clone the data repo into `data/` and carry on.
 
 ## Commands
 
@@ -102,6 +112,7 @@ Point `STUDYKIT_DATA` somewhere else to keep it out of the repo entirely, or to 
 ./study record --json-text '...'  append measurements, rebuild everything
 ./study dashboard --open          self-contained HTML charts
 ./study packs                     what content exists, how covered it is
+./study sync                      push your data to its private repo
 ./study doctor                    validate packs and data
 ./study test                      run the test suite with Python 3.12+
 ```
