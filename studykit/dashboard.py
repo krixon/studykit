@@ -88,7 +88,7 @@ def chart_progress(progress: list[dict]) -> str:
     if len(points) < 2:
         return _empty("Two sessions of history and this fills in.")
 
-    width, height = 720, 260
+    width, height = 980, 300
     x0, x1 = PAD_L, width - PAD_R - 46
     y0, y1 = PAD_T, height - PAD_B
     n = len(points)
@@ -174,7 +174,7 @@ def chart_distribution(distribution: dict[str, int]) -> str:
     total = sum(distribution.values())
     if not total:
         return _empty("No facets measured yet.")
-    width, height = 340, 210
+    width, height = 620, 240
     x0, x1 = PAD_L, width - PAD_R
     y0, y1 = PAD_T, height - PAD_B
     peak = max(distribution.values()) or 1
@@ -206,7 +206,7 @@ def chart_distribution(distribution: dict[str, int]) -> str:
 def chart_calibration(series: list[dict]) -> str:
     if not series:
         return _empty("No confidence ratings captured. They are optional, and only feed this chart.")
-    width, height = 340, 210
+    width, height = 620, 240
     x0, x1 = PAD_L, width - PAD_R
     y0, y1 = PAD_T, height - PAD_B
     span = max(1.0, max(abs(p["error"]) for p in series if p["error"] is not None))
@@ -242,11 +242,20 @@ def chart_calibration(series: list[dict]) -> str:
 # --------------------------------------------------------------------------- #
 
 
-def table(headers: list[str], rows: list[list[str]], *, empty: str) -> str:
+def table(
+    headers: list[str], rows: list[list[str]], *, empty: str, wrap_columns: tuple[int, ...] = ()
+) -> str:
+    """Columns in `wrap_columns` wrap instead of scrolling off the edge."""
     if not rows:
         return _empty(empty)
     head = "".join(f"<th>{esc(h)}</th>" for h in headers)
-    body = "".join("<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>" for row in rows)
+    body = ""
+    for row in rows:
+        cells = "".join(
+            f'<td class="wrapcell">{cell}</td>' if index in wrap_columns else f"<td>{cell}</td>"
+            for index, cell in enumerate(row)
+        )
+        body += f"<tr>{cells}</tr>"
     return f'<div class="scroll"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>'
 
 
@@ -345,10 +354,11 @@ def render(state: dict, metrics: dict, recommendation: dict) -> str:
     gaps_table = table(
         ["topic", "unmeasured", "facets"],
         [
-            [esc(gap["topic"]), f"{len(gap['missing'])}/{gap['total']}", esc(" ".join(gap["missing"][:6]))]
+            [esc(gap["topic"]), f"{len(gap['missing'])}/{gap['total']}", esc(" · ".join(gap["missing"]))]
             for gap in gaps[:15]
         ],
         empty="Every facet in scope has been measured at least once.",
+        wrap_columns=(2,),
     )
 
     weakest_table = table(
@@ -475,7 +485,7 @@ body {
   background: var(--page); color: var(--ink);
   font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-.wrap { max-width: 1080px; margin: 0 auto; }
+.wrap { max-width: 1560px; margin: 0 auto; }
 header { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: baseline; margin-bottom: 6px; }
 h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
 h2 { font-size: 14px; margin: 0 0 12px; color: var(--ink-2); font-weight: 600;
@@ -507,7 +517,9 @@ section { background: var(--surface); border: 1px solid var(--border); border-ra
           padding: 18px 20px 20px; margin-top: 18px; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 18px; }
 .grid2 section { margin-top: 0; }
-svg { width: 100%; height: auto; display: block; overflow: visible; }
+/* Charts stop growing past their natural size; the extra width goes to the tables,
+   which is where it is actually useful. */
+svg { width: 100%; max-width: 980px; height: auto; display: block; overflow: visible; }
 
 .grid { stroke: var(--grid); stroke-width: 1; }
 .axis { stroke: var(--axis); stroke-width: 1; }
@@ -542,6 +554,8 @@ th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacin
 td { padding: 7px 12px 7px 0; border-top: 1px solid var(--grid); color: var(--ink-2);
      white-space: nowrap; font-variant-numeric: tabular-nums; }
 td:nth-child(2) { color: var(--ink); }
+/* A list of facet names is prose, not a value: let it wrap rather than clip. */
+td.wrapcell { white-space: normal; min-width: 22ch; font-variant-numeric: normal; }
 .chip { display: inline-block; min-width: 22px; text-align: center; border-radius: 5px;
         padding: 1px 6px; font-size: 12px; font-weight: 600; color: #fff; }
 .chip.low { background: var(--crit); }
