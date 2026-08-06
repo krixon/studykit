@@ -138,6 +138,8 @@ Python 3.12 or newer, and a POSIX shell. That is the whole list. If `python3` on
 
 Tests: `./study test --verbose`
 
+Working on it? `git config core.hooksPath .githooks` runs the tests and `doctor` before every push. `git push --no-verify` skips them once.
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
