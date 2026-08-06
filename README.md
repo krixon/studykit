@@ -9,7 +9,7 @@ git clone <this repo> && cd studykit
 ./study setup
 ```
 
-Then say **`study 25m`** to Claude Code (or any agent that reads `.claude/skills/`).
+Then say **`study 25m`** to your coding agent. Claude Code and Codex both work out of the box; so does anything else that reads `AGENTS.md`.
 
 No dependencies, no install, no virtualenv, no account. Python 3.12+ and a shell.
 

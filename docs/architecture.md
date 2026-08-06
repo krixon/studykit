@@ -8,13 +8,28 @@ Three parts, with a deliberate line between them.
 |---|---|---|
 | **Engine** | scheduling, scoring, selection, metrics | `studykit/`, pure Python stdlib |
 | **Content** | topics, cards, questions, problems | `packs/`, TOML and markdown |
-| **Teaching** | asking, judging, explaining | `.claude/skills/`, run by an agent |
+| **Teaching** | asking, judging, explaining | `.agents/skills/`, run by an agent |
 
 The line matters because each part fails differently. Deterministic logic that drifts between sessions is a bug you cannot see; content that lives in code cannot be shared; and judging an answer is not something you can write a function for.
 
 **Anything that must be identical every time is code.** Interval arithmetic, queue order, question selection, coverage, metrics. If the scheduler were a paragraph of instructions to a model, two identical sessions would produce different due dates and nobody would notice.
 
 **Anything requiring judgement is the agent.** Whether an answer named the tradeoff, whether a worked example landed, what the gap actually was.
+
+## Agent harnesses
+
+One copy of every instruction, symlinked into the places each harness looks:
+
+```
+AGENTS.md             the instructions
+CLAUDE.md         ->  AGENTS.md
+.agents/skills/       the session protocols, one directory per skill
+.claude/skills/   ->  ../.agents/skills
+```
+
+`.agents/` is Codex's repo-level convention and `AGENTS.md` is read by most agents; Claude Code wants `CLAUDE.md` and `.claude/skills/`, and follows both symlinks. `AGENTS.md` names the skills by path, so a harness that does not auto-discover them still finds them.
+
+Support a new harness by symlinking, never by copying. Two copies of a protocol drift, and the copy that drifts is the one nobody is reading.
 
 ## Token efficiency
 
@@ -83,7 +98,7 @@ The same reasoning applies to packs in TOML rather than in a content service, an
 
 **A new pack** — see [authoring-packs.md](authoring-packs.md). No code changes.
 
-**A new session type** — a skill in `.claude/skills/`, plus a session name in `ledger.SESSIONS` if it should be distinguishable in reports.
+**A new session type** — a skill in `.agents/skills/`, plus a session name in `ledger.SESSIONS` if it should be distinguishable in reports.
 
 **A new technique block** — add it to `TECHNIQUES` in `select.py` with its cost, then give it a trigger in `_targeted_blocks`. The trigger is the interesting part: a block that fires on preference rather than on a diagnosis is just a menu item.
 
