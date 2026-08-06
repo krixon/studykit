@@ -450,7 +450,7 @@ def compose(
     targeted: list[dict] = []
     max_targeted = 1 if minutes < 30 else 2 if minutes < 60 else 3
     allowance = max(budget - QUIZ_FLOOR, 0)
-    for block in _targeted_blocks(library, rows, level, queue, budget, as_of):
+    for block in _targeted_blocks(library, rows, level, queue):
         if len(targeted) >= max_targeted or block["minutes"] > allowance:
             continue
         targeted.append(block)
@@ -489,7 +489,7 @@ def compose(
     # A long budget can outrun the queue and the problem bank. Say so rather than
     # silently planning 78 minutes of a half day and calling it a session.
     notes: list[str] = []
-    if budget >= 20:
+    if budget >= 20 and not any(b["type"] == "card-writing" for b in blocks):
         weakest = _weakest(queue) or (queue[0] if queue else None)
         if weakest is not None:
             cost = min(budget, TECHNIQUE_BY_NAME["card-writing"]["minutes"])
@@ -545,12 +545,7 @@ def compose(
 
 
 def _targeted_blocks(
-    library: Library,
-    rows: list[Row],
-    level: str,
-    queue: list[QueueEntry],
-    budget: int,
-    as_of: str,
+    library: Library, rows: list[Row], level: str, queue: list[QueueEntry]
 ) -> list[dict]:
     """Blocks that fire on a specific diagnosis, strongest signal first."""
     out: list[dict] = []
