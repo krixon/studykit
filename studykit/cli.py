@@ -28,7 +28,6 @@ from .config import (
     Profile,
     ProfileMissing,
     StudykitError,
-    at_midday,
     attempts_dir,
     bank_dir,
     check_level,
@@ -552,16 +551,9 @@ def cmd_record(args) -> int:
             'Expected {"session": ..., "pack": ..., "rows": [...]} or a bare list of rows.'
         )
 
-    # A live session is stamped with the moment it happened. A named date is a
-    # backfill, and midday is the honest stamp for a time nobody recorded.
-    if payload.get("at"):
-        stamp = valid_at(str(payload["at"]))
-    elif payload.get("date"):
-        stamp = at_midday(str(payload["date"]))
-    elif args.date:
-        stamp = at_midday(args.date)
-    else:
-        stamp = now()
+    # A row is stamped with the moment it is recorded. `--date` is the as_of for
+    # the rebuild that follows and has no bearing on when a measurement happened.
+    stamp = valid_at(str(payload["at"])) if payload.get("at") else now()
 
     defaults = {
         "at": stamp,
@@ -576,9 +568,6 @@ def cmd_record(args) -> int:
     rows = []
     for entry in payload["rows"]:
         merged = {k: v for k, v in defaults.items() if v is not None}
-        # A row carrying its own time must not be overruled by the default one.
-        if entry.get("at") or entry.get("date"):
-            merged.pop("at", None)
         merged.update(entry)
         rows.append(validate(merged, library, default_level=profile.level))
 

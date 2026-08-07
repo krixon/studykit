@@ -18,7 +18,7 @@ class LedgerTestCase(unittest.TestCase):
 
     def valid(self, **overrides):
         entry = {
-            "date": "2026-01-01",
+            "at": "2026-01-01T09:14:07+01:00",
             "pack": "system-design",
             "session": "quiz",
             "topic": "caching",
@@ -130,18 +130,22 @@ class TestTimestamps(LedgerTestCase):
         self.assertEqual(row.at, "2026-01-01T09:14:07+01:00")
         self.assertEqual(row.date, "2026-01-01")
 
-    def test_a_bare_date_becomes_midday(self):
-        """A backfill has no time to recover. Midday cannot land on the wrong day."""
-        row = validate(self.valid(date="2026-01-01"), self.library)
-        self.assertTrue(row.at.startswith("2026-01-01T12:00:00"), row.at)
-        self.assertEqual(row.date, "2026-01-01")
+    def test_an_absent_timestamp_becomes_now(self):
+        """A row is written as it is measured, so the moment is always to hand."""
+        import datetime as dt
 
-    def test_a_row_needs_one_or_the_other(self):
         entry = self.valid()
-        entry.pop("date")
+        entry.pop("at")
+        row = validate(entry, self.library)
+        stamped = dt.datetime.fromisoformat(row.at)
+        self.assertIsNotNone(stamped.tzinfo)
+        self.assertLess(abs((dt.datetime.now().astimezone() - stamped).total_seconds()), 120)
+
+    def test_a_bare_date_is_not_a_field(self):
+        """There is no backfill. A day is not a time, and will not be invented."""
         with self.assertRaises(StudykitError) as caught:
-            validate(entry, self.library)
-        self.assertIn("at", str(caught.exception))
+            validate(self.valid(date="2026-01-01"), self.library)
+        self.assertIn("unknown field", str(caught.exception))
 
     def test_a_nonsense_timestamp_is_rejected(self):
         with self.assertRaises(StudykitError):

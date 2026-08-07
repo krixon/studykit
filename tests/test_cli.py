@@ -102,10 +102,19 @@ class TestRecord(CliTestCase):
             abs((dt.datetime.now().astimezone() - stamped).total_seconds()), 120, row["at"]
         )
 
-    def test_a_named_date_is_a_backfill_and_lands_at_midday(self):
-        self.run_cli("record", "--date", "2026-06-01", "--json-text", self.payload)
+    def test_an_explicit_timestamp_in_the_payload_is_used(self):
+        payload = json.loads(self.payload)
+        payload["at"] = "2026-06-01T18:42:09+01:00"
+        self.run_cli("record", "--json-text", json.dumps(payload))
         row = json.loads((self.data / "ledger.jsonl").read_text().splitlines()[0])
-        self.assertTrue(row["at"].startswith("2026-06-01T12:00:00"), row["at"])
+        self.assertEqual(row["at"], "2026-06-01T18:42:09+01:00")
+
+    def test_a_date_in_the_payload_is_rejected(self):
+        payload = json.loads(self.payload)
+        payload["rows"][0]["date"] = "2026-06-01"
+        code, _ = self.run_cli("record", "--json-text", json.dumps(payload))
+        self.assertEqual(code, 2)
+        self.assertIn("unknown field", self.stderr)
 
     def test_record_appends_and_rebuilds(self):
         code, _ = self.run_cli("record", "--date", "2026-06-01", "--json-text", self.payload)

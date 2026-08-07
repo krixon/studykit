@@ -82,7 +82,7 @@ def dashboard_path() -> Path:
 
 
 def today() -> str:
-    """Today as ISO. `STUDYKIT_TODAY` overrides, for tests and backfills."""
+    """Today as ISO, for `as_of` reasoning. `STUDYKIT_TODAY` overrides."""
     override = os.environ.get("STUDYKIT_TODAY")
     if override:
         return valid_date(override)
@@ -92,26 +92,13 @@ def today() -> str:
 def now() -> str:
     """This instant, local, with its offset. What a new ledger row is stamped with.
 
-    `STUDYKIT_NOW` overrides it outright; `STUDYKIT_TODAY` pins the day and
-    leaves the time at midday, so a test that fixes the date stays deterministic.
+    `STUDYKIT_NOW` overrides it. `STUDYKIT_TODAY` deliberately does not: a day is
+    not a time, and deriving one from the other would be a guess.
     """
     override = os.environ.get("STUDYKIT_NOW")
     if override:
         return valid_at(override)
-    day = os.environ.get("STUDYKIT_TODAY")
-    if day:
-        return at_midday(day)
     return dt.datetime.now().astimezone().replace(microsecond=0).isoformat()
-
-
-def at_midday(day: str) -> str:
-    """Midday local time on `day`.
-
-    The least-wrong stamp when only the date is known: far enough from either
-    boundary that no plausible timezone reading moves it onto a different day.
-    """
-    naive = dt.datetime.fromisoformat(valid_date(day)).replace(hour=12)
-    return naive.astimezone().replace(microsecond=0).isoformat()
 
 
 def day_of(at: str) -> str:

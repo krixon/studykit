@@ -6,8 +6,10 @@ so it is the single source of truth for everything the engine knows.
 
 A row is stamped with `at`, a full local timestamp with its offset, because when
 in the day something was measured is real information and cannot be recovered
-later. Scheduling still works in whole days: `Row.date` is derived from `at`, so
-several measurements of one facet in one sitting remain one piece of evidence.
+later. A row is written as it is measured, so the time is always known.
+
+Scheduling still works in whole days: `Row.date` is derived from `at`, so several
+measurements of one facet in one sitting remain one piece of evidence.
 """
 
 from __future__ import annotations
@@ -16,17 +18,15 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config import StudykitError, at_midday, day_of, ledger_path, valid_at
+from .config import StudykitError, day_of, ledger_path, now, valid_at
 from .packs import QTYPES, Library
 
 SESSIONS: tuple[str, ...] = ("quiz", "practice", "review", "learn", "study", "drill")
 
 #: Fields a caller may set. Anything derived (strength, interval, due, reps)
-#: is computed by the scheduler and is not accepted here. `date` is accepted as
-#: a convenience for backfills and becomes midday of that day.
+#: is computed by the scheduler and is not accepted here.
 WRITABLE = (
     "at",
-    "date",
     "pack",
     "session",
     "level",
@@ -126,12 +126,7 @@ def validate(entry: dict, library: Library, *, default_level: str = "") -> Row:
         if entry.get(required) in (None, ""):
             raise StudykitError(f"{where}: missing required field {required!r}")
 
-    if entry.get("at"):
-        at = valid_at(str(entry["at"]))
-    elif entry.get("date"):
-        at = at_midday(str(entry["date"]))
-    else:
-        raise StudykitError(f"{where}: missing required field 'at' (or 'date' for a backfill)")
+    at = valid_at(str(entry["at"])) if entry.get("at") else now()
     pack = library.pack(str(entry["pack"]))
     session = str(entry["session"])
     if session not in SESSIONS:
