@@ -22,8 +22,8 @@ id = "cp-003"
 qtype = "judgment"
 subtopic = "cap"
 levels = ["senior", "lead", "staff"]
-q = "Someone justifies a design choice with we chose AP because partitions are common. More or less sound?"
-a = "Weak as stated, -1. CAP only governs behaviour DURING a partition, which is rare. The choice you make on every request, all the time, is the latency-versus-consistency one. Cite PACELC's else half - that is what actually shapes the system's daily behaviour."
+q = "A team picks an AP datastore for a shopping cart, justifying it with we chose availability because partitions are common. New information: the service runs in one region on one cloud provider, where partitions run to a few hours a year. Does that justification become more or less sound?"
+a = "-1. The new information guts the stated reason without necessarily gutting the choice, and those are separate verdicts. A few hours a year is roughly 0.05% of requests, so CAP's during-a-partition trade-off governs almost none of this system's behaviour. AP is still probably right for a cart, but on PACELC's else branch: the everyday choice is latency versus consistency, and a cart wants low-latency local writes with merge-on-conflict. Grade the reasoning, not the conclusion."
 
 [[q]]
 id = "cp-004"
