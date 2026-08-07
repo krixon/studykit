@@ -1,8 +1,13 @@
-"""Backing the data directory up to a git remote.
+"""Carrying the data directory between machines over a git remote.
 
 The engine and the packs are shareable; a ledger is not. So the data directory
 is its own git repository, with its own remote, and the tool repo never sees it.
 That keeps `studykit` publishable while your history lives somewhere private.
+
+Both directions matter, and for different reasons. `push` is backup: the ledger
+is the only thing here that cannot be recomputed. `pull` is correctness: the due
+queue is a function of the ledger, so a machine working from a stale one is
+given the wrong questions and then collides on the next push.
 
 Only the source of truth is tracked. `state.json`, `metrics.json` and the
 dashboard are pure functions of the ledger and are rebuilt on every write, so
@@ -25,6 +30,13 @@ from .config import Profile, StudykitError, data_dir
 IGNORED = ("state.json", "metrics.json", "dashboard.html", "*.tmp", ".DS_Store")
 
 GITIGNORE = "# Derived from ledger.jsonl on every write. Not history.\n" + "\n".join(IGNORED) + "\n"
+
+#: Two machines studying between syncs both append to the end of the ledger,
+#: which is a conflict on every single line-based merge. `union` takes both
+#: sides, which is the correct resolution for an append-only log: no row is
+#: ever edited, so there is nothing to choose between. `ledger.read` sorts by
+#: timestamp, so the interleaving the union produces does not matter either.
+GITATTRIBUTES = "# Append-only. Concurrent appends are both kept, not reconciled.\nledger.jsonl merge=union\n"
 
 
 def _git(*args: str, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -78,10 +90,38 @@ def _dirty() -> list[str]:
 
 def _ahead(branch: str) -> int | None:
     """Commits not yet on the remote, or None when the remote is unknown here."""
+    return _count(f"origin/{branch}..HEAD", branch)
+
+
+def _behind(branch: str) -> int | None:
+    """Commits on the remote not yet here, or None when the remote is unknown here.
+
+    Counted against the last fetch, not the live remote, so it is only as fresh
+    as the last `fetch`. `pull` fetches first; `status` deliberately does not,
+    because reporting state should not need the network.
+    """
+    return _count(f"HEAD..origin/{branch}", branch)
+
+
+def _count(rev_range: str, branch: str) -> int | None:
     if _git("rev-parse", "--verify", f"origin/{branch}", check=False).returncode != 0:
         return None
-    out = _git("rev-list", "--count", f"origin/{branch}..HEAD", check=False).stdout.strip()
+    out = _git("rev-list", "--count", rev_range, check=False).stdout.strip()
     return int(out) if out.isdigit() else None
+
+
+def _ensure_repo_files(path: Path | None = None) -> None:
+    """Write the two control files, without clobbering a user's edits.
+
+    Called from `pull` as well as `init`, because a data repo created before
+    the merge driver existed would otherwise conflict on its first pull and
+    never get the file that would have prevented it.
+    """
+    path = path or data_dir()
+    for name, body in ((".gitignore", GITIGNORE), (".gitattributes", GITATTRIBUTES)):
+        target = path / name
+        if not target.exists():
+            target.write_text(body, encoding="utf-8")
 
 
 def configured(profile: Profile) -> bool:
@@ -115,9 +155,7 @@ def init(profile: Profile, remote: str, branch: str = "", *, auto: bool = False)
     else:
         _git("remote", "add", "origin", remote)
 
-    gitignore = path / ".gitignore"
-    if not gitignore.exists():
-        gitignore.write_text(GITIGNORE, encoding="utf-8")
+    _ensure_repo_files(path)
 
     _git("fetch", "origin", check=False)
     remote_exists = _git("rev-parse", "--verify", f"origin/{branch}", check=False).returncode == 0
@@ -153,14 +191,8 @@ def push(profile: Profile, *, message: str = "", set_upstream: bool = False) -> 
             f"{data_dir()} is not a git repository. Run `./study sync init {profile.sync_remote}`."
         )
 
-    changed = _dirty()
-    committed = False
-    if changed:
-        _git("add", "-A")
-        # `add` may stage nothing if everything changed is ignored.
-        if _git("diff", "--cached", "--quiet", check=False).returncode != 0:
-            _git("commit", "-m", message or _message())
-            committed = True
+    files = _commit(message)
+    committed = files > 0
 
     ahead = _ahead(branch)
     if not committed and ahead == 0:
@@ -181,7 +213,20 @@ def push(profile: Profile, *, message: str = "", set_upstream: bool = False) -> 
             detail = (retry.stderr or retry.stdout).strip().splitlines()
             raise StudykitError(f"git push failed: {detail[-1] if detail else 'no output'}")
 
-    return {"ok": True, "committed": committed, "pushed": True, "files": len(changed)}
+    return {"ok": True, "committed": committed, "pushed": True, "files": files}
+
+
+def _commit(message: str = "") -> int:
+    """Commit whatever has changed, and say how many paths that was."""
+    changed = _dirty()
+    if not changed:
+        return 0
+    _git("add", "-A")
+    # `add` may stage nothing if everything that changed is ignored.
+    if _git("diff", "--cached", "--quiet", check=False).returncode == 0:
+        return 0
+    _git("commit", "-m", message or _message())
+    return len(changed)
 
 
 def _message() -> str:
@@ -190,6 +235,64 @@ def _message() -> str:
     rows = read()
     last = rows[-1].date if rows else "no rows"
     return f"study: {len(rows)} rows, latest {last}"
+
+
+def pull(profile: Profile) -> dict:
+    """Fetch the remote and rebase onto it. Idempotent when nothing is waiting.
+
+    Rebase rather than merge, because the ledger is append-only and a merge
+    commit in it carries no information.
+
+    Local work is committed first rather than stashed. A rebase that goes wrong
+    can be aborted back to a commit; a stash that fails to pop leaves the
+    session's measurements somewhere the user has to know about `git stash` to
+    find. Committing also puts the local rows under the union merge driver,
+    which is what stops two machines' appends from colliding at all.
+    """
+    require_configured(profile)
+    branch = profile.sync_branch or "main"
+    if not is_repo():
+        raise StudykitError(
+            f"{data_dir()} is not a git repository. Run `./study sync init {profile.sync_remote}`."
+        )
+
+    _ensure_repo_files()
+    _commit()
+
+    if _git("fetch", "origin", branch, check=False).returncode != 0:
+        raise StudykitError(f"Could not reach {profile.sync_remote}.")
+
+    behind = _behind(branch)
+    if behind is None:
+        return {"ok": True, "pulled": False, "commits": 0, "note": f"no {branch} on the remote yet"}
+    if behind == 0:
+        return {"ok": True, "pulled": False, "commits": 0, "note": "already current"}
+
+    result = _git("pull", "--rebase", "origin", branch, check=False)
+    if result.returncode != 0:
+        # Leave nothing half-rebased. The abort restores the pre-pull commit,
+        # so the worst case is that the pull did not happen.
+        _git("rebase", "--abort", check=False)
+        raise StudykitError(
+            f"Rebase onto origin/{branch} hit a conflict and was aborted. "
+            f"Resolve it by hand in {data_dir()}."
+        )
+    return {"ok": True, "pulled": True, "commits": behind}
+
+
+def auto_pull(profile: Profile) -> dict | None:
+    """Pull at the start of a session, when the profile asks for it.
+
+    Same contract as `auto`: a machine that cannot reach the remote still gets
+    to study. The cost of working from a stale ledger is a suboptimal queue and
+    a rebase on the next push, not lost data.
+    """
+    if not (profile.sync_auto and configured(profile)):
+        return None
+    try:
+        return pull(profile)
+    except StudykitError as exc:
+        return {"ok": False, "error": str(exc)}
 
 
 def status(profile: Profile) -> dict:
@@ -208,6 +311,7 @@ def status(profile: Profile) -> dict:
     payload["branch_actual"] = _current_branch()
     payload["uncommitted"] = _dirty()
     payload["unpushed"] = _ahead(payload["branch"])
+    payload["unpulled"] = _behind(payload["branch"])
     return payload
 
 

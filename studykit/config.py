@@ -146,9 +146,11 @@ class Profile:
     budget: str = "25m"
     mode: str = "coaching"
     confidence_prompt: bool = True
-    #: Where the data directory is backed up to. Empty means sync is off.
+    #: Where the data directory is carried between machines. Empty means sync is off.
     sync_remote: str = ""
     sync_branch: str = "main"
+    #: Pull before a session, push after one. Off by default: sync touches the
+    #: network, and a tool that clones and runs should not do that unasked.
     sync_auto: bool = False
     created: str = ""
     schema: int = SCHEMA

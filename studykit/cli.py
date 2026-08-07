@@ -308,6 +308,14 @@ def cmd_plan(args) -> int:
     profile = load_profile_or_default(args)
     library = library_for(profile)
     as_of = args.date or today()
+
+    # Before selection, not after: the queue is a function of the ledger, so
+    # planning against a stale one hands out questions another machine has
+    # already answered.
+    pulled = sync_mod.auto_pull(profile)
+    if pulled is not None and pulled.get("pulled"):
+        rebuild(profile, library, as_of)
+
     minutes = select.parse_budget(args.budget, profile.budget)
     plan = select.compose(
         library,
@@ -320,7 +328,10 @@ def cmd_plan(args) -> int:
     )
     plan["mode"] = args.mode or profile.mode
     plan["confidence_prompt"] = profile.confidence_prompt
+    if pulled is not None:
+        plan["sync"] = pulled
     emit(plan)
+    _warn_if_sync_failed(pulled, "sync pull")
     return 0
 
 
@@ -623,10 +634,10 @@ def cmd_record(args) -> int:
     return 0
 
 
-def _warn_if_sync_failed(synced: dict | None) -> None:
+def _warn_if_sync_failed(synced: dict | None, retry: str = "sync") -> None:
     """Never fail a session over the network. Say so and move on."""
     if synced is not None and not synced.get("ok"):
-        print(f"warning: sync failed ({synced['error']}). Run `./study sync` later.", file=sys.stderr)
+        print(f"warning: sync failed ({synced['error']}). Run `./study {retry}` later.", file=sys.stderr)
 
 
 def _next_ids(pack, prefix: str, count: int) -> list[str]:
@@ -831,9 +842,21 @@ def cmd_sync(args) -> int:
         else:
             print(f"Data directory {data_dir()} now backs up to {result['remote']} ({result['branch']}).")
             if profile.sync_auto:
-                print("  auto-sync on: every recorded session pushes.")
+                print("  auto-sync on: `plan` pulls before a session, `record` pushes after it.")
             else:
                 print("  auto-sync off. Turn it on with `./study config set sync_auto true`.")
+        return 0
+
+    if action == "pull":
+        result = sync_mod.pull(profile)
+        if result.get("pulled"):
+            rebuild(profile, library_for(profile), today())
+        if args.json:
+            emit(result)
+        elif result.get("note"):
+            print(result["note"])
+        else:
+            print(f"Pulled {result['commits']} commit(s) from {profile.sync_remote}. State rebuilt.")
         return 0
 
     if action == "status":
@@ -853,8 +876,10 @@ def cmd_sync(args) -> int:
             else:
                 pending = len(payload["uncommitted"])
                 unpushed = payload["unpushed"]
+                unpulled = payload["unpulled"]
                 print(f"  uncommitted {pending}")
                 print(f"  unpushed    {'unknown' if unpushed is None else unpushed}")
+                print(f"  unpulled    {'unknown' if unpulled is None else unpulled} (as of last fetch)")
         return 0
 
     result = sync_mod.push(profile, message=args.message or "")
@@ -1101,9 +1126,11 @@ def build_parser() -> argparse.ArgumentParser:
     sync_init = sync_sub.add_parser("init", help="Point the data directory at a git remote and push it.")
     sync_init.add_argument("remote", help="e.g. git@github.com:you/studykit-data.git")
     sync_init.add_argument("--branch", help="Default main.")
-    sync_init.add_argument("--auto", action="store_true", help="Also push after every recorded session.")
+    sync_init.add_argument("--auto", action="store_true", help="Also pull before each session and push after it.")
     sync_init.set_defaults(func=cmd_sync, sync_action="init", message=None)
-    sync_status = sync_sub.add_parser("status", help="Remote, branch, and anything not yet pushed.")
+    sync_pull = sync_sub.add_parser("pull", help="Fetch the remote, rebase onto it, and rebuild state.")
+    sync_pull.set_defaults(func=cmd_sync, sync_action="pull", message=None)
+    sync_status = sync_sub.add_parser("status", help="Remote, branch, and anything not yet pushed or pulled.")
     sync_status.set_defaults(func=cmd_sync, sync_action="status", message=None)
 
     doctor = subparsers.add_parser("doctor", help="Validate packs and data.")

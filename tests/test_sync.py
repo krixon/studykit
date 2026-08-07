@@ -169,6 +169,111 @@ class TestPush(SyncTestCase):
         self.assertEqual(len(self.run_json("export", "ledger")), 1)
 
 
+class TestPull(SyncTestCase):
+    """The second machine. A clone of the remote standing in for one."""
+
+    def other_machine_records(self, subtopic="hot-key", measured=5):
+        """Append a row from somewhere else and push it, without touching this data dir."""
+        other = self.root / "other"
+        shutil.rmtree(other, ignore_errors=True)
+        git("clone", str(self.remote), str(other), cwd=self.root)
+        row = {
+            "at": "2026-08-06T09:00:00+01:00",
+            "pack": "system-design",
+            "session": "quiz",
+            "level": "senior",
+            "area": "caching",
+            "topic": "caching",
+            "subtopic": subtopic,
+            "measured": measured,
+        }
+        ledger = other / "ledger.jsonl"
+        existing = ledger.read_text(encoding="utf-8") if ledger.exists() else ""
+        ledger.write_text(existing + json.dumps(row) + "\n", encoding="utf-8")
+        git("add", "-A", cwd=other)
+        git("commit", "-m", "from the other machine", cwd=other)
+        git("push", "origin", "main", cwd=other)
+
+    def test_the_merge_driver_is_committed_not_just_written(self):
+        """A driver only on the machine that wrote it protects nothing."""
+        self.run_cli("sync", "init", str(self.remote))
+        self.assertIn(".gitattributes", self.tracked())
+        body = git("show", "main:.gitattributes", cwd=self.remote).stdout
+        self.assertIn("ledger.jsonl merge=union", body)
+
+    def test_pull_without_a_remote_explains_itself(self):
+        code, _ = self.run_cli("sync", "pull")
+        self.assertEqual(code, 2)
+        self.assertIn("sync init", self.stderr)
+
+    def test_pull_with_nothing_waiting_is_a_no_op(self):
+        self.run_cli("sync", "init", str(self.remote))
+        result = self.run_json("--json", "sync", "pull")
+        self.assertFalse(result["pulled"])
+        self.assertEqual(result["note"], "already current")
+
+    def test_pull_brings_down_a_row_recorded_elsewhere(self):
+        self.run_cli("sync", "init", str(self.remote))
+        self.other_machine_records()
+        result = self.run_json("--json", "sync", "pull")
+        self.assertTrue(result["pulled"])
+        self.assertEqual(result["commits"], 1)
+        subtopics = {row["subtopic"] for row in self.run_json("export", "ledger")}
+        self.assertIn("hot-key", subtopics)
+
+    def test_pull_rebuilds_the_derived_state(self):
+        """state.json is gitignored, so a pulled ledger leaves it stale."""
+        self.run_cli("sync", "init", str(self.remote))
+        self.other_machine_records()
+        self.run_cli("sync", "pull")
+        state = json.loads((self.data / "state.json").read_text(encoding="utf-8"))
+        self.assertTrue(
+            any(item["label"].endswith("hot-key") for item in state["items"]),
+            "the pulled measurement should be in the rebuilt state",
+        )
+
+    def test_concurrent_appends_to_the_ledger_both_survive(self):
+        """The union merge driver, which is the whole reason two-way sync works."""
+        self.run_cli("sync", "init", str(self.remote))
+        self.record_one()
+        self.other_machine_records()
+        result = self.run_json("--json", "sync", "pull")
+        self.assertTrue(result["pulled"])
+        subtopics = {row["subtopic"] for row in self.run_json("export", "ledger")}
+        self.assertIn("hot-key", subtopics, "the remote row arrived")
+        self.assertIn("eviction", subtopics, "the local row survived the rebase")
+
+    def test_plan_pulls_before_selecting(self):
+        self.run_cli("sync", "init", str(self.remote), "--auto")
+        self.other_machine_records()
+        plan = self.run_json("plan", "25m")
+        self.assertTrue(plan["sync"]["pulled"])
+        subtopics = {row["subtopic"] for row in self.run_json("export", "ledger")}
+        self.assertIn("hot-key", subtopics)
+
+    def test_plan_does_not_pull_when_auto_is_off(self):
+        self.run_cli("sync", "init", str(self.remote))
+        self.other_machine_records()
+        plan = self.run_json("plan", "25m")
+        self.assertNotIn("sync", plan)
+
+    def test_a_failed_pull_does_not_fail_the_session(self):
+        self.run_cli("sync", "init", str(self.remote), "--auto")
+        shutil.rmtree(self.remote)
+        code, out = self.run_cli("plan", "25m")
+        self.assertEqual(code, 0, "an unreachable remote must not stop a session")
+        self.assertIn("warning: sync failed", self.stderr)
+        self.assertIn("sync pull", self.stderr)
+        self.assertTrue(json.loads(out)["blocks"], "the plan was still composed")
+
+    def test_status_reports_unpulled_work(self):
+        self.run_cli("sync", "init", str(self.remote))
+        self.other_machine_records()
+        self.run_cli("sync", "pull")
+        payload = self.run_json("--json", "sync", "status")
+        self.assertEqual(payload["unpulled"], 0)
+
+
 class TestConfig(SyncTestCase):
     def test_auto_cannot_be_turned_on_without_a_remote(self):
         code, _ = self.run_cli("config", "set", "sync_auto", "true")
