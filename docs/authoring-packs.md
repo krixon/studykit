@@ -5,7 +5,7 @@ A pack is content. It declares what there is to learn and says nothing about sch
 ## Layout
 
 ```
-packs/<name>/
+<name>/
   pack.toml                    manifest: levels, areas, topics, problems, calibration
   cards/<topic>.md             one knowledge card per topic
   questions/<topic>.toml       one question bank per topic
@@ -15,7 +15,9 @@ packs/<name>/
 
 The filename conventions are load-bearing: `cards/<topic id>.md` and `questions/<topic id>.toml` are found by the topic's id, not by anything in the manifest.
 
-Drop a directory into `packs/` and it is available. `./study config set packs a,b` chooses which are in rotation.
+Two directories are searched: `packs/` in the checkout, for the packs that ship with it, and `~/.studykit/packs/` for packs you install. Drop a directory into either and it is available. Installing to the second keeps `git status` clean and means the pack syncs with your data to your other machines. Two packs sharing a name is an error naming both directories, not a silent shadow.
+
+`./study config set packs a,b` chooses which are in rotation. `./study packs` says where each one was loaded from.
 
 ## pack.toml
 

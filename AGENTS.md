@@ -36,7 +36,7 @@ Full model: `docs/scoring.md`. Warrants: `docs/research.md`.
 - Python 3.12+, **standard library only**. No dependencies, ever. Clone-and-run is the point.
 - `studykit/schedule.py` is the only implementation of the interval algorithm. If you change it, update `docs/scoring.md` in the same commit.
 - The ledger is append-only and is the only source of truth. `state.json` and `metrics.json` are pure functions of it, rebuilt on every `record`.
-- Never write user data into `packs/`. Session-generated questions go to `data/bank/` unless `--into-pack` is passed.
+- Never write user data into the checkout. Everything the user owns lives under `~/.studykit`, and session-generated questions go to its `bank/` unless `--into-pack` is passed.
 - Run `./study test` and `./study doctor` before committing.
 
 ## Working on content
@@ -50,3 +50,14 @@ Question ids are stable forever. Sub-topic names are effectively permanent: rena
 British English. No em-dashes. Lead with the conclusion. Concrete over abstract.
 
 Name gaps directly; do not cheerlead. Documents state current facts: no changelog paragraphs, no "previously", no explaining what a file used to say. Git holds the history.
+
+### Comments
+
+A comment earns its place only by saying something you must know and cannot get by reading the code. If it restates the code, justifies the design, or explains what the code does not do, delete it. Specifically, never write:
+
+- Narration of history. No "this used to", "the old path", "now we". The commit message is where that goes.
+- Enumerations of rejected alternatives, or why something is not done another way.
+- Rationale for a decision the code already makes obvious.
+- Docstrings that restate the signature. A function named `user_packs_dir` returning `data_dir() / "packs"` needs nothing.
+
+What does earn a comment: a non-obvious invariant, a constraint imposed from outside the file, or a reason the obvious implementation is wrong. Keep it to a line or two. If it needs a paragraph, the code is the thing to fix.

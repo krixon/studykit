@@ -73,23 +73,24 @@ Retrieval practice reliably builds near transfer and reliably fails to build far
 
 ## Your data
 
-Everything you generate lives in `data/`, which is git-ignored:
+Everything you generate lives in `~/.studykit`, outside this checkout, so your history outlives any particular clone:
 
 ```
-data/profile.json      your level and preferences
-data/ledger.jsonl      append-only history of every measurement
-data/state.json        current strength and due dates, derived
-data/metrics.json      computed metrics, derived
-data/bank/             questions generated during your sessions
-data/attempts/         your problem attempts
-data/dashboard.html    generated charts
+profile.json      your level and preferences
+ledger.jsonl      append-only history of every measurement
+state.json        current strength and due dates, derived
+metrics.json      computed metrics, derived
+bank/             questions generated during your sessions
+attempts/         your problem attempts
+packs/            packs you installed
+dashboard.html    generated charts
 ```
+
+`XDG_DATA_HOME` is honoured where it is set. `STUDYKIT_DATA` overrides both, which is also how you run more than one profile.
 
 Nothing leaves your machine unless you ask it to. The ledger is the only source of truth; `state.json` and `metrics.json` are rebuilt from it on every `record`, so they can always be deleted and regenerated.
 
-Point `STUDYKIT_DATA` somewhere else to keep it out of the repo entirely, or to run more than one profile.
-
-### Backing it up
+### Syncing it
 
 The ledger is the one thing here that cannot be regenerated. Give it a private repository of its own:
 
@@ -97,7 +98,9 @@ The ledger is the one thing here that cannot be regenerated. Give it a private r
 ./study sync init git@github.com:you/studykit-data.git --auto
 ```
 
-That makes `data/` its own git repository, separate from this one, and pushes after every session that writes. `./study sync` does it by hand; `./study sync status` says what is outstanding. Derived files stay untracked. On a second machine, clone the data repo into `data/` and carry on.
+That makes the data directory its own git repository and turns on both halves: `./study plan` pulls before a session, `./study record` pushes after it. `./study sync` and `./study sync pull` do each by hand, and `./study sync status` says what is outstanding either way. Derived files stay untracked.
+
+The ledger carries a `merge=union` attribute, so two machines that both studied while offline keep both sets of rows rather than conflicting. On a second machine, clone the data repo into `~/.studykit` and carry on.
 
 ## Commands
 

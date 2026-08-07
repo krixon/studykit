@@ -48,7 +48,7 @@ Apply the level bar. `./study levels` prints the calibration brief for each leve
 
 ## Record
 
-Write the attempt to `data/attempts/<pack>/<slug>/YYYY-MM-DD.md` in whatever structure serves the diff. For a re-attempt, compare against the previous file and call out what improved and what regressed.
+Write the attempt to `~/.studykit/attempts/<pack>/<slug>/YYYY-MM-DD.md` in whatever structure serves the diff. For a re-attempt, compare against the previous file and call out what improved and what regressed.
 
 Then:
 

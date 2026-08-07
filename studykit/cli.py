@@ -37,8 +37,10 @@ from .config import (
     ledger_path,
     metrics_path,
     now,
+    pack_roots,
     packs_dir,
     read_json,
+    user_packs_dir,
     state_path,
     today,
     valid_at,
@@ -237,7 +239,7 @@ def cmd_setup(args) -> int:
         created=(existing.created if existing else today()),
     )
     profile.save()
-    for directory in (bank_dir(), attempts_dir()):
+    for directory in (bank_dir(), attempts_dir(), user_packs_dir()):
         directory.mkdir(parents=True, exist_ok=True)
     ledger_path().touch()
 
@@ -249,7 +251,8 @@ def cmd_setup(args) -> int:
     print(report.rule("ready"))
     print(f"  level     {LEVEL_TITLES[level]}")
     print(f"  packs     {', '.join(packs)}")
-    print(f"  data      {data_dir()}  (git-ignored, yours alone)")
+    print(f"  data      {data_dir()}  (outside the checkout, yours alone)")
+    print(f"  install   {user_packs_dir()}  (drop a pack here)")
     print(
         f"  in scope  {metrics['summary']['facets_in_scope']} facets, "
         f"{len(library.questions(level))} questions, {len(library.problems(level))} problems"
@@ -309,9 +312,7 @@ def cmd_plan(args) -> int:
     library = library_for(profile)
     as_of = args.date or today()
 
-    # Before selection, not after: the queue is a function of the ledger, so
-    # planning against a stale one hands out questions another machine has
-    # already answered.
+    # Before selection: the queue is a function of the ledger.
     pulled = sync_mod.auto_pull(profile)
     if pulled is not None and pulled.get("pulled"):
         rebuild(profile, library, as_of)
@@ -476,6 +477,8 @@ def cmd_packs(args) -> int:
                         "name": pack.name,
                         "title": pack.title,
                         "description": pack.description,
+                        "root": str(pack.root),
+                        "installed": pack.root.is_relative_to(user_packs_dir()),
                         "areas": list(pack.areas),
                         "levels": list(pack.levels),
                         "topics": [
@@ -782,6 +785,7 @@ def cmd_config(args) -> int:
             "sync_auto": profile.sync_auto,
             "data_dir": str(data_dir()),
             "packs_dir": str(packs_dir()),
+            "user_packs_dir": str(user_packs_dir()),
         }
         if args.key:
             if args.key not in payload:
@@ -917,6 +921,10 @@ def cmd_doctor(args) -> int:
     problems: list[str] = []
     notes: list[str] = []
     library = load_library()
+
+    for root in pack_roots():
+        found = sorted(p.name for p in library.all.values() if p.root.parent == root)
+        notes.append(f"packs: {root} - {', '.join(found) if found else 'none'}")
 
     for pack in library.all.values():
         for topic in pack.topics.values():

@@ -1,7 +1,6 @@
 """Paths, levels and the user profile.
 
-Everything the user owns lives under the data directory, which is git-ignored.
-Nothing in `packs/` is ever mutated by a session.
+The data directory sits outside the checkout, so history outlives the install.
 """
 
 from __future__ import annotations
@@ -47,9 +46,22 @@ def packs_dir() -> Path:
     return Path(env).expanduser().resolve() if env else repo_root() / "packs"
 
 
+def user_packs_dir() -> Path:
+    return data_dir() / "packs"
+
+
+def pack_roots() -> list[Path]:
+    return [packs_dir(), user_packs_dir()]
+
+
 def data_dir() -> Path:
     env = os.environ.get("STUDYKIT_DATA")
-    return Path(env).expanduser().resolve() if env else repo_root() / "data"
+    if env:
+        return Path(env).expanduser().resolve()
+    xdg = os.environ.get("XDG_DATA_HOME")
+    if xdg:
+        return Path(xdg).expanduser().resolve() / "studykit"
+    return Path.home() / ".studykit"
 
 
 def profile_path() -> Path:
@@ -149,8 +161,7 @@ class Profile:
     #: Where the data directory is carried between machines. Empty means sync is off.
     sync_remote: str = ""
     sync_branch: str = "main"
-    #: Pull before a session, push after one. Off by default: sync touches the
-    #: network, and a tool that clones and runs should not do that unasked.
+    #: Pull before a session, push after one.
     sync_auto: bool = False
     created: str = ""
     schema: int = SCHEMA

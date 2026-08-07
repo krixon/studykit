@@ -4,11 +4,6 @@ The engine and the packs are shareable; a ledger is not. So the data directory
 is its own git repository, with its own remote, and the tool repo never sees it.
 That keeps `studykit` publishable while your history lives somewhere private.
 
-Both directions matter, and for different reasons. `push` is backup: the ledger
-is the only thing here that cannot be recomputed. `pull` is correctness: the due
-queue is a function of the ledger, so a machine working from a stale one is
-given the wrong questions and then collides on the next push.
-
 Only the source of truth is tracked. `state.json`, `metrics.json` and the
 dashboard are pure functions of the ledger and are rebuilt on every write, so
 committing them would produce a diff on every command and merge conflicts on
@@ -31,11 +26,8 @@ IGNORED = ("state.json", "metrics.json", "dashboard.html", "*.tmp", ".DS_Store")
 
 GITIGNORE = "# Derived from ledger.jsonl on every write. Not history.\n" + "\n".join(IGNORED) + "\n"
 
-#: Two machines studying between syncs both append to the end of the ledger,
-#: which is a conflict on every single line-based merge. `union` takes both
-#: sides, which is the correct resolution for an append-only log: no row is
-#: ever edited, so there is nothing to choose between. `ledger.read` sorts by
-#: timestamp, so the interleaving the union produces does not matter either.
+#: Union is safe because no ledger row is ever edited and `ledger.read` sorts
+#: by timestamp, so the interleaving it produces does not matter.
 GITATTRIBUTES = "# Append-only. Concurrent appends are both kept, not reconciled.\nledger.jsonl merge=union\n"
 
 
@@ -94,12 +86,8 @@ def _ahead(branch: str) -> int | None:
 
 
 def _behind(branch: str) -> int | None:
-    """Commits on the remote not yet here, or None when the remote is unknown here.
-
-    Counted against the last fetch, not the live remote, so it is only as fresh
-    as the last `fetch`. `pull` fetches first; `status` deliberately does not,
-    because reporting state should not need the network.
-    """
+    """Commits on the remote not yet here, as of the last fetch. `status` does
+    not fetch, so its answer can be stale."""
     return _count(f"HEAD..origin/{branch}", branch)
 
 
@@ -111,12 +99,7 @@ def _count(rev_range: str, branch: str) -> int | None:
 
 
 def _ensure_repo_files(path: Path | None = None) -> None:
-    """Write the two control files, without clobbering a user's edits.
-
-    Called from `pull` as well as `init`, because a data repo created before
-    the merge driver existed would otherwise conflict on its first pull and
-    never get the file that would have prevented it.
-    """
+    """Write the two control files, without clobbering a user's edits."""
     path = path or data_dir()
     for name, body in ((".gitignore", GITIGNORE), (".gitattributes", GITATTRIBUTES)):
         target = path / name
@@ -240,14 +223,8 @@ def _message() -> str:
 def pull(profile: Profile) -> dict:
     """Fetch the remote and rebase onto it. Idempotent when nothing is waiting.
 
-    Rebase rather than merge, because the ledger is append-only and a merge
-    commit in it carries no information.
-
-    Local work is committed first rather than stashed. A rebase that goes wrong
-    can be aborted back to a commit; a stash that fails to pop leaves the
-    session's measurements somewhere the user has to know about `git stash` to
-    find. Committing also puts the local rows under the union merge driver,
-    which is what stops two machines' appends from colliding at all.
+    Local work is committed first, not stashed: an aborted rebase leaves the
+    measurements in a commit, and a commit is what the union driver applies to.
     """
     require_configured(profile)
     branch = profile.sync_branch or "main"
@@ -283,9 +260,7 @@ def pull(profile: Profile) -> dict:
 def auto_pull(profile: Profile) -> dict | None:
     """Pull at the start of a session, when the profile asks for it.
 
-    Same contract as `auto`: a machine that cannot reach the remote still gets
-    to study. The cost of working from a stale ledger is a suboptimal queue and
-    a rebase on the next push, not lost data.
+    Same contract as `auto`: an unreachable remote must not stop the session.
     """
     if not (profile.sync_auto and configured(profile)):
         return None

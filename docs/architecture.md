@@ -7,7 +7,7 @@ Three parts, with a deliberate line between them.
 | Part | Is | Where |
 |---|---|---|
 | **Engine** | scheduling, scoring, selection, metrics | `studykit/`, pure Python stdlib |
-| **Content** | topics, cards, questions, problems | `packs/`, TOML and markdown |
+| **Content** | topics, cards, questions, problems | `packs/` and `~/.studykit/packs/`, TOML and markdown |
 | **Teaching** | asking, judging, explaining | `.agents/skills/`, run by an agent |
 
 The line matters because each part fails differently. Deterministic logic that drifts between sessions is a bug you cannot see; content that lives in code cannot be shared; and judging an answer is not something you can write a function for.
@@ -48,9 +48,9 @@ Rule of thumb when extending it: **if the agent would have to read a file to dec
 ## Data flow
 
 ```
-packs/*.toml ──┐
+pack.toml ─────┐
                ├──► select.py ──► plan / questions  ──► agent runs the session
-data/ledger ───┤                                              │
+ledger.jsonl ──┤                                              │
                │                                              ▼
                └──► schedule.py ──► state.json ◄──── record (append + rebuild)
                     metrics.py  ──► metrics.json ──► report.py   ──► terminal

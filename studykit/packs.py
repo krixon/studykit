@@ -11,7 +11,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config import LEVELS, StudykitError, bank_dir, check_level, packs_dir
+from .config import LEVELS, StudykitError, bank_dir, check_level, pack_roots
 
 QTYPES: tuple[str, ...] = ("recall", "discrimination", "judgment", "diagnostic", "numeric")
 
@@ -296,16 +296,25 @@ class Library:
 
 
 def load_library(enabled: list[str] | None = None) -> Library:
-    root = packs_dir()
-    if not root.is_dir():
-        raise StudykitError(f"No packs directory at {root}")
+    roots = pack_roots()
     packs: dict[str, Pack] = {}
-    for child in sorted(root.iterdir()):
-        if (child / "pack.toml").exists():
+    where: dict[str, Path] = {}
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for child in sorted(root.iterdir()):
+            if not (child / "pack.toml").exists():
+                continue
             pack = load_pack(child)
+            if pack.name in packs:
+                raise StudykitError(
+                    f"two packs are both named {pack.name!r}: {where[pack.name]} and {child}. "
+                    "Rename or remove one."
+                )
             packs[pack.name] = pack
+            where[pack.name] = child
     if not packs:
-        raise StudykitError(f"No packs found under {root}")
+        raise StudykitError("No packs found under " + ", ".join(str(r) for r in roots))
     return Library(packs, enabled)
 
 

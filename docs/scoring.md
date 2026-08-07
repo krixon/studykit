@@ -148,4 +148,4 @@ If a question is worth asking and the card lacks its grounding, **the card is wh
 
 ## The ledger is the only source of truth
 
-`data/ledger.jsonl` is history. It is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`) and are never hand-edited. Deleting them loses nothing.
+`~/.studykit/ledger.jsonl` is history. It is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`) and are never hand-edited. Deleting them loses nothing.
