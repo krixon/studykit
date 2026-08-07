@@ -22,6 +22,7 @@ The session protocols live in `.agents/skills/<name>/SKILL.md`: `study` (the def
 - **Score cold, before teaching anything.** `measured` is always the pre-teaching score, and it is the only field that schedules.
 - **A confident wrong answer is a 2, not a 3.** Conflation is worse than a blank.
 - **`predicted` is the user's own number.** If they did not state one, omit the field. Never infer it from how confident they sounded, and never reconstruct it later.
+- **Never write the user's turn.** Ask the question and stop. An answer you composed is not a measurement, and scoring one puts fiction in an append-only ledger. No answer means no row.
 - **Measure only what you tested.** No inference from adjacent topics.
 - **A problem score never lifts a topic.** It may emit sub-topic rows for facets it genuinely exercised, in either direction.
 - **Anything shown is banked**, before the session ends. `record` rejects a row naming an unbanked question id.

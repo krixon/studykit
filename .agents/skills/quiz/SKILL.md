@@ -29,7 +29,7 @@ One at a time, unless the user prefers batches.
 
 1. Ask the question.
 2. Take a **predicted** confidence 1-5 first, if they engage with it. One keystroke. Skip silently if they do not; never nag. If they did not give one, the field is absent - do not invent it.
-3. Take the answer.
+3. Take the answer. **Stop the turn after asking.** Never write the candidate's answer, and never continue past a question into the response to it. If the turn ends with a question, that is the whole turn.
 4. Score it cold, **before teaching anything**. A confident wrong answer is a **2**, not a 3, because conflation will not self-correct.
 5. Follow the ladder below. It is the protocol, not a suggestion.
 
@@ -40,6 +40,12 @@ One at a time, unless the user prefers batches.
 | 1-2 | **Worked example**, then a variant re-test later in the set. |
 
 Judge against the level's bar, which `./study plan` returns in its `calibration` block and `./study levels` prints on demand.
+
+## Never score an answer that was not given
+
+A question with no answer from the candidate has no score, and no ledger row. Not a 1, not an omitted `measured` with the row kept: no row at all. A fabricated turn scored as though it were real corrupts the ledger, which is append-only, and it is worse than a missed measurement because it looks like data.
+
+If you find you have scored an answer the candidate did not write, say so plainly, drop the row, and re-ask the question cold. Do not reconstruct what they "would have" said.
 
 ## The 1-2 branch
 
