@@ -17,7 +17,7 @@ The filename conventions are load-bearing: `cards/<topic id>.md` and `questions/
 
 Two directories are searched: `packs/` in the checkout, for the packs that ship with it, and `~/.studykit/packs/` for packs you install. Drop a directory into either and it is available. Installing to the second keeps `git status` clean and syncs the pack with your data to your other machines. Two packs sharing a name is an error naming both directories.
 
-`./study config set packs a,b` chooses which are in rotation. `./study packs` says where each one was loaded from.
+`./study packs enable <name>` and `./study packs disable <name>` choose what is in rotation, or `./study config set packs a,b` replaces the list outright. `./study packs` says where each one was loaded from.
 
 ## pack.toml
 
@@ -155,7 +155,7 @@ Checks: cards exist, questions name declared sub-topics, ids are unique across t
 Then use it:
 
 ```
-./study config set packs <your-pack>
+./study packs enable <your-pack>
 ./study plan 25m
 ```
 

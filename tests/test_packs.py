@@ -169,7 +169,7 @@ class TestInstalledPacks(EnvTestCase):
     def test_packs_reports_where_each_one_came_from(self):
         self.install("widgets-pack")
         self.setup_with("widgets-pack")
-        payload = self.run_json("--json", "packs", "--all")
+        payload = self.run_json("--json", "packs")
         by_name = {p["name"]: p for p in payload["packs"]}
         self.assertTrue(by_name["widgets-pack"]["installed"])
         self.assertFalse(by_name["system-design"]["installed"])

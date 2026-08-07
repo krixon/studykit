@@ -214,9 +214,9 @@ class TestReportsAndArtefacts(CliTestCase):
         args = cli.build_parser().parse_args(["test"])
         self.assertIs(args.func, cli.cmd_test)
 
-    def test_packs_all_marks_packs_outside_the_profile_as_off(self):
-        """`--all` loads every pack, which must not make every pack look enabled."""
-        code, out = self.run_cli("packs", "--all")
+    def test_packs_marks_packs_outside_the_profile_as_off(self):
+        """A Library holds every pack, which must not make every pack look enabled."""
+        code, out = self.run_cli("packs")
         self.assertEqual(code, 0, self.stderr)
         flags = {
             line.split()[1]: line.split()[0]
@@ -258,6 +258,37 @@ class TestReportsAndArtefacts(CliTestCase):
     def test_doctor_passes_on_the_shipped_packs(self):
         result = self.run_json("doctor", "--json")
         self.assertTrue(result["ok"], result["problems"])
+
+
+class TestPacksRotation(CliTestCase):
+    def test_enable_and_disable_change_the_rotation(self):
+        code, _ = self.run_cli("packs", "enable", "foundations")
+        self.assertEqual(code, 0, self.stderr)
+        self.assertEqual(self.run_json("config", "get")["packs"], ["foundations", "system-design"])
+
+        code, _ = self.run_cli("packs", "disable", "foundations")
+        self.assertEqual(code, 0, self.stderr)
+        self.assertEqual(self.run_json("config", "get")["packs"], ["system-design"])
+
+    def test_disabling_the_last_pack_is_refused(self):
+        """An empty rotation means every pack, so emptying it would enable more, not less."""
+        code, _ = self.run_cli("packs", "disable", "system-design")
+        self.assertEqual(code, 2)
+        self.assertEqual(self.run_json("config", "get")["packs"], ["system-design"])
+
+    def test_enabling_an_unknown_pack_names_what_is_installed(self):
+        code, _ = self.run_cli("packs", "enable", "nope")
+        self.assertEqual(code, 2)
+        self.assertIn("system-design", self.stderr)
+
+
+class TestBareCommandsPrintHelp(CliTestCase):
+    def test_a_command_with_nothing_to_act_on_prints_help(self):
+        for command in ([], ["bank"], ["config"], ["card"], ["export"]):
+            with self.subTest(command=command):
+                code, out = self.run_cli(*command)
+                self.assertEqual(code, 0, self.stderr)
+                self.assertIn("usage:", out)
 
 
 if __name__ == "__main__":

@@ -211,9 +211,8 @@ def render_queue(entries: list[dict], limit: int = 20) -> str:
 def render_packs(library, level: str, state: dict, enabled: list[str]) -> str:
     """`enabled` comes from the profile, not from the library.
 
-    Under `--all` the library is loaded with every pack, so its own
-    `enabled_names` is everything it holds and would mark all of them on.
-    Only the profile knows what is actually in rotation.
+    A Library always holds every pack on disk, so its own `enabled_names`
+    would mark all of them on. Only the profile knows what is in rotation.
     """
     measured = {(i["pack"], i["topic"], i["subtopic"]) for i in state.get("items", [])}
     out = []

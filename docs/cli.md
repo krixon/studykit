@@ -23,6 +23,8 @@ Environment:
 
 Errors exit `2` with a one-line message on stderr and no traceback. `doctor` and `test` exit `1` when they find problems.
 
+A command invoked with nothing to act on prints its own help and exits `0`, rather than treating the omission as an error. That covers `./study` itself, the commands that only group subcommands, and the ones that need an argument or a JSON payload to do anything.
+
 ---
 
 ## Getting started
@@ -83,7 +85,15 @@ The ordered work list: overdue first (weakest first within that), then never-mea
 
 ### `packs`
 
-What content is installed and how covered it is, per topic. `--all` includes packs not enabled in your profile.
+Every installed pack, marked `on` or `off` by whether it is in rotation, with per-topic coverage at your level.
+
+```
+./study packs                         # what is installed, and what is on
+./study packs enable foundations      # add to the rotation
+./study packs disable design-patterns # remove from it
+```
+
+Both take several names. Rotation is what `plan`, `questions` and `queue` draw from; an installed pack that is off stays listed and stays out of the queue. Taking the last pack out is refused, because an empty rotation means every pack rather than none.
 
 ### `levels`
 

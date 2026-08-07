@@ -83,6 +83,20 @@ def library_for(profile: Profile) -> Library:
     return load_library(profile.packs or None)
 
 
+def needs_help(args) -> int:
+    """A command invoked with nothing to act on prints its own help instead of failing."""
+    args.parser.print_help()
+    return 0
+
+
+def no_payload_offered(args) -> bool:
+    return (
+        not getattr(args, "json_text", None)
+        and not getattr(args, "file", None)
+        and sys.stdin.isatty()
+    )
+
+
 def read_payload(args) -> object:
     """JSON from --json, --file, or stdin."""
     if getattr(args, "json_text", None):
@@ -379,6 +393,8 @@ def cmd_questions(args) -> int:
 
 
 def cmd_card(args) -> int:
+    if not args.topic:
+        return needs_help(args)
     profile = load_profile_or_default(args)
     library = library_for(profile)
     pack, topic = library.find_topic(args.topic, args.pack)
@@ -463,7 +479,7 @@ def cmd_problem(args) -> int:
 
 def cmd_packs(args) -> int:
     profile = load_profile_or_default(args)
-    library = load_library(None if args.all else profile.packs or None)
+    library = load_library()
     as_of = args.date or today()
     state = build_state(library_for(profile), read(), profile.level, as_of)
     if args.json:
@@ -510,6 +526,32 @@ def cmd_packs(args) -> int:
     return 0
 
 
+def cmd_packs_toggle(args) -> int:
+    profile = Profile.load()
+    available = sorted(load_library().all)
+    unknown = [name for name in args.names if name not in available]
+    if unknown:
+        raise StudykitError(
+            f"Unknown pack(s): {', '.join(unknown)}. Installed: {', '.join(available)}"
+        )
+    # An empty profile list means every pack is in rotation, so it has to be
+    # spelled out before anything can be taken out of it.
+    current = profile.packs or available
+    if args.enable:
+        chosen = [name for name in available if name in current or name in args.names]
+    else:
+        chosen = [name for name in current if name not in args.names]
+    if not chosen:
+        raise StudykitError("That would leave nothing in rotation. Enable another pack first.")
+    profile.packs = chosen
+    profile.save()
+    if args.json:
+        emit({"packs": chosen})
+    else:
+        print("in rotation: " + ", ".join(chosen))
+    return 0
+
+
 def cmd_levels(args) -> int:
     profile = None
     try:
@@ -552,6 +594,8 @@ def cmd_levels(args) -> int:
 
 
 def cmd_record(args) -> int:
+    if no_payload_offered(args):
+        return needs_help(args)
     profile = load_profile_or_default(args)
     library = library_for(profile)
     payload = read_payload(args)
@@ -675,6 +719,8 @@ def _bank_ids(entries: list[dict], prefix: str) -> list[str]:
 
 
 def cmd_bank_add(args) -> int:
+    if no_payload_offered(args):
+        return needs_help(args)
     profile = load_profile_or_default(args)
     library = library_for(profile)
     payload = read_payload(args)
@@ -1014,6 +1060,8 @@ def cmd_test(args) -> int:
 
 
 def cmd_export(args) -> int:
+    if not args.what:
+        return needs_help(args)
     mapping = {"state": state_path(), "metrics": metrics_path(), "profile": data_dir() / "profile.json"}
     if args.what == "ledger":
         emit([r.as_dict() for r in read()])
@@ -1047,7 +1095,11 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument(
         "--json", action="store_true", help=argparse.SUPPRESS, default=argparse.SUPPRESS
     )
-    subparsers = parser.add_subparsers(dest="command", required=True, parser_class=lambda **kw: argparse.ArgumentParser(parents=[common], **kw))
+    def sub_parser_class(**kw):
+        return argparse.ArgumentParser(parents=[common], **kw)
+
+    subparsers = parser.add_subparsers(dest="command", parser_class=sub_parser_class)
+    parser.set_defaults(func=needs_help, parser=parser)
 
     setup = subparsers.add_parser("setup", help="Set your level and packs. Run this first.")
     setup.add_argument("--level", choices=LEVELS)
@@ -1088,9 +1140,9 @@ def build_parser() -> argparse.ArgumentParser:
     questions.set_defaults(func=cmd_questions)
 
     card = subparsers.add_parser("card", help="Print a knowledge card.")
-    card.add_argument("topic")
+    card.add_argument("topic", nargs="?")
     card.add_argument("--pack")
-    card.set_defaults(func=cmd_card)
+    card.set_defaults(func=cmd_card, parser=card)
 
     problem = subparsers.add_parser("problem", help="Print a problem's candidate prompt, or its notes.")
     problem.add_argument("slug", nargs="?")
@@ -1099,9 +1151,15 @@ def build_parser() -> argparse.ArgumentParser:
     problem.add_argument("--pack")
     problem.set_defaults(func=cmd_problem)
 
-    packs_cmd = subparsers.add_parser("packs", help="What content is installed and how covered it is.")
-    packs_cmd.add_argument("--all", action="store_true", help="Include packs not enabled in your profile.")
+    packs_cmd = subparsers.add_parser("packs", help="What content is installed, and what is in rotation.")
     packs_cmd.set_defaults(func=cmd_packs)
+    packs_sub = packs_cmd.add_subparsers(dest="packs_action", parser_class=sub_parser_class)
+    packs_enable = packs_sub.add_parser("enable", help="Put packs into rotation.")
+    packs_enable.add_argument("names", nargs="+", metavar="PACK")
+    packs_enable.set_defaults(func=cmd_packs_toggle, enable=True)
+    packs_disable = packs_sub.add_parser("disable", help="Take packs out of rotation.")
+    packs_disable.add_argument("names", nargs="+", metavar="PACK")
+    packs_disable.set_defaults(func=cmd_packs_toggle, enable=False)
 
     levels_cmd = subparsers.add_parser("levels", help="The level ladder and each pack's calibration brief.")
     levels_cmd.set_defaults(func=cmd_levels)
@@ -1110,10 +1168,11 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--json-text", "--data", dest="json_text", help="JSON payload as a string.")
     record.add_argument("--file", help="Read the JSON payload from a file.")
     record.add_argument("--dry-run", action="store_true", help="Validate without writing.")
-    record.set_defaults(func=cmd_record)
+    record.set_defaults(func=cmd_record, parser=record)
 
     bank = subparsers.add_parser("bank", help="Manage question banks.")
-    bank_sub = bank.add_subparsers(dest="bank_command", required=True)
+    bank.set_defaults(func=needs_help, parser=bank)
+    bank_sub = bank.add_subparsers(dest="bank_command", parser_class=sub_parser_class)
     bank_add = bank_sub.add_parser("add", help="Bank questions generated during a session. Assigns ids.")
     bank_add.add_argument("--json-text", "--data", dest="json_text")
     bank_add.add_argument("--file")
@@ -1122,7 +1181,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write into the pack itself rather than your private overlay. For pack authors.",
     )
-    bank_add.set_defaults(func=cmd_bank_add)
+    bank_add.set_defaults(func=cmd_bank_add, parser=bank_add)
 
     rebuild_cmd = subparsers.add_parser("rebuild", help="Recompute state.json and metrics.json from the ledger.")
     rebuild_cmd.set_defaults(func=cmd_rebuild)
@@ -1133,7 +1192,8 @@ def build_parser() -> argparse.ArgumentParser:
     dash.set_defaults(func=cmd_dashboard)
 
     config = subparsers.add_parser("config", help="Read or change your profile.")
-    config_sub = config.add_subparsers(dest="action", required=True)
+    config.set_defaults(func=needs_help, parser=config)
+    config_sub = config.add_subparsers(dest="action", parser_class=sub_parser_class)
     config_get = config_sub.add_parser("get")
     config_get.add_argument("key", nargs="?")
     config_get.set_defaults(func=cmd_config, action="get")
@@ -1165,8 +1225,8 @@ def build_parser() -> argparse.ArgumentParser:
     test.set_defaults(func=cmd_test)
 
     export = subparsers.add_parser("export", help="Print state, metrics, ledger or profile as JSON.")
-    export.add_argument("what", choices=["state", "metrics", "ledger", "profile"])
-    export.set_defaults(func=cmd_export)
+    export.add_argument("what", nargs="?", choices=["state", "metrics", "ledger", "profile"])
+    export.set_defaults(func=cmd_export, parser=export)
 
     return parser
 
