@@ -62,7 +62,7 @@ id = "mq-008"
 qtype = "judgment"
 subtopic = "ordering"
 levels = ["senior", "lead", "staff"]
-q = "A message fails and you are re-queueing it at the tail so it gets retried. New information - this topic is partitioned by account id specifically to preserve per-account ordering."
+q = "A message fails and you are re-queueing it at the tail so it gets retried. New information - this topic is partitioned by account id specifically to preserve per-account ordering. More or less appropriate?"
 a = "Much less appropriate, -2. Re-queueing at the tail places the retried message after later messages for the same account, so you have broken exactly the ordering the partitioning existed to provide. Either block the partition and retry in place, accepting head-of-line blocking, or move the message to a per-key error state so subsequent messages for that key are also held."
 
 [[q]]

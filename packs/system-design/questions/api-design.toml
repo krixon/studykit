@@ -86,8 +86,8 @@ id = "ap-011"
 qtype = "recall"
 subtopic = "errors-status"
 levels = ["graduate", "mid", "senior", "lead", "staff"]
-q = "What should an error response contain besides a status code?"
-a = "A stable machine-readable code the client can branch on, a human message for logs, and a correlation id so a support conversation can find the request. Never make clients regex the message - that makes your prose part of the contract."
+q = "You are designing a JSON API. A mobile client calls it, a third-party integrator also calls it, and your support team fields tickets about it. A request fails. Beyond the status code, what goes in the response body, and what does each part buy you?"
+a = "A stable machine-readable code the client can branch on, a human message for logs, and a correlation id so a support conversation can find the request. Never make clients regex the message - that makes your prose part of the contract, so say explicitly that the message is not covered by it. A strong answer adds pointers to the offending fields for validation failures, a link to documentation for the code, one consistent schema across every endpoint, and the boundary that stack traces and internal detail never ship in a production body. The correlation id is the one that changes support economics: an error code says what class of thing broke, only the id says which request."
 
 [[q]]
 id = "ap-012"

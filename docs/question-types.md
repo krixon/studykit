@@ -32,6 +32,10 @@ A design context, then new information. Does an option become more or less appro
 
 Answered as `-2 -1 0 +1 +2` plus a clause of why. Near-zero typing for a genuinely hard question.
 
+**The stem must end with the ask.** A design context plus new information and then nothing is not a question: the candidate cannot tell whether you want the rating, the remedy, or both. End with "More or less appropriate?" or whichever variant fits.
+
+**The rating applies to the option as stated, not to the repaired version.** Least-response-time balancing against a backend returning 500 in 2ms is -2, because the algorithm as specified measures elapsed time and cannot see a status code. A candidate who answers 0 on the grounds that a sensible implementation would exclude 5xx has patched the design and then rated the patch, which hides the fact that the default is the broken one. Score the delta against what is on the table; the fix is the next sentence, not a substitute for the rating.
+
 Adapted from script concordance testing in medical education, which assesses reasoning under uncertainty rather than knowledge. **This is the type that targets far transfer**; weight the bank towards it.
 
 A good judgment question has a defensible answer that is not obvious, and sometimes the honest answer is 0: "it depends, and here is what on". Questions where the new information trivially settles it are recall in disguise.
@@ -79,6 +83,22 @@ Targets for authoring, not enforced by code. `./study progress` shows your measu
 Mix topics within a set and never say which card a question came from. Naming the topic pre-activates the schema and does half the retrieval for the candidate.
 
 `./study questions` already interleaves the set it returns. Do not reorder it into topic groups.
+
+### The corollary: a stem must be self-contained
+
+Because the topic cannot be named, everything needed to fix the frame has to be in the stem, written as scenario rather than as a label.
+
+> What should an error response contain besides a status code?
+
+Unanswerable. HTTP mandates nothing beyond the status code, so a candidate reading this as a protocol question is right to say "nothing", and a candidate reading it as a design question answers something else entirely. The two readings do not overlap.
+
+> You are designing a JSON API. A mobile client calls it, a third-party integrator also calls it, and your support team fields tickets about it. A request fails. Beyond the status code, what goes in the response body?
+
+Same knowledge tested, frame fixed, and nothing pre-activated. "This is an API design question" would also fix the frame, but it names the topic and hands over half the retrieval. Scenario does the work a label would, for free.
+
+A `judgment` stem carrying a time constraint has a second frame to fix: **design or lever**. "Prices must be visible within 60 seconds" reads as a standing requirement to one candidate and as an incident to another, and the right answers are disjoint - restructure what is cached, versus fire the purge and accept the herd. Say which you are asking for.
+
+The test: if a stem needs a topic label to be answerable, it is missing a sentence.
 
 ## Bank format
 

@@ -21,6 +21,8 @@ Returns questions already filtered to the user's level, drawn from the most-due 
 
 **Never say which topic a question is from.** Naming it pre-activates the schema and does half the retrieval.
 
+**A stem must be answerable without knowing its topic.** That is the cost of the rule above: everything needed to fix the frame goes in the stem as scenario, never as a label. "What should an error response contain?" has no answer until the candidate knows whether it means the HTTP spec, which mandates nothing, or JSON API practice. "You are designing a JSON API consumed by a mobile client and by third-party integrators, and a request fails" fixes the frame and primes nothing. A `judgment` stem with a time constraint must also say whether it wants a design change or an operational lever, because those answers are disjoint. This applies to questions you author mid-session as much as to banked ones; see [question-types.md](../../../docs/question-types.md).
+
 Leave room for follow-ups: a set of 6 where two score 1-2 runs to 8. Plan the box accordingly rather than skipping the re-tests.
 
 ## Run
@@ -46,6 +48,14 @@ Judge against the level's bar, which `./study plan` returns in its `calibration`
 A question with no answer from the candidate has no score, and no ledger row. Not a 1, not an omitted `measured` with the row kept: no row at all. A fabricated turn scored as though it were real corrupts the ledger, which is append-only, and it is worse than a missed measurement because it looks like data.
 
 If you find you have scored an answer the candidate did not write, say so plainly, drop the row, and re-ask the question cold. Do not reconstruct what they "would have" said.
+
+## Never score across two readings
+
+If the candidate answers a different question from the one you meant, check the stem before checking the answer. Where the stem admits both readings, the answer is not wrong and the question is not a measurement: say so, drop the row, re-ask with the frame supplied, and fix the stem in the bank before the session ends.
+
+A candidate who challenges the frame is usually right. Treat it as a bug report on the question, not as evasion, and do not argue them into your reading of a stem that did not carry it.
+
+This applies to a `post` score as much as a cold one. A post-teaching failure recorded against an ambiguous variant says the teaching did not land when what actually happened is that the re-test asked something else.
 
 ## The 1-2 branch
 

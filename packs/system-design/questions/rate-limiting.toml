@@ -86,7 +86,7 @@ id = "rl-011"
 qtype = "judgment"
 subtopic = "failure-modes"
 levels = ["senior", "lead", "staff"]
-q = "Your rate limiter's Redis is unreachable. You are deciding to fail closed and reject everything. New information - the limiter exists to protect the service from overload, and the service is currently healthy."
+q = "Your rate limiter's Redis is unreachable. You are deciding to fail closed and reject everything. New information - the limiter exists to protect the service from overload, and the service is currently healthy. More or less appropriate?"
 a = "Less appropriate, -2. Failing closed turns a limiter outage into a total service outage, which is precisely the outage the limiter existed to prevent. A protection limiter fails open, ideally with a conservative local fallback limit. A commercial limiter enforcing a paid plan is the case that fails closed."
 
 [[q]]

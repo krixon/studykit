@@ -94,7 +94,7 @@ id = "rp-012"
 qtype = "judgment"
 subtopic = "conflict-handling"
 levels = ["senior", "lead", "staff"]
-q = "You are adopting CRDTs to handle multi-region conflicts. New information - the operation is transfer funds between accounts, which must not overdraw."
+q = "You are adopting CRDTs to handle multi-region conflicts. New information - the operation is transfer funds between accounts, which must not overdraw. More or less appropriate?"
 a = "Much less appropriate, -2. CRDTs converge because their merge is commutative, associative and idempotent, which works for counters, sets and text. A conditional operation - only if funds allow - is not expressible that way, because the condition depends on a global state no replica has. Either route all writes for an account to one region, or use consensus."
 
 [[q]]
