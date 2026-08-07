@@ -2,12 +2,6 @@
 
 The measurement model. The mechanism is implemented in `studykit/schedule.py` and nowhere else, so this document and that file are the only two places the algorithm exists.
 
-## Why the rules are this strict
-
-An earlier version of this system conflated a self-reported confidence with a measurement, and let problem-level scores propagate onto topics. A session scoring 4 overall raised `caching` from 3 to 4 and `consistent-hashing` from 4 to 5, while the same attempt recorded caching **failures**. Direct measurement the next day returned caching **2**. Both inferred bumps were wrong, and both were optimistic in the same direction.
-
-They self-corrected only because a later session happened to hit those topics. Had it not, caching would have sat at 4 and next surfaced a week later. The rules below exist to make that failure impossible rather than lucky, and they are enforced in code: `studykit/ledger.py` rejects a row that names a facet the pack does not declare, and rejects any attempt to write a derived field.
-
 ## Three constructs, never merged
 
 | Field | Is | Drives |
@@ -16,7 +10,7 @@ They self-corrected only because a later session happened to hit those topics. H
 | `measured` | cold-recall score, taken before any teaching | scheduling and metrics |
 | `state.json` | derived from `measured` | what comes up next |
 
-Never hand-set derived state. Never let a self-report move a schedule.
+Never hand-set derived state. Never let a self-report move a schedule. `studykit/ledger.py` enforces both: it rejects a row naming a facet the pack does not declare, and rejects any attempt to write a derived field.
 
 `predicted` is the user's number. If they did not state one, the field is **absent**. It is not inferred from how confident an answer sounded, and it is not reconstructed later.
 
@@ -60,7 +54,7 @@ Every item tracks `reps`, the count of direct measurement **dates**. This caps h
 | 2 | 10 days |
 | 3+ | uncapped, to a 120-day ceiling |
 
-One answer is not evidence of mastery, only of not-failing-once. Without this cap, a single lucky 5 schedules itself a week out and is not seen again for a fortnight.
+One answer is evidence of not-failing-once, not of mastery. Without the cap, a single lucky 5 schedules itself a week out.
 
 ## Interval
 
@@ -105,7 +99,6 @@ Rules for the 1-2 branch:
 - The re-test is a **variant**, never the question just answered. Recognition lets an answer be confirmed without retrieving anything.
 - **Space it.** Put other questions between the teaching and the re-test; back-to-back is a working-memory read, not a retrieval.
 - The variant is banked like any other shown question.
-- A set with two 1-2s runs longer than planned. Budget for it, or cut a planned question rather than skipping the re-test.
 
 Warrant: [research.md](research.md), *prior knowledge gates unguided struggle* and *feedback needs a second retrieval*.
 
@@ -142,10 +135,10 @@ Worked examples help at low strength and actively hurt at high strength: experti
 
 A question may only require material the pack actually carries: what is on the card, or what follows from it by reasoning the card supports. Asking for a derivation the material never introduces measures nothing and scores an unfair 1.
 
-This is not a softening of cold-first. Pretesting works because the learner has something to generate from and fails at the edge of it. A question outside the material entirely is not a desirable difficulty, just a wrong one.
+Pretesting works because the learner has something to generate from and fails at the edge of it. A question outside the material is not a desirable difficulty, just a wrong one.
 
 If a question is worth asking and the card lacks its grounding, **the card is what needs fixing**.
 
 ## The ledger is the only source of truth
 
-`~/.studykit/ledger.jsonl` is history. It is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`) and are never hand-edited. Deleting them loses nothing.
+`~/.studykit/ledger.jsonl` is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`), never hand-edited, and lose nothing when deleted.

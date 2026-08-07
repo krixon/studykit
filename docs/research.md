@@ -1,8 +1,6 @@
 # Evidence base
 
-Why the engine works the way it does. Each finding is recorded with the mechanism it licenses, so a design decision can be traced to its warrant and challenged on the evidence rather than on taste.
-
-A finding earns a place here only if it changes what the engine does. Interesting-but-inert research is not listed.
+Why the engine works the way it does. Each finding is recorded with the mechanism it licenses, so a decision can be challenged on the evidence rather than on taste. A finding earns a place here only if it changes what the engine does.
 
 ## Retrieval before instruction
 
@@ -10,7 +8,7 @@ A finding earns a place here only if it changes what the engine does. Interestin
 
 **What it licenses.** Cold measurement always comes first. `measured` is the pre-teaching score and is the only field that schedules. No session teaches before it tests.
 
-**The boundary that is easy to drop.** In these studies instruction *immediately follows* the pretest. The failed attempt is a primer for a lesson, not a substitute for one. A pretest with no real instruction behind it is just an unanswered question.
+**The boundary.** In these studies instruction *immediately follows* the pretest. The failed attempt is a primer for a lesson, not a substitute for one. A pretest with no real instruction behind it is just an unanswered question.
 
 ## Prior knowledge gates unguided struggle
 

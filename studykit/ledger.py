@@ -1,15 +1,12 @@
 """The append-only measurement ledger.
 
 One JSON object per line, one line per measured item per session. Never edited,
-only appended. `state.json` and `metrics.json` are both derived from this file,
-so it is the single source of truth for everything the engine knows.
+only appended. `state.json` and `metrics.json` are derived from it.
 
 A row is stamped with `at`, a full local timestamp with its offset, because when
-in the day something was measured is real information and cannot be recovered
-later. A row is written as it is measured, so the time is always known.
-
-Scheduling still works in whole days: `Row.date` is derived from `at`, so several
-measurements of one facet in one sitting remain one piece of evidence.
+in the day something was measured cannot be recovered later. Scheduling still
+works in whole days: `Row.date` is derived from `at`, so several measurements of
+one facet in one sitting remain one piece of evidence.
 """
 
 from __future__ import annotations
@@ -107,9 +104,8 @@ def _score(value, field: str, where: str) -> int:
 def validate(entry: dict, library: Library, *, default_level: str = "") -> Row:
     """Turn one caller-supplied dict into a Row, or explain why it cannot.
 
-    Validation is where the engine's rules become mechanical: a measurement has
-    to name a facet that actually exists in the pack taxonomy, and no caller can
-    write a derived field.
+    A measurement has to name a facet the pack taxonomy declares, and no caller
+    may write a derived field.
     """
     where = f"row {entry.get('topic', '?')}/{entry.get('subtopic', '?')}"
 
@@ -236,8 +232,8 @@ def read(path: Path | None = None) -> list[Row]:
 def question_exposure(rows: list[Row]) -> dict[str, dict]:
     """How often each banked question has been shown, and when it last was.
 
-    Exposure is derived from the ledger rather than stored on the question, so
-    the shipped packs stay pristine and portable.
+    Derived from the ledger rather than stored on the question, so the shipped
+    packs stay portable.
     """
     out: dict[str, dict] = {}
     for row in rows:

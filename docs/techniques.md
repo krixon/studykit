@@ -1,8 +1,6 @@
 # Technique menu
 
-The blocks `./study plan` draws from. Each targets a specific failure, has a rough cost so a session can be built to fit a budget, and fires on a specific diagnosis rather than on preference. Warrants are in [research.md](research.md).
-
-Selection is implemented in `studykit/select.py`. This document explains the choices; the code makes them.
+The blocks `./study plan` draws from. Each targets a specific failure, has a rough cost so a session can be built to fit a budget, and fires on a diagnosis rather than on preference. Warrants are in [research.md](research.md); selection is implemented in `studykit/select.py`.
 
 | Block | Targets | Budget | Fires when |
 |---|---|---:|---|
@@ -19,11 +17,11 @@ Selection is implemented in `studykit/select.py`. This document explains the cho
 
 ## Notes on the less obvious ones
 
-**Contrasting cases.** Present two or three things that share surface features and differ in deep structure, and ask what separates them *before* explaining anything. Novices miss important distinctions because their knowledge is not differentiated the way an expert's is; systematic variation is what induces the distinction. This is the direct remedy for a score-2 conflation, and it works better than a correction because a correction addresses the wrong answer rather than the missing axis.
+**Contrasting cases.** Present two or three things that share surface features and differ in deep structure, and ask what separates them *before* explaining anything. The direct remedy for a score-2 conflation, and better than a correction, because a correction addresses the wrong answer rather than the missing axis.
 
 **Teach-back.** Explain the concept as if to a competent engineer who has not met it. The gap between feeling able to explain something and actually explaining it is large and invisible from the inside. Cheap to run, brutal as a diagnostic, which is why the composer fires it on a calibration signal rather than on a strength signal.
 
-**Design critique.** Present a deliberately flawed design and ask what breaks. Evaluation is cheaper than generation for the same signal, so it fits budgets where a full problem does not, and critiquing architecture is a real senior activity in its own right rather than a proxy for one.
+**Design critique.** Present a deliberately flawed design and ask what breaks. Evaluation is cheaper than generation for the same signal, so it fits budgets where a full problem does not.
 
 **Faded worked example.** Show a complete worked design, then re-run a variant with parts removed for the user to fill. Only for weak facets: worked examples help at low strength and actively hurt at high strength, so fade them out as strength rises.
 
@@ -43,9 +41,9 @@ Selection is implemented in `studykit/select.py`. This document explains the cho
 | half day | a problem, the blocks its gaps expose, and card writing |
 | full day | two problems in different areas, consolidation, and a cold re-attempt |
 
-Two minutes are always reserved at the end for recording. A session that is not written down did not happen.
+Two minutes are always reserved at the end for recording.
 
-The composer also spreads the quiz set across topics deliberately: the queue rotates through topics rather than exhausting one, so a 12-question set draws from up to 12 different topics. Interleaving only works if there is something to interleave.
+The queue rotates through topics rather than exhausting one, so a 12-question set draws from up to 12 different topics. Interleaving only works if there is something to interleave.
 
 ## Overriding it
 

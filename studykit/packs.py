@@ -1,8 +1,7 @@
 """Loading packs: taxonomy, cards, question banks and problems.
 
-A pack is content only. It declares what there is to learn; the engine owns
-scheduling and scoring. Packs are never written to during a session - questions
-generated mid-session land in the user's bank overlay under the data directory.
+Packs are never written to during a session. Questions generated mid-session
+land in the user's bank overlay under the data directory.
 """
 
 from __future__ import annotations

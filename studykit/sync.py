@@ -1,16 +1,11 @@
 """Carrying the data directory between machines over a git remote.
 
-The engine and the packs are shareable; a ledger is not. So the data directory
-is its own git repository, with its own remote, and the tool repo never sees it.
-That keeps `studykit` publishable while your history lives somewhere private.
+The data directory is its own git repository with its own remote, so the tool
+repo never sees a ledger. Only the source of truth is tracked: the derived files
+are rebuilt on every write, and committing them would produce a diff on every
+command and a conflict on every second machine.
 
-Only the source of truth is tracked. `state.json`, `metrics.json` and the
-dashboard are pure functions of the ledger and are rebuilt on every write, so
-committing them would produce a diff on every command and merge conflicts on
-every second machine.
-
-git is invoked as a subprocess, not imported. Nothing here adds a dependency,
-and every command no-ops cleanly when sync is not configured.
+Every command here no-ops cleanly when sync is not configured.
 """
 
 from __future__ import annotations

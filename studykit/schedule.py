@@ -1,18 +1,8 @@
 """Scheduling: the only implementation of the interval algorithm.
 
-Rules, in one place so they can be argued with:
-
-* `strength` is the most recent measured score, never an average of history.
-* Several measurements of one facet on one date collapse to their mean, rounded,
-  and count as a single rep. Eight quiz questions on caching is one piece of
-  evidence about caching, not eight.
-* Thin evidence is capped: one rep can never buy more than a 3 day interval,
-  two reps no more than 10. One answer is evidence of not-failing-once.
-* A problem score is a broad integration measure and is exempt from the reps cap.
-  It still never lifts a topic's strength - that separation lives in `ledger.py`,
-  which requires problem rows to name a problem.
-
-See `docs/scoring.md` for the reasoning and `docs/research.md` for the warrants.
+Change anything here and `docs/scoring.md` has to change in the same commit;
+between them they are the only two places the algorithm exists. Warrants for the
+choices are in `docs/research.md`.
 """
 
 from __future__ import annotations

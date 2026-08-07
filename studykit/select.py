@@ -1,8 +1,7 @@
 """Queue ordering, question drawing and session composition.
 
-The user says how long they have; this module decides what they work on. That
-decision is deterministic so it can be argued with and tested, rather than being
-re-improvised by a model every session.
+The user says how long they have; this module decides what they work on,
+deterministically, so the same inputs always compose the same session.
 """
 
 from __future__ import annotations
@@ -229,7 +228,6 @@ def _spread_topics(entries: list[QueueEntry]) -> list[QueueEntry]:
 
     Without this, a queue of never-measured facets comes out grouped by topic,
     and a session drawn from the head of it quizzes two topics rather than eight.
-    Interleaving is only worth anything if the queue offers something to interleave.
     """
     out: list[QueueEntry] = []
     for priority in sorted({e.priority for e in entries}):
@@ -317,9 +315,8 @@ def draw_questions(
 def interleave(questions: list[Question], rng: random.Random) -> list[Question]:
     """Reorder so consecutive questions come from different topics where possible.
 
-    Blocked practice inflates in-session performance and depresses retention, and
-    it removes the discrimination demand entirely: if you know the topic, half the
-    retrieval is done for you.
+    Blocked practice inflates in-session performance and depresses retention: if
+    you know the topic, half the retrieval is done for you.
     """
     remaining = list(questions)
     rng.shuffle(remaining)
@@ -357,9 +354,9 @@ def choose_problem(
 ) -> dict | None:
     """A due re-attempt beats a new problem; otherwise the least-covered area.
 
-    `max_minutes` keeps the composer honest: offering a 60 minute problem inside a
-    45 minute session either overruns or gets cut short, and neither measures
-    integration, which is the only thing a problem is for.
+    `max_minutes` keeps the composer honest: a 60 minute problem inside a 45
+    minute session either overruns or gets cut short, and neither measures
+    integration.
     """
     as_of = as_of or today()
     taken = exclude or set()

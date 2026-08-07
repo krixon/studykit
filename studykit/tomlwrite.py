@@ -1,8 +1,7 @@
 """Just enough TOML writing to append a question to a bank.
 
-Deliberately minimal. Banking appends rendered `[[q]]` blocks rather than
-re-serialising a whole file, so hand-authored formatting and comments in the
-shipped packs survive untouched.
+Banking appends rendered `[[q]]` blocks rather than re-serialising a whole file,
+so hand-authored formatting and comments in the shipped packs survive untouched.
 """
 
 from __future__ import annotations

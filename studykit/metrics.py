@@ -1,11 +1,9 @@
 """Metrics, computed from the ledger and written to `data/metrics.json`.
 
-Two things worth knowing about the progress series:
-
-* **All facets** moves when new ground is broken as well as when something
-  improves, because breaking new ground usually means adding a low score.
-* **Re-measured only** holds the item set fixed to facets tested on two or more
-  separate dates. That is the like-for-like reading, and the honest one.
+Two readings of the progress series: **all facets** moves when new ground is
+broken as well as when something improves, because new ground usually means a
+low score; **re-measured only** holds the item set to facets tested on two or
+more separate dates, which is the like-for-like reading.
 
 Every average uses the cold `measured` field. `post` is never averaged in - it
 would flatter the numbers with scores taken after teaching.

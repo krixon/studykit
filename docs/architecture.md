@@ -35,7 +35,7 @@ Support a new harness by symlinking, never by copying. Two copies of a protocol 
 
 The agent never reads pack files. That is the design decision that keeps a session cheap.
 
-`./study plan 25m` returns a session: the calibration brief, the blocks in order, and the twelve questions already drawn, filtered by level, and interleaved. A few kilobytes. The alternative (reading a manifest, three cards and four question banks, then choosing) is a hundred times that, and worse, it re-derives selection logic every time.
+`./study plan 25m` returns a session: the calibration brief, the blocks in order, and the twelve questions already drawn, filtered by level, and interleaved. A few kilobytes. Reading a manifest, three cards and four question banks instead costs a hundred times that and re-derives selection logic every time.
 
 The same principle runs through the rest of the surface:
 
@@ -59,7 +59,7 @@ ledger.jsonl ──┤                                              │
 
 `ledger.jsonl` is the only source of truth. It is append-only and never edited. `state.json` and `metrics.json` are pure functions of it plus the pack taxonomy, rebuilt on every `record`, and deleting them loses nothing.
 
-That property is worth protecting. It means a scheduling change is retroactive: fix the interval function, run `./study rebuild`, and every due date is recomputed from the same history. If state were mutated in place, a bug in the scheduler would be baked into the data.
+That makes a scheduling change retroactive: fix the interval function, run `./study rebuild`, and every due date is recomputed from the same history. Mutating state in place would bake a scheduler bug into the data.
 
 ## Modules
 
@@ -81,8 +81,6 @@ Dependencies run one way: `cli` → everything, `select` → `schedule` + `packs
 
 ## Rules enforced in code, not in prose
 
-The scoring model has rules that were previously guidance and were violated anyway. These are now mechanical:
-
 - **A measurement must name a facet the pack declares.** `ledger.validate` rejects anything else, so a typo cannot create a phantom facet that is never scheduled.
 - **Derived fields cannot be written.** Passing `strength`, `interval`, `due` or `reps` to `record` is an error, not a silent override.
 - **A problem row must name a problem.** `topic` must be `problem:<slug>` with `subtopic: overall`, so a problem score cannot be recorded as a topic score.
@@ -91,9 +89,7 @@ The scoring model has rules that were previously guidance and were violated anyw
 
 ## Why not a database
 
-The ledger is a few hundred lines of JSONL after a year of daily use. It is greppable, diffable, and trivially portable. A database would add a dependency, a schema migration story, and a file you cannot read, in exchange for query performance nobody needs at this scale.
-
-The same reasoning applies to packs in TOML rather than in a content service, and to a generated HTML file rather than a dashboard server.
+The ledger is a few hundred lines of JSONL after a year of daily use: greppable, diffable, portable. A database would add a dependency, a migration story and a file you cannot read, for query performance nobody needs at this scale. The same reasoning puts packs in TOML and the dashboard in a generated file.
 
 ## Extending it
 

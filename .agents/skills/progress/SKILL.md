@@ -24,7 +24,7 @@ For the underlying numbers:
 
 ## What to add on top
 
-The CLI gives the numbers. Your job is the reading of them. In particular:
+The CLI gives the numbers. Your job is the reading of them:
 
 - **Unknown beats stale.** A never-measured facet is a bigger risk than an overdue known-good one. If the report shows both, say which to attack first and why.
 - **Score by question type is the diagnostic that matters.** High `recall` with low `judgment` means the knowledge is there and inert - that needs applied work, not more flashcards. Say so plainly when the gap is a point or more.
@@ -44,4 +44,4 @@ Writes a self-contained HTML page - trend over time, score by type, strength by 
 
 ## Do not
 
-Do not recompute or edit state here. This skill only reads. `record` is the only thing that writes, and it rebuilds everything itself.
+Do not recompute or edit state here. This skill only reads; `record` is the only thing that writes, and it rebuilds everything itself.

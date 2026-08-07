@@ -1,6 +1,6 @@
 # Authoring a pack
 
-A pack is content. It declares what there is to learn and says nothing about scheduling, scoring or session structure. The engine owns those, so a pack is portable and can be shared without carrying anyone's history.
+A pack is content. It declares what there is to learn and says nothing about scheduling, scoring or session structure, so it can be shared without carrying anyone's history.
 
 ## Layout
 
@@ -15,7 +15,7 @@ A pack is content. It declares what there is to learn and says nothing about sch
 
 The filename conventions are load-bearing: `cards/<topic id>.md` and `questions/<topic id>.toml` are found by the topic's id, not by anything in the manifest.
 
-Two directories are searched: `packs/` in the checkout, for the packs that ship with it, and `~/.studykit/packs/` for packs you install. Drop a directory into either and it is available. Installing to the second keeps `git status` clean and means the pack syncs with your data to your other machines. Two packs sharing a name is an error naming both directories, not a silent shadow.
+Two directories are searched: `packs/` in the checkout, for the packs that ship with it, and `~/.studykit/packs/` for packs you install. Drop a directory into either and it is available. Installing to the second keeps `git status` clean and syncs the pack with your data to your other machines. Two packs sharing a name is an error naming both directories.
 
 `./study config set packs a,b` chooses which are in rotation. `./study packs` says where each one was loaded from.
 
@@ -55,12 +55,12 @@ A calibration brief per level is optional but strongly recommended: without one 
 
 ## Sub-topics are the unit of everything
 
-Sub-topics are the atom of measurement, scheduling and reporting. Get them right and everything else follows.
+Sub-topics are the atom of measurement, scheduling and reporting.
 
 - **Four to seven per topic.** Fewer and the topic is too coarse to schedule usefully; more and each one is measured too rarely to mean anything.
 - **Name them by what is known, not by section heading.** `stampede-penetration` is a facet you can be right or wrong about. `overview` is not.
 - **They must be independently assessable.** If you cannot write a question that tests one without testing another, they are one facet.
-- **Adding a sub-topic makes it appear as unmeasured**, so the addition immediately shows up in everyone's queue. That is intended, and it is why renaming one is a breaking change: the old name's history is orphaned. Choose carefully, and prefer adding to renaming.
+- **Adding a sub-topic makes it appear as unmeasured**, so it shows up in everyone's queue immediately. Renaming one is a breaking change: the old name's history is orphaned. Prefer adding to renaming.
 
 ## Cards
 
@@ -117,12 +117,12 @@ a = "They are on different axes entirely. Cache-aside is a READ strategy; write-
 - `subtopic` must be declared by the topic. `doctor` catches it if not.
 - `levels` defaults to the pack's levels if omitted. Be deliberate rather than relying on the default.
 - Ids are stable forever and never reused, because the ledger references them.
-- Numeric tails, `ca-001`, belong to pack authors. Questions banked during a session get `ca-u<hash>`, derived from the question text, so a session can never mint an id a pack later wants and two machines that bank the same question offline agree on one id rather than colliding.
-- **Exposure history is not stored here.** `shown` and `reps` are derived from the ledger, so a pack can be shared without carrying anyone's history.
+- Numeric tails, `ca-001`, belong to pack authors. Questions banked during a session get `ca-u<hash>`, derived from the question text, so a session can never mint an id a pack later wants and two machines that bank the same question offline agree on one id.
+- **Exposure history is not stored here.** `shown` and `reps` are derived from the ledger.
 
 Weight the bank towards `judgment` and `discrimination`. `recall` is the floor, not the point.
 
-Write the answer as what a **strong** answer contains, not as a minimal key. The agent scores against it and uses it to name the gap, so "Less, -2, because the floor on overshoot is one lease per node" is far more useful than "Less appropriate".
+Write the answer as what a **strong** answer contains, not as a minimal key. The agent scores against it and uses it to name the gap, so "Less, -2, because the floor on overshoot is one lease per node" beats "Less appropriate".
 
 ## Problems
 
@@ -140,7 +140,7 @@ Two files, deliberately.
 - **Level calibration**, if the problem spans several levels and the bar differs meaningfully.
 - **Follow-up questions.**
 
-A good prompt is under-specified on purpose. If a candidate can start designing without asking anything, the prompt has given away too much.
+If a candidate can start designing without asking anything, the prompt has given away too much.
 
 ## Validating
 

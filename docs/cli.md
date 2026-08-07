@@ -102,7 +102,7 @@ Prints a knowledge card. `--pack` disambiguates if two packs share a topic id. `
 ./study problem url-shortener --notes # the interviewer notes
 ```
 
-**The prompt and the notes are separate files.** Without `--notes` you cannot get the notes, which is what makes it safe for an agent to fetch a problem mid-session.
+**The prompt and the notes are separate files.** Without `--notes` the notes are unreachable, which is what makes it safe for an agent to fetch a problem mid-session.
 
 ### `export <what>`
 
@@ -184,7 +184,7 @@ Appends measurements, then rebuilds `state.json` and `metrics.json`.
 
 **When a row happened.** The ledger stores `at`, a full local timestamp with its offset, and a row is stamped with the moment it is recorded. Set `at` yourself only to be exact about a session you are writing up. `--date` is the `as_of` for the rebuild that follows and has no bearing on when a measurement happened.
 
-Scheduling works in whole days, read off `at`. Several measurements of one facet in one sitting collapse to one rep however far apart they were taken.
+Scheduling works in whole days, read off `at`. Several measurements of one facet in one sitting collapse to their mean and count as one rep, however far apart they were taken.
 
 | Field | Required | Notes |
 |---|---|---|
@@ -202,8 +202,6 @@ Scheduling works in whole days, read off `at`. Several measurements of one facet
 | `note` | no | free text, shown in reports |
 
 Rejected: unknown topics or subtopics, unknown question ids, scores outside 1-5, and any attempt to set a derived field (`strength`, `interval`, `due`, `reps`). `--dry-run` validates without writing.
-
-Several rows for one facet on one date collapse to their mean and count as **one** rep. That is intended, not a bug.
 
 ### `rebuild`
 
@@ -265,4 +263,4 @@ Validates packs and data: missing cards, unknown subtopics in questions, duplica
 ./study doctor --verbose      # also list notes, e.g. topics with no questions at a level
 ```
 
-Exits 1 if it finds problems. Worth running after editing a pack.
+Exits 1 if it finds problems.

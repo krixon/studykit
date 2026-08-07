@@ -104,8 +104,8 @@ def today() -> str:
 def now() -> str:
     """This instant, local, with its offset. What a new ledger row is stamped with.
 
-    `STUDYKIT_NOW` overrides it. `STUDYKIT_TODAY` deliberately does not: a day is
-    not a time, and deriving one from the other would be a guess.
+    `STUDYKIT_NOW` overrides it; `STUDYKIT_TODAY` does not, because deriving a
+    time from a day would be a guess.
     """
     override = os.environ.get("STUDYKIT_NOW")
     if override:
@@ -114,7 +114,7 @@ def now() -> str:
 
 
 def day_of(at: str) -> str:
-    """The calendar day a timestamp falls on. Scheduling works in days."""
+    """Scheduling works in whole days, read off the timestamp."""
     return at[:10]
 
 
@@ -141,7 +141,6 @@ def days_between(start: str, end: str) -> int:
 
 
 def at_least(level: str, floor: str) -> bool:
-    """True when `level` is at or above `floor` in the ladder."""
     return LEVELS.index(level) >= LEVELS.index(floor)
 
 
@@ -197,7 +196,6 @@ class Profile:
 
 
 def write_json(path: Path, payload: object) -> Path:
-    """Atomic-enough write: temp file in the same directory, then rename."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8")

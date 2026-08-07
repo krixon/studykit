@@ -74,6 +74,6 @@ Bank first (ids must exist before they can be referenced), then record.
 ]}'
 ```
 
-Row order does not matter - several measurements of one facet on one date collapse to their mean and count as one rep, which is what the model intends.
+Row order does not matter - several measurements of one facet on one date collapse to their mean and count as one rep.
 
 `record` rebuilds state and metrics. Nothing else to run.

@@ -14,7 +14,7 @@ Straight retrieval. One line.
 
 > What is the boundary defect in a fixed-window counter?
 
-The floor. Cheap to author, cheap to answer, weakest signal. Necessary at graduate level, where the vocabulary is still being built, and close to worthless on its own at staff.
+The floor. Cheap to author, cheap to answer, weakest signal. Necessary at graduate level, where the vocabulary is still being built, and close to worthless at staff.
 
 ### `discrimination`: which is it, and what separates them
 
@@ -32,7 +32,7 @@ A design context, then new information. Does an option become more or less appro
 
 Answered as `-2 -1 0 +1 +2` plus a clause of why. Near-zero typing for a genuinely hard question.
 
-Adapted from script concordance testing in medical education, which exists to assess reasoning under uncertainty rather than knowledge. Swap diagnosis for design option and it transfers directly. **This is the type that targets far transfer**; weight the bank towards it.
+Adapted from script concordance testing in medical education, which assesses reasoning under uncertainty rather than knowledge. **This is the type that targets far transfer**; weight the bank towards it.
 
 A good judgment question has a defensible answer that is not obvious, and sometimes the honest answer is 0: "it depends, and here is what on". Questions where the new information trivially settles it are recall in disguise.
 
@@ -72,11 +72,11 @@ As a rough guide to bank composition per level:
 | mid | 25% | 30% | 25% | 10% | 10% |
 | senior+ | 10% | 25% | 35% | 15% | 15% |
 
-These are targets for authoring, not enforced by code. `./study progress` shows your actual measured mean per type, which is the number that matters: a high `recall` with a low `judgment` means the knowledge is there and inert.
+Targets for authoring, not enforced by code. `./study progress` shows your measured mean per type: a high `recall` with a low `judgment` means the knowledge is there and inert.
 
 ## Interleave, and do not announce the topic
 
-Mix topics within a set and never say which card a question came from. Naming the topic pre-activates the schema and does half the retrieval for the candidate. Interleaved practice beats blocked for both retention and problem-solving, and it is specifically what builds discrimination, because it forces identifying *which* concept applies before applying it.
+Mix topics within a set and never say which card a question came from. Naming the topic pre-activates the schema and does half the retrieval for the candidate.
 
 `./study questions` already interleaves the set it returns. Do not reorder it into topic groups.
 

@@ -1,8 +1,7 @@
 """A self-contained HTML dashboard, generated from state and metrics.
 
-One file, no network, no build step, no dependencies: inline CSS, inline SVG,
-one small script for tooltips and the theme toggle. Open it with a browser or
-email it to yourself.
+One file, no network: inline CSS, inline SVG, one small script for tooltips and
+the theme toggle.
 
 Chart forms follow the data's job: trend over time is a line, magnitude
 comparisons are bars on a single sequential hue, and calibration error is a

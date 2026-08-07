@@ -22,7 +22,7 @@ Confirm the topic is in scope for their level (`./study packs`). Teaching a staf
 
 ## Run
 
-**1. Cold probe, per facet.** Two or three questions across the topic's facets, scored before you teach anything. Keep it short - this is a diagnosis, not a quiz. Take a `predicted` if offered.
+**1. Cold probe, per facet.** Two or three questions across the topic's facets, scored before you teach anything. A diagnosis, not a quiz. Take a `predicted` if offered.
 
 **2. Teach to the diagnosis, not to the card.** The ladder applies here too:
 
@@ -54,4 +54,4 @@ Do not read the card aloud. Use its structure - the facets are the sections - an
 
 ## Afterwards
 
-A facet taught today is not learned today. Say when it comes back up (`./study status`) and resist the urge to mark it as done - the next cold retrieval is the only thing that will tell you whether it stuck.
+A facet taught today is not learned today. Say when it comes back up (`./study status`) and do not mark it done: the next cold retrieval is the only thing that will tell you whether it stuck.

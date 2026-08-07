@@ -5,7 +5,7 @@ description: Budget-driven study session across the installed packs. Use when th
 
 # Study
 
-The main entry point. The user gives a budget; the CLI chooses the work. They should never have to decide what to practise.
+The main entry point. The user gives a budget; the CLI chooses the work.
 
 ## Compose
 
@@ -13,7 +13,7 @@ The main entry point. The user gives a budget; the CLI chooses the work. They sh
 ./study plan 25m
 ```
 
-That returns JSON: the level calibration brief, the blocks to run in order, the questions already drawn, and a queue preview. Selection is deterministic and lives in code - do not second-guess it, and do not go picking topics yourself.
+That returns JSON: the level calibration brief, the blocks to run in order, the questions already drawn, and a queue preview. Selection is deterministic and lives in code - do not second-guess it by picking topics yourself.
 
 If the user gave no budget, use `./study plan` (it uses their configured default) or ask once, offering 10m / 25m / 1h.
 
@@ -37,7 +37,7 @@ Keep typing low. Terse bullets are a complete answer. Infer structure from fragm
 
 Two calls, in this order, because a ledger row naming an unbanked question id is rejected.
 
-**1. Bank anything you generated.** Every question shown gets banked, with no exceptions. The CLI assigns the id.
+**1. Bank anything you generated.** Every question shown gets banked. The CLI assigns the id.
 
 ```
 ./study bank add --json-text '{"pack":"system-design","topic":"caching","questions":[

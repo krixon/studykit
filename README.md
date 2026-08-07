@@ -11,7 +11,7 @@ git clone <this repo> && cd studykit
 
 Then say **`study 25m`** to your coding agent. Claude Code and Codex both work out of the box; so does anything else that reads `AGENTS.md`.
 
-No dependencies, no install, no virtualenv, no account. Python 3.12+ and a shell.
+No dependencies, no install, no account. Python 3.12+ and a shell.
 
 ---
 
@@ -25,11 +25,9 @@ No dependencies, no install, no virtualenv, no account. Python 3.12+ and a shell
 | `learn <topic>` | taught properly - tested first, then taught to the gap |
 | `progress` | what's due, what's weak, what's never been measured |
 
-`study` is the default. It picks the work so you don't have to.
+`study` is the default.
 
 ## What ships with it
-
-Three content packs, ready to use:
 
 | Pack | Topics | Questions | Problems | For |
 |---|---:|---:|---:|---|
@@ -69,7 +67,7 @@ Then `./study dashboard --open` for the charts.
 
 ## The design in one paragraph
 
-Retrieval practice reliably builds near transfer and reliably fails to build far transfer, which is the thing that actually matters past a junior level. So the unit of assessment is judgment, not facts: five question types weighted towards judgment and discrimination, interleaved across topics without announcing which topic a question comes from. Everything is measured at sub-topic granularity, scheduled only on cold-recall scores taken before any teaching, and never inferred from adjacent evidence. Self-reported confidence is captured but kept strictly away from scheduling, where it feeds a calibration metric instead. Every mechanism traces to a citation in [docs/research.md](docs/research.md), including the two places the evidence is genuinely contested.
+Retrieval practice reliably builds near transfer and reliably fails to build far transfer, which is what matters past a junior level. So the unit of assessment is judgment, not facts: five question types weighted towards judgment and discrimination, interleaved across topics without announcing which topic a question comes from. Everything is measured at sub-topic granularity, scheduled only on cold-recall scores taken before any teaching, and never inferred from adjacent evidence. Self-reported confidence is captured but kept strictly away from scheduling, where it feeds a calibration metric instead. Every mechanism traces to a citation in [docs/research.md](docs/research.md), including the two places the evidence is genuinely contested.
 
 ## Your data
 
@@ -88,7 +86,7 @@ dashboard.html    generated charts
 
 `XDG_DATA_HOME` is honoured where it is set. `STUDYKIT_DATA` overrides both, which is also how you run more than one profile.
 
-Nothing leaves your machine unless you ask it to. The ledger is the only source of truth; `state.json` and `metrics.json` are rebuilt from it on every `record`, so they can always be deleted and regenerated.
+Nothing leaves your machine unless you ask it to. The ledger is the only source of truth; `state.json` and `metrics.json` are rebuilt from it on every `record` and can always be deleted.
 
 ### Syncing it
 
@@ -98,7 +96,7 @@ The ledger is the one thing here that cannot be regenerated. Give it a private r
 ./study sync init git@github.com:you/studykit-data.git --auto
 ```
 
-That makes the data directory its own git repository and turns on both halves: `./study plan` pulls before a session, `./study record` pushes after it. `./study sync` and `./study sync pull` do each by hand, and `./study sync status` says what is outstanding either way. Derived files stay untracked.
+That makes the data directory its own git repository and turns on both halves: `./study plan` pulls before a session, `./study record` pushes after it. `./study sync` and `./study sync pull` do each by hand; `./study sync status` says what is outstanding. Derived files stay untracked.
 
 The ledger carries a `merge=union` attribute, so two machines that both studied while offline keep both sets of rows rather than conflicting. On a second machine, clone the data repo into `~/.studykit` and carry on.
 
@@ -137,7 +135,7 @@ Full reference: [docs/cli.md](docs/cli.md).
 
 ## Requirements
 
-Python 3.12 or newer, and a POSIX shell. That is the whole list. If `python3` on your PATH is older, set `STUDYKIT_PYTHON=/path/to/python3.12`.
+Python 3.12 or newer, and a POSIX shell. If `python3` on your PATH is older, set `STUDYKIT_PYTHON=/path/to/python3.12`.
 
 Tests: `./study test --verbose`
 
