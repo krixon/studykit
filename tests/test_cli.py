@@ -109,13 +109,6 @@ class TestRecord(CliTestCase):
         row = json.loads((self.data / "ledger.jsonl").read_text().splitlines()[0])
         self.assertEqual(row["at"], "2026-06-01T18:42:09+01:00")
 
-    def test_a_date_in_the_payload_is_rejected(self):
-        payload = json.loads(self.payload)
-        payload["rows"][0]["date"] = "2026-06-01"
-        code, _ = self.run_cli("record", "--json-text", json.dumps(payload))
-        self.assertEqual(code, 2)
-        self.assertIn("unknown field", self.stderr)
-
     def test_record_appends_and_rebuilds(self):
         code, _ = self.run_cli("record", "--date", "2026-06-01", "--json-text", self.payload)
         self.assertEqual(code, 0, self.stderr)

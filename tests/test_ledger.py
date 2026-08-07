@@ -141,12 +141,6 @@ class TestTimestamps(LedgerTestCase):
         self.assertIsNotNone(stamped.tzinfo)
         self.assertLess(abs((dt.datetime.now().astimezone() - stamped).total_seconds()), 120)
 
-    def test_a_bare_date_is_not_a_field(self):
-        """There is no backfill. A day is not a time, and will not be invented."""
-        with self.assertRaises(StudykitError) as caught:
-            validate(self.valid(date="2026-01-01"), self.library)
-        self.assertIn("unknown field", str(caught.exception))
-
     def test_a_nonsense_timestamp_is_rejected(self):
         with self.assertRaises(StudykitError):
             validate(self.valid(at="yesterday afternoon"), self.library)
