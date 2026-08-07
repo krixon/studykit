@@ -17,7 +17,8 @@ from studykit.schedule import (
 
 
 def row(date, subtopic="a", measured=3, topic="caching", pack="p"):
-    return Row(date=date, pack=pack, session="quiz", topic=topic, subtopic=subtopic, measured=measured)
+    """`date` is a day; the ledger stamps a time, so give it a settled one."""
+    return Row(at=f"{date}T12:00:00", pack=pack, session="quiz", topic=topic, subtopic=subtopic, measured=measured)
 
 
 class TestRounding(unittest.TestCase):
@@ -88,6 +89,25 @@ class TestComputeItems(unittest.TestCase):
         rows = [row("2026-01-01"), row("2026-01-01"), row("2026-01-05")]
         [item] = compute_items(rows)
         self.assertEqual(item.reps, 2)
+
+    def test_different_times_on_one_day_are_still_one_rep(self):
+        """Rows carry a timestamp; the scheduler must keep grouping by the day.
+
+        Eight questions about caching in one sitting is one piece of evidence
+        about caching, not eight, however far apart they were asked.
+        """
+        rows = [
+            Row(at="2026-01-01T09:03:11+01:00", pack="p", session="quiz",
+                topic="caching", subtopic="a", measured=2),
+            Row(at="2026-01-01T09:41:52+01:00", pack="p", session="quiz",
+                topic="caching", subtopic="a", measured=4),
+            Row(at="2026-01-01T21:15:00+01:00", pack="p", session="quiz",
+                topic="caching", subtopic="a", measured=3),
+        ]
+        [item] = compute_items(rows)
+        self.assertEqual(item.reps, 1)
+        self.assertEqual(item.strength, 3)
+        self.assertEqual(item.last, "2026-01-01")
 
     def test_interval_compounds_across_sessions(self):
         rows = [

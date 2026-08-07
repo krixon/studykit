@@ -3,6 +3,11 @@
 One JSON object per line, one line per measured item per session. Never edited,
 only appended. `state.json` and `metrics.json` are both derived from this file,
 so it is the single source of truth for everything the engine knows.
+
+A row is stamped with `at`, a full local timestamp with its offset, because when
+in the day something was measured is real information and cannot be recovered
+later. Scheduling still works in whole days: `Row.date` is derived from `at`, so
+several measurements of one facet in one sitting remain one piece of evidence.
 """
 
 from __future__ import annotations
@@ -11,14 +16,16 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config import StudykitError, ledger_path, valid_date
+from .config import StudykitError, at_midday, day_of, ledger_path, valid_at
 from .packs import QTYPES, Library
 
 SESSIONS: tuple[str, ...] = ("quiz", "practice", "review", "learn", "study", "drill")
 
 #: Fields a caller may set. Anything derived (strength, interval, due, reps)
-#: is computed by the scheduler and is not accepted here.
+#: is computed by the scheduler and is not accepted here. `date` is accepted as
+#: a convenience for backfills and becomes midday of that day.
 WRITABLE = (
+    "at",
     "date",
     "pack",
     "session",
@@ -41,7 +48,7 @@ PROBLEM_PREFIX = "problem:"
 
 @dataclass(frozen=True)
 class Row:
-    date: str
+    at: str
     pack: str
     session: str
     topic: str
@@ -57,6 +64,11 @@ class Row:
     note: str = ""
 
     @property
+    def date(self) -> str:
+        """The calendar day. Every scheduling and metrics rule groups on this."""
+        return day_of(self.at)
+
+    @property
     def is_problem(self) -> bool:
         return self.topic.startswith(PROBLEM_PREFIX)
 
@@ -66,7 +78,7 @@ class Row:
 
     def as_dict(self) -> dict:
         out = {
-            "date": self.date,
+            "at": self.at,
             "pack": self.pack,
             "session": self.session,
             "level": self.level,
@@ -110,11 +122,16 @@ def validate(entry: dict, library: Library, *, default_level: str = "") -> Row:
     if unknown:
         raise StudykitError(f"{where}: unknown field(s) {', '.join(sorted(unknown))}")
 
-    for required in ("date", "pack", "session", "topic", "subtopic", "measured"):
+    for required in ("pack", "session", "topic", "subtopic", "measured"):
         if entry.get(required) in (None, ""):
             raise StudykitError(f"{where}: missing required field {required!r}")
 
-    date = valid_date(str(entry["date"]))
+    if entry.get("at"):
+        at = valid_at(str(entry["at"]))
+    elif entry.get("date"):
+        at = at_midday(str(entry["date"]))
+    else:
+        raise StudykitError(f"{where}: missing required field 'at' (or 'date' for a backfill)")
     pack = library.pack(str(entry["pack"]))
     session = str(entry["session"])
     if session not in SESSIONS:
@@ -154,7 +171,7 @@ def validate(entry: dict, library: Library, *, default_level: str = "") -> Row:
     predicted = entry.get("predicted")
     post = entry.get("post")
     return Row(
-        date=date,
+        at=at,
         pack=pack.name,
         session=session,
         level=str(entry.get("level") or default_level),
@@ -194,9 +211,14 @@ def read(path: Path | None = None) -> list[Row]:
             raw = json.loads(line)
         except json.JSONDecodeError as exc:
             raise StudykitError(f"{path}:{number}: not valid JSON ({exc})") from exc
+        if not raw.get("at"):
+            raise StudykitError(
+                f"{path}:{number}: row has no `at` timestamp. Ledgers written before "
+                "timestamps need migrating, not guessing at."
+            )
         rows.append(
             Row(
-                date=raw.get("date", ""),
+                at=str(raw["at"]),
                 pack=raw.get("pack", ""),
                 session=raw.get("session", ""),
                 level=raw.get("level", ""),
@@ -212,7 +234,7 @@ def read(path: Path | None = None) -> list[Row]:
                 note=raw.get("note", ""),
             )
         )
-    rows.sort(key=lambda r: r.date)
+    rows.sort(key=lambda r: r.at)
     return rows
 
 

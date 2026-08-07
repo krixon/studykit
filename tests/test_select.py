@@ -15,7 +15,7 @@ from studykit.select import (
 
 
 def row(date, topic, subtopic, measured, pack="system-design"):
-    return Row(date=date, pack=pack, session="quiz", topic=topic, subtopic=subtopic, measured=measured)
+    return Row(at=f"{date}T12:00:00", pack=pack, session="quiz", topic=topic, subtopic=subtopic, measured=measured)
 
 
 class TestParseBudget(unittest.TestCase):
@@ -104,7 +104,7 @@ class TestDrawQuestions(SelectionTestCase):
         first, _ = draw_questions(self.library, [], "senior", targets, 4, as_of="2026-06-01", seed=1)
         history = [
             Row(
-                date="2026-06-01",
+                at="2026-06-01T12:00:00",
                 pack="system-design",
                 session="quiz",
                 topic=q.topic,

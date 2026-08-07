@@ -90,6 +90,23 @@ class TestRecord(CliTestCase):
         }
     )
 
+    def test_a_live_session_is_stamped_with_the_moment_it_happened(self):
+        import datetime as dt
+
+        code, _ = self.run_cli("record", "--json-text", self.payload)
+        self.assertEqual(code, 0, self.stderr)
+        row = json.loads((self.data / "ledger.jsonl").read_text().splitlines()[0])
+        stamped = dt.datetime.fromisoformat(row["at"])
+        self.assertIsNotNone(stamped.tzinfo, "a timestamp without an offset is ambiguous")
+        self.assertLess(
+            abs((dt.datetime.now().astimezone() - stamped).total_seconds()), 120, row["at"]
+        )
+
+    def test_a_named_date_is_a_backfill_and_lands_at_midday(self):
+        self.run_cli("record", "--date", "2026-06-01", "--json-text", self.payload)
+        row = json.loads((self.data / "ledger.jsonl").read_text().splitlines()[0])
+        self.assertTrue(row["at"].startswith("2026-06-01T12:00:00"), row["at"])
+
     def test_record_appends_and_rebuilds(self):
         code, _ = self.run_cli("record", "--date", "2026-06-01", "--json-text", self.payload)
         self.assertEqual(code, 0, self.stderr)

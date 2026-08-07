@@ -28,17 +28,21 @@ from .config import (
     Profile,
     ProfileMissing,
     StudykitError,
+    at_midday,
     attempts_dir,
     bank_dir,
     check_level,
+    day_of,
     dashboard_path,
     data_dir,
     ledger_path,
     metrics_path,
+    now,
     packs_dir,
     read_json,
     state_path,
     today,
+    valid_at,
     valid_date,
     write_json,
 )
@@ -548,8 +552,19 @@ def cmd_record(args) -> int:
             'Expected {"session": ..., "pack": ..., "rows": [...]} or a bare list of rows.'
         )
 
+    # A live session is stamped with the moment it happened. A named date is a
+    # backfill, and midday is the honest stamp for a time nobody recorded.
+    if payload.get("at"):
+        stamp = valid_at(str(payload["at"]))
+    elif payload.get("date"):
+        stamp = at_midday(str(payload["date"]))
+    elif args.date:
+        stamp = at_midday(args.date)
+    else:
+        stamp = now()
+
     defaults = {
-        "date": payload.get("date", as_of),
+        "at": stamp,
         "pack": payload.get("pack") or (profile.packs[0] if profile.packs else None),
         "session": payload.get("session"),
         "level": payload.get("level", profile.level),
@@ -561,6 +576,9 @@ def cmd_record(args) -> int:
     rows = []
     for entry in payload["rows"]:
         merged = {k: v for k, v in defaults.items() if v is not None}
+        # A row carrying its own time must not be overruled by the default one.
+        if entry.get("at") or entry.get("date"):
+            merged.pop("at", None)
         merged.update(entry)
         rows.append(validate(merged, library, default_level=profile.level))
 
@@ -592,7 +610,8 @@ def cmd_record(args) -> int:
     result = {
         "ok": True,
         "recorded": len(rows),
-        "date": defaults["date"],
+        "at": stamp,
+        "date": day_of(stamp),
         "changes": changes,
         "next_due": state["items"][0]["label"] if state["items"] else None,
         "coverage_pct": metrics["summary"]["coverage_pct"],
@@ -604,7 +623,7 @@ def cmd_record(args) -> int:
     if args.json:
         emit(result)
     else:
-        print(f"Recorded {len(rows)} measurement(s) on {defaults['date']}.")
+        print(f"Recorded {len(rows)} measurement(s) on {day_of(stamp)}.")
         for change in changes:
             was = f"{change['was']} -> " if change["was"] is not None else ""
             print(

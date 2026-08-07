@@ -89,11 +89,48 @@ def today() -> str:
     return dt.date.today().isoformat()
 
 
+def now() -> str:
+    """This instant, local, with its offset. What a new ledger row is stamped with.
+
+    `STUDYKIT_NOW` overrides it outright; `STUDYKIT_TODAY` pins the day and
+    leaves the time at midday, so a test that fixes the date stays deterministic.
+    """
+    override = os.environ.get("STUDYKIT_NOW")
+    if override:
+        return valid_at(override)
+    day = os.environ.get("STUDYKIT_TODAY")
+    if day:
+        return at_midday(day)
+    return dt.datetime.now().astimezone().replace(microsecond=0).isoformat()
+
+
+def at_midday(day: str) -> str:
+    """Midday local time on `day`.
+
+    The least-wrong stamp when only the date is known: far enough from either
+    boundary that no plausible timezone reading moves it onto a different day.
+    """
+    naive = dt.datetime.fromisoformat(valid_date(day)).replace(hour=12)
+    return naive.astimezone().replace(microsecond=0).isoformat()
+
+
+def day_of(at: str) -> str:
+    """The calendar day a timestamp falls on. Scheduling works in days."""
+    return at[:10]
+
+
 def valid_date(value: str) -> str:
     try:
         return dt.date.fromisoformat(value).isoformat()
     except ValueError as exc:
         raise StudykitError(f"Not an ISO date (YYYY-MM-DD): {value!r}") from exc
+
+
+def valid_at(value: str) -> str:
+    try:
+        return dt.datetime.fromisoformat(value).replace(microsecond=0).isoformat()
+    except ValueError as exc:
+        raise StudykitError(f"Not an ISO timestamp (YYYY-MM-DDTHH:MM:SS): {value!r}") from exc
 
 
 def add_days(iso: str, days: int) -> str:

@@ -48,6 +48,8 @@ Problems are a separate item type: `pack / problem:<slug>`, always with `subtopi
 
 Where several measurements land on one date (several quiz questions on one facet), they collapse to the **mean of that date, rounded half up, counted as one rep**. Eight questions about caching is one piece of evidence about caching, not eight.
 
+A row records the full timestamp it was measured at. Scheduling reads the calendar day off it, so the collapse holds however far apart in the day the questions were asked.
+
 ## Evidence quality
 
 Every item tracks `reps`, the count of direct measurement **dates**. This caps how far ahead it can be scheduled:

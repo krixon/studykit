@@ -122,12 +122,60 @@ class TestProblemRows(LedgerTestCase):
         self.assertRejected("no problem", topic="problem:invented", subtopic="overall")
 
 
+class TestTimestamps(LedgerTestCase):
+    """A row records when it happened. Scheduling still works in whole days."""
+
+    def test_an_explicit_timestamp_is_kept(self):
+        row = validate(self.valid(at="2026-01-01T09:14:07+01:00"), self.library)
+        self.assertEqual(row.at, "2026-01-01T09:14:07+01:00")
+        self.assertEqual(row.date, "2026-01-01")
+
+    def test_a_bare_date_becomes_midday(self):
+        """A backfill has no time to recover. Midday cannot land on the wrong day."""
+        row = validate(self.valid(date="2026-01-01"), self.library)
+        self.assertTrue(row.at.startswith("2026-01-01T12:00:00"), row.at)
+        self.assertEqual(row.date, "2026-01-01")
+
+    def test_a_row_needs_one_or_the_other(self):
+        entry = self.valid()
+        entry.pop("date")
+        with self.assertRaises(StudykitError) as caught:
+            validate(entry, self.library)
+        self.assertIn("at", str(caught.exception))
+
+    def test_a_nonsense_timestamp_is_rejected(self):
+        with self.assertRaises(StudykitError):
+            validate(self.valid(at="yesterday afternoon"), self.library)
+
+    def test_the_ledger_stores_at_and_not_date(self):
+        written = validate(self.valid(at="2026-01-01T09:14:07+01:00"), self.library).as_dict()
+        self.assertEqual(written["at"], "2026-01-01T09:14:07+01:00")
+        self.assertNotIn("date", written)
+
+    def test_a_row_without_a_timestamp_is_not_guessed_at(self):
+        import tempfile
+        from pathlib import Path
+
+        from studykit.ledger import read
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "ledger.jsonl"
+            path.write_text(
+                '{"date": "2026-01-01", "pack": "p", "session": "quiz", '
+                '"topic": "t", "subtopic": "s", "measured": 3}\n',
+                encoding="utf-8",
+            )
+            with self.assertRaises(StudykitError) as caught:
+                read(path)
+        self.assertIn("migrating", str(caught.exception))
+
+
 class TestExposure(unittest.TestCase):
     def test_exposure_is_derived_from_the_ledger(self):
         rows = [
-            Row(date="2026-01-01", pack="p", session="quiz", topic="t", subtopic="s", measured=3, qid="a-1"),
-            Row(date="2026-01-05", pack="p", session="quiz", topic="t", subtopic="s", measured=4, qid="a-1"),
-            Row(date="2026-01-05", pack="p", session="quiz", topic="t", subtopic="s", measured=2, qid="a-2"),
+            Row(at="2026-01-01T12:00:00", pack="p", session="quiz", topic="t", subtopic="s", measured=3, qid="a-1"),
+            Row(at="2026-01-05T09:30:00", pack="p", session="quiz", topic="t", subtopic="s", measured=4, qid="a-1"),
+            Row(at="2026-01-05T09:41:00", pack="p", session="quiz", topic="t", subtopic="s", measured=2, qid="a-2"),
         ]
         exposure = question_exposure(rows)
         self.assertEqual(exposure["a-1"]["reps"], 2)

@@ -17,7 +17,8 @@ Environment:
 | `STUDYKIT_DATA` | where your data lives. Default `<repo>/data`. |
 | `STUDYKIT_PACKS` | where packs are loaded from. Default `<repo>/packs`. |
 | `STUDYKIT_PYTHON` | which interpreter to use, if `python3` is older than 3.12. |
-| `STUDYKIT_TODAY` | override today's date globally. |
+| `STUDYKIT_TODAY` | override today's date globally. Row timestamps land at midday on it. |
+| `STUDYKIT_NOW` | override the timestamp new rows are stamped with. |
 | `NO_COLOR` | disable colour. |
 
 Errors exit `2` with a one-line message on stderr and no traceback. `doctor` and `test` exit `1` when they find problems.
@@ -179,7 +180,11 @@ Appends measurements, then rebuilds `state.json` and `metrics.json`.
 }'
 ```
 
-`session`, `pack`, `date` and `level` at the top level are defaults for every row. A bare JSON array of rows also works.
+`session`, `pack`, `at`, `date` and `level` at the top level are defaults for every row. A bare JSON array of rows also works.
+
+**When a row happened.** The ledger stores `at`, a full local timestamp with its offset. You rarely set it: a live session is stamped with the moment it is recorded. Naming a day instead (`date` in the payload, or `--date`) is a backfill, and lands at midday, which is the only stamp for an unrecorded time that cannot fall on the wrong day.
+
+Scheduling still works in whole days. Several measurements of one facet in one sitting collapse to one rep however far apart they were taken.
 
 | Field | Required | Notes |
 |---|---|---|
@@ -188,6 +193,8 @@ Appends measurements, then rebuilds `state.json` and `metrics.json`.
 | `topic` | yes | a pack topic, or `problem:<slug>` |
 | `subtopic` | yes | declared by the topic, or `overall` |
 | `measured` | yes | 1-5, the **cold** score |
+| `at` | no | ISO 8601 local timestamp. Defaults to now |
+| `date` | no | a bare day, for a backfill. Becomes midday of it |
 | `qtype` | no | quiz rows only |
 | `qid` | no | must already be banked |
 | `predicted` | no | the user's own number. Omit if they did not give one |
