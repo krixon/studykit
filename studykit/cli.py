@@ -12,6 +12,7 @@ sessions never open them.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -231,8 +232,7 @@ def cmd_setup(args) -> int:
         budget=budget,
         mode=mode,
         confidence_prompt=not args.no_confidence,
-        # Setup is about the study profile. It must not silently unhook a
-        # configured backup.
+        # Setup sets the study profile. It must not unhook a configured remote.
         sync_remote=(existing.sync_remote if existing else ""),
         sync_branch=(existing.sync_branch if existing else "main"),
         sync_auto=(existing.sync_auto if existing else False),
@@ -644,6 +644,7 @@ def _warn_if_sync_failed(synced: dict | None, retry: str = "sync") -> None:
 
 
 def _next_ids(pack, prefix: str, count: int) -> list[str]:
+    """Sequential ids, for `--into-pack`. Numeric tails belong to pack authors."""
     used = set()
     for question in pack.questions:
         if question.id.startswith(prefix + "-"):
@@ -657,6 +658,20 @@ def _next_ids(pack, prefix: str, count: int) -> list[str]:
             used.add(candidate)
             out.append(f"{prefix}-{candidate:03d}")
         candidate += 1
+    return out
+
+
+def _bank_ids(entries: list[dict], prefix: str) -> list[str]:
+    """Content-derived ids, for the bank.
+
+    A counter would need machines that have not synced yet to agree on it.
+    """
+    out = []
+    for entry in entries:
+        digest = hashlib.sha256(entry["q"].strip().encode("utf-8")).hexdigest()[:8]
+        out.append(f"{prefix}-u{digest}")
+    if len(set(out)) != len(out):
+        raise StudykitError("Two questions in this batch have identical text.")
     return out
 
 
@@ -704,7 +719,8 @@ def cmd_bank_add(args) -> int:
         )
         target.parent.mkdir(parents=True, exist_ok=True)
         fresh = not target.exists()
-        ids = _next_ids(pack, pack.topic(topic_id).prefix, len(entries))
+        prefix = pack.topic(topic_id).prefix
+        ids = _next_ids(pack, prefix, len(entries)) if args.into_pack else _bank_ids(entries, prefix)
         blocks = []
         for entry, question_id in zip(entries, ids):
             blocks.append(

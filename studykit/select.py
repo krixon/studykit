@@ -416,8 +416,7 @@ def compose(
     queue = build_queue(library, rows, level, as_of)
     budget = max(minutes - RECORDING_RESERVE, 5)
 
-    # A long budget wants more than one problem: integration is the expensive thing
-    # to measure, and a half day spent entirely on retrieval measures the cheap one.
+    # A half day spent entirely on retrieval measures the cheap thing.
     max_problems = 0 if not allow_problem else 1 if minutes < 120 else 2 if minutes < 300 else 3
     problem_blocks: list[dict] = []
     chosen_slugs: set[str] = set()
@@ -444,9 +443,8 @@ def compose(
         )
         budget -= cost
 
-    # Targeted blocks are chosen before the quiz set, because they fire on a
-    # specific diagnosis and the quiz set will otherwise absorb the whole budget
-    # and a session with a facet at strength 1 would never get its worked example.
+    # Before the quiz set, which would otherwise absorb the whole budget and
+    # leave a facet at strength 1 without its worked example.
     targeted: list[dict] = []
     max_targeted = 1 if minutes < 30 else 2 if minutes < 60 else 3
     allowance = max(budget - QUIZ_FLOOR, 0)
@@ -486,8 +484,8 @@ def compose(
     blocks.extend(targeted)
     blocks.extend(problem_blocks)
 
-    # A long budget can outrun the queue and the problem bank. Say so rather than
-    # silently planning 78 minutes of a half day and calling it a session.
+    # A long budget can outrun the queue and the problem bank. Say so rather
+    # than planning 78 minutes of a half day and calling it a session.
     notes: list[str] = []
     if budget >= 20 and not any(b["type"] == "card-writing" for b in blocks):
         weakest = _weakest(queue) or (queue[0] if queue else None)

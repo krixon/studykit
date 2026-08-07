@@ -180,6 +180,7 @@ def load_pack(root: Path) -> Pack:
 def _load_questions(pack: Pack) -> list[Question]:
     questions: list[Question] = []
     seen: dict[str, Path] = {}
+    by_id: dict[str, Question] = {}
     sources = [(pack.root / "questions", "pack"), (bank_dir() / pack.name, "bank")]
     for directory, origin in sources:
         if not directory.is_dir():
@@ -187,11 +188,16 @@ def _load_questions(pack: Pack) -> list[Question]:
         for path in sorted(directory.glob("*.toml")):
             for question in _read_bank(path, pack, origin):
                 if question.id in seen:
+                    # A bank id is a hash of its question, so an identical
+                    # entry is two machines banking it, not a clash.
+                    if question == by_id[question.id]:
+                        continue
                     raise StudykitError(
                         f"duplicate question id {question.id!r} in {path} "
                         f"(already defined in {seen[question.id]})"
                     )
                 seen[question.id] = path
+                by_id[question.id] = question
                 questions.append(question)
     return questions
 

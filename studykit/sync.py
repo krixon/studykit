@@ -26,9 +26,14 @@ IGNORED = ("state.json", "metrics.json", "dashboard.html", "*.tmp", ".DS_Store")
 
 GITIGNORE = "# Derived from ledger.jsonl on every write. Not history.\n" + "\n".join(IGNORED) + "\n"
 
-#: Union is safe because no ledger row is ever edited and `ledger.read` sorts
-#: by timestamp, so the interleaving it produces does not matter.
-GITATTRIBUTES = "# Append-only. Concurrent appends are both kept, not reconciled.\nledger.jsonl merge=union\n"
+#: Union is safe because neither file is ever edited in place: `ledger.read`
+#: sorts rows by timestamp, and a bank id is a hash of its question, so the
+#: same block arriving twice collapses at load.
+GITATTRIBUTES = (
+    "# Append-only. Concurrent appends are both kept, not reconciled.\n"
+    "ledger.jsonl merge=union\n"
+    "bank/**/*.toml merge=union\n"
+)
 
 
 def _git(*args: str, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -184,8 +189,8 @@ def push(profile: Profile, *, message: str = "", set_upstream: bool = False) -> 
     args = ["push", "-u", "origin", branch] if set_upstream else ["push", "origin", branch]
     result = _git(*args, check=False)
     if result.returncode != 0:
-        # The usual cause is another machine having pushed since. One rebase,
-        # then one retry; anything worse is the user's to untangle.
+        # Usually another machine pushed since. One retry; anything worse is
+        # the user's to untangle.
         if _git("pull", "--rebase", "origin", branch, check=False).returncode != 0:
             raise StudykitError(
                 f"Push rejected and the rebase onto origin/{branch} failed. "
@@ -247,8 +252,6 @@ def pull(profile: Profile) -> dict:
 
     result = _git("pull", "--rebase", "origin", branch, check=False)
     if result.returncode != 0:
-        # Leave nothing half-rebased. The abort restores the pre-pull commit,
-        # so the worst case is that the pull did not happen.
         _git("rebase", "--abort", check=False)
         raise StudykitError(
             f"Rebase onto origin/{branch} hit a conflict and was aborted. "

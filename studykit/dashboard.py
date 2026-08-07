@@ -67,7 +67,6 @@ def _cap_path(x: float, y: float, w: float, h: float, radius: float, side: str) 
             f"M{x},{y} V{y + h - r} A{r},{r} 0 0 0 {x + r},{y + h} "
             f"H{x + w - r} A{r},{r} 0 0 0 {x + w},{y + h - r} V{y} Z"
         )
-    # "top": vertical column anchored to the baseline
     return (
         f"M{x},{y + h} V{y + r} A{r},{r} 0 0 1 {x + r},{y} "
         f"H{x + w - r} A{r},{r} 0 0 1 {x + w},{y + r} V{y + h} Z"

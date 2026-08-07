@@ -161,7 +161,7 @@ Banks questions generated during a session. Assigns ids; never write ids yoursel
 
 Top-level `pack`, `topic` and `levels` act as defaults for every question; each question may override them. `levels` defaults to your level and everything above it.
 
-Writes to `~/.studykit/bank/<pack>/<topic>.toml`, your private overlay, which merges with the pack at load time. `--into-pack` writes into the pack's own directory instead, for pack authors.
+Writes to `~/.studykit/bank/<pack>/<topic>.toml`, your private overlay, which merges with the pack at load time. The CLI assigns each id as `<prefix>-u<hash of the question>`. `--into-pack` writes into the pack's own directory instead, with a sequential id, for pack authors.
 
 Also accepts `--file` or piped stdin.
 

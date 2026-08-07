@@ -117,6 +117,7 @@ a = "They are on different axes entirely. Cache-aside is a READ strategy; write-
 - `subtopic` must be declared by the topic. `doctor` catches it if not.
 - `levels` defaults to the pack's levels if omitted. Be deliberate rather than relying on the default.
 - Ids are stable forever and never reused, because the ledger references them.
+- Numeric tails, `ca-001`, belong to pack authors. Questions banked during a session get `ca-u<hash>`, derived from the question text, so a session can never mint an id a pack later wants and two machines that bank the same question offline agree on one id rather than colliding.
 - **Exposure history is not stored here.** `shown` and `reps` are derived from the ledger, so a pack can be shared without carrying anyone's history.
 
 Weight the bank towards `judgment` and `discrimination`. `recall` is the floor, not the point.

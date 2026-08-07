@@ -175,5 +175,78 @@ class TestInstalledPacks(EnvTestCase):
         self.assertFalse(by_name["system-design"]["installed"])
 
 
+class TestBankIds(TestInstalledPacks):
+    def bank(self, question, answer="An answer.", pack="widgets-pack"):
+        return self.run_json(
+            "bank",
+            "add",
+            "--json-text",
+            json.dumps(
+                {
+                    "pack": pack,
+                    "topic": "widgets",
+                    "questions": [
+                        {"subtopic": "assembly", "qtype": "recall", "q": question, "a": answer}
+                    ],
+                }
+            ),
+        )["questions"][0]["id"]
+
+    def test_a_bank_id_cannot_collide_with_a_pack_id(self):
+        self.install("widgets-pack")
+        self.setup_with("widgets-pack")
+        banked = self.bank("What is a grommet?")
+        self.assertTrue(banked.startswith("wg-u"), banked)
+        self.assertNotIn(banked, {"wg-001", "wg-002", "wg-003"})
+
+    def test_the_same_question_gets_the_same_id_anywhere(self):
+        """Two machines banking the same question must not mint two ids."""
+        self.install("widgets-pack")
+        self.setup_with("widgets-pack")
+        first = self.bank("What is a grommet?")
+
+        second_machine = Path(tempfile.mkdtemp(prefix="studykit-other-"))
+        try:
+            os.environ["STUDYKIT_DATA"] = str(second_machine)
+            (second_machine / "packs").mkdir(parents=True)
+            shutil.copytree(self.data / "packs" / "widgets-pack", second_machine / "packs" / "widgets-pack")
+            self.setup_with("widgets-pack")
+            self.assertEqual(self.bank("What is a grommet?"), first)
+        finally:
+            os.environ["STUDYKIT_DATA"] = str(self.data)
+            shutil.rmtree(second_machine, ignore_errors=True)
+
+    def test_different_questions_get_different_ids(self):
+        self.install("widgets-pack")
+        self.setup_with("widgets-pack")
+        self.assertNotEqual(self.bank("What is a grommet?"), self.bank("What is a flange?"))
+
+    def test_the_same_block_arriving_twice_is_not_a_duplicate(self):
+        """What a union merge of two machines' bank files produces."""
+        self.install("widgets-pack")
+        self.setup_with("widgets-pack")
+        self.bank("What is a grommet?")
+        banked = self.data / "bank" / "widgets-pack" / "widgets.toml"
+        body = banked.read_text(encoding="utf-8")
+        block = body[body.index("[[q]]") :]
+        banked.write_text(body + block, encoding="utf-8")
+
+        library = load_library()
+        ids = [q.id for q in library.pack("widgets-pack").questions]
+        self.assertEqual(len(ids), len(set(ids)), "the repeated block should collapse")
+
+    def test_one_id_carrying_two_different_questions_is_still_an_error(self):
+        self.install("widgets-pack")
+        self.setup_with("widgets-pack")
+        banked = self.data / "bank" / "widgets-pack" / "widgets.toml"
+        body = banked.read_text(encoding="utf-8") if banked.exists() else ""
+        banked.parent.mkdir(parents=True, exist_ok=True)
+        clash = QUESTION.replace("wg-001", "wg-uaaaaaaaa")
+        banked.write_text(body + clash + clash.replace("A grommet.", "A flange."), encoding="utf-8")
+        with self.assertRaises(StudykitError) as caught:
+            load_library()
+        self.assertIn("wg-uaaaaaaaa", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
