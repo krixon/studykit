@@ -1,4 +1,4 @@
-"""Metrics, computed from the ledger and written to `data/metrics.json`.
+"""Metrics, computed from the ledger and written to `metrics.json`.
 
 Two readings of the progress series: **all facets** moves when new ground is
 broken as well as when something improves, because new ground usually means a

@@ -14,8 +14,8 @@ Environment:
 
 | Variable | Effect |
 |---|---|
-| `STUDYKIT_DATA` | where your data lives. Default `<repo>/data`. |
-| `STUDYKIT_PACKS` | where packs are loaded from. Default `<repo>/packs`. |
+| `STUDYKIT_DATA` | where your data lives. Default `$XDG_DATA_HOME/studykit`, else `~/.studykit`. |
+| `STUDYKIT_PACKS` | where the shipped packs are read from. Default `<repo>/packs`. Installed packs always come from the data directory as well. |
 | `STUDYKIT_PYTHON` | which interpreter to use, if `python3` is older than 3.12. |
 | `STUDYKIT_TODAY` | override today's date, for `as_of` reasoning. |
 | `STUDYKIT_NOW` | override the timestamp new rows are stamped with. |
@@ -236,7 +236,7 @@ Backs the data directory up to a git remote of your own. The tool repo and the d
 `init` makes the data directory its own git repository, points it at the remote, writes a `.gitignore` for the derived files, and pushes. It refuses when the remote already has history. Clone that into your data directory instead:
 
 ```
-rm -rf data && git clone git@github.com:you/studykit-data.git data
+rm -rf ~/.studykit && git clone git@github.com:you/studykit-data.git ~/.studykit
 ```
 
 Only the source of truth is tracked: `ledger.jsonl`, `profile.json`, `bank/` and `attempts/`. `state.json`, `metrics.json` and `dashboard.html` are rebuilt on every write, so committing them would produce a diff on every command and a conflict on every second machine.

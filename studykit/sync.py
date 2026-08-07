@@ -49,10 +49,10 @@ def _git(*args: str, cwd: Path | None = None, check: bool = True) -> subprocess.
 def is_repo(path: Path | None = None) -> bool:
     """True only when the data directory is a repository *in its own right*.
 
-    The default data directory lives inside the studykit checkout, so a plain
-    `rev-parse --git-dir` walks up and finds the tool's repo. Treating that as a
-    hit would commit a private ledger into a public repository. The top level
-    has to be the data directory itself.
+    `STUDYKIT_DATA` may point inside another checkout, where a plain
+    `rev-parse --git-dir` walks up and finds that repo. Treating that as a hit
+    would commit a private ledger into someone else's repository, so the top
+    level has to be the data directory itself.
     """
     path = path or data_dir()
     if not path.exists():
