@@ -88,7 +88,7 @@ Unanswerable. HTTP mandates nothing beyond the status code, so a candidate readi
 
 > You are designing a JSON API. A mobile client calls it, a third-party integrator also calls it, and your support team fields tickets about it. A request fails. Beyond the status code, what goes in the response body?
 
-Same knowledge tested, frame fixed, and nothing pre-activated. "This is an API design question" would also fix the frame, but it names the topic and hands over half the retrieval. Scenario does the work a label would, for free.
+Same knowledge tested, frame fixed, and nothing pre-activated. "This is an API design question" would also fix the frame, but it names the topic and hands over half the retrieval.
 
 A `judgment` stem carrying a time constraint has a second frame to fix: **design or lever**. "Prices must be visible within 60 seconds" reads as a standing requirement to one candidate and as an incident to another, and the right answers are disjoint - restructure what is cached, versus fire the purge and accept the herd. Say which you are asking for.
 

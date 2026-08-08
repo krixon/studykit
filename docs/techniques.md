@@ -17,7 +17,7 @@ The blocks `./study plan` draws from. Each targets a specific failure, has a rou
 
 ## Notes on the less obvious ones
 
-Each block's own instructions travel with it, in the `instruction` field `plan` returns. What follows is why they exist.
+Each block's own instructions travel with it, in the `instruction` field `plan` returns.
 
 **Contrasting cases.** Two or three things that share surface features and differ in deep structure, with the ask coming before any explanation. The direct remedy for a score-2 conflation, and better than a correction, because a correction addresses the wrong answer rather than the missing axis.
 
@@ -45,7 +45,7 @@ Each block's own instructions travel with it, in the `instruction` field `plan` 
 
 Two minutes are always reserved at the end for recording.
 
-The queue rotates through topics rather than exhausting one, so a 12-question set draws from up to 12 different topics. Interleaving only works if there is something to interleave.
+The queue rotates through topics rather than exhausting one, so a 12-question set draws from up to 12 different topics.
 
 ## Overriding it
 

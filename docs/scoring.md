@@ -1,6 +1,6 @@
 # Scoring and scheduling
 
-The measurement model. The mechanism is implemented in `studykit/schedule.py` and nowhere else, so this document and that file are the only two places the algorithm exists.
+The measurement model. Implemented in `studykit/schedule.py` and nowhere else.
 
 ## Three constructs, never merged
 
@@ -82,7 +82,7 @@ The multipliers are conventional, not derived. See the *Contested* section of [r
 
 Every session type tests **before** it teaches. Attempting and failing before instruction beats errorless study for retention, and the failed attempt is the honest number anyway. Warrant: [research.md](research.md), retrieval before instruction.
 
-The pretest is a primer for instruction, not a replacement for it. What follows the cold attempt is set by the ladder.
+The pretest is a primer for instruction, not a replacement for it.
 
 ## The follow-up ladder
 

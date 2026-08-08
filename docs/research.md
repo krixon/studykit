@@ -1,6 +1,6 @@
 # Evidence base
 
-Why the engine works the way it does. Each finding is recorded with the mechanism it licenses, so a decision can be challenged on the evidence rather than on taste. A finding earns a place here only if it changes what the engine does.
+Why the engine works the way it does. Each finding is recorded with the mechanism it licenses, and earns a place here only if it changes what the engine does.
 
 ## Retrieval before instruction
 
@@ -53,8 +53,6 @@ The re-test must be a variant, never the same question. Recognition lets a learn
 **What it licenses.** Free recall by default. Multiple choice only where discriminating the named alternatives is itself the skill. See [question-types.md](question-types.md).
 
 ## Contested
-
-Recorded so the engine does not present a live dispute as settled.
 
 - **Does retrieval practice produce far transfer?** [question-types.md](question-types.md) asserts it reliably produces near transfer and often fails at far transfer. That is roughly Van Gog & Sweller's (2015) position, that the testing effect shrinks as element interactivity rises; Karpicke & Aue (2015) rebutted it. The engine hedges by weighting the bank towards `judgment` and by treating full problems as the only integration measure, which is defensible under either reading.
 

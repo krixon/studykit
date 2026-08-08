@@ -53,9 +53,9 @@ minutes = 45                     # what the composer budgets for it
 
 A calibration brief per level is optional but strongly recommended: without one the agent falls back on its own judgement, which drifts. `./study doctor --verbose` lists missing ones.
 
-## Sub-topics are the unit of everything
+## Sub-topics
 
-Sub-topics are the atom of measurement, scheduling and reporting.
+The atom of measurement, scheduling and reporting.
 
 - **Four to seven per topic.** Fewer and the topic is too coarse to schedule usefully; more and each one is measured too rarely to mean anything.
 - **Name them by what is known, not by section heading.** `stampede-penetration` is a facet you can be right or wrong about. `overview` is not.
