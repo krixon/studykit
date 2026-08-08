@@ -14,8 +14,16 @@ from studykit.select import (
 )
 
 
-def row(date, topic, subtopic, measured, pack="system-design"):
-    return Row(at=f"{date}T12:00:00", pack=pack, session="quiz", topic=topic, subtopic=subtopic, measured=measured)
+def row(date, topic, subtopic, measured, pack="system-design", post=None):
+    return Row(
+        at=f"{date}T12:00:00",
+        pack=pack,
+        session="quiz",
+        topic=topic,
+        subtopic=subtopic,
+        measured=measured,
+        post=post,
+    )
 
 
 class TestParseBudget(unittest.TestCase):
@@ -140,10 +148,59 @@ class TestCompose(SelectionTestCase):
         plan = compose(self.library, [], "senior", 60, as_of="2026-06-01", seed=1, allow_problem=False)
         self.assertNotIn("full-problem", [b["type"] for b in plan["blocks"]])
 
-    def test_a_weak_facet_triggers_a_worked_example(self):
-        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+    def test_a_weak_facet_with_reps_behind_it_triggers_a_worked_example(self):
+        rows = [
+            row("2026-03-01", "caching", "hot-key", 3),
+            row("2026-04-01", "caching", "hot-key", 2),
+            row("2026-05-01", "caching", "hot-key", 1),
+        ]
         plan = compose(self.library, rows, "senior", 45, as_of="2026-06-01", seed=1, allow_problem=False)
         self.assertIn("faded-worked-example", [b["type"] for b in plan["blocks"]])
+
+    def test_a_facet_with_nothing_to_retrieve_gets_taught_not_quizzed(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 45, as_of="2026-06-01", seed=1, allow_problem=False)
+        block = next(b for b in plan["blocks"] if b["type"] == "learn")
+        self.assertEqual(block["focus"]["subtopic"], "hot-key")
+        self.assertNotIn("faded-worked-example", [b["type"] for b in plan["blocks"]])
+
+    def test_teaching_that_failed_once_is_taught_again_not_faded(self):
+        rows = [
+            row("2026-03-01", "caching", "hot-key", 2),
+            row("2026-04-01", "caching", "hot-key", 2),
+            row("2026-05-01", "caching", "hot-key", 2, post=2),
+        ]
+        plan = compose(self.library, rows, "senior", 45, as_of="2026-06-01", seed=1, allow_problem=False)
+        self.assertIn("learn", [b["type"] for b in plan["blocks"]])
+
+    def test_teaching_that_landed_leaves_the_facet_to_the_faded_example(self):
+        rows = [
+            row("2026-03-01", "caching", "hot-key", 2),
+            row("2026-04-01", "caching", "hot-key", 2),
+            row("2026-05-01", "caching", "hot-key", 2, post=4),
+        ]
+        plan = compose(self.library, rows, "senior", 45, as_of="2026-06-01", seed=1, allow_problem=False)
+        self.assertNotIn("learn", [b["type"] for b in plan["blocks"]])
+
+    def test_two_blocks_never_target_the_same_facet(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 2)]
+        plan = compose(self.library, rows, "senior", 90, as_of="2026-06-01", seed=1, allow_problem=False)
+        focused = [b["focus"] for b in plan["blocks"] if "focus" in b and b["type"] != "card-writing"]
+        keys = [(f["pack"], f["topic"], f["subtopic"]) for f in focused]
+        self.assertEqual(len(keys), len(set(keys)))
+
+    def test_teaching_a_weak_facet_outranks_a_problem_for_the_budget(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 60, as_of="2026-06-01", seed=1)
+        types = [b["type"] for b in plan["blocks"]]
+        self.assertIn("learn", types)
+        self.assertNotIn("full-problem", types)
+
+    def test_a_learn_block_that_does_not_fit_is_reported(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 15, as_of="2026-06-01", seed=1)
+        self.assertNotIn("learn", [b["type"] for b in plan["blocks"]])
+        self.assertTrue(any("hot-key" in n for n in plan["notes"]))
 
     def test_the_plan_carries_the_level_calibration_brief(self):
         plan = compose(self.library, [], "senior", 25, as_of="2026-06-01", seed=1)

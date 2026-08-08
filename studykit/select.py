@@ -52,6 +52,7 @@ TECHNIQUES: list[dict] = [
     {"name": "diagnostic-inversion", "targets": "symptom to cause", "minutes": 10},
     {"name": "teach-back", "targets": "illusion of explanatory depth", "minutes": 12},
     {"name": "faded-worked-example", "targets": "rebuilding a weak facet", "minutes": 25},
+    {"name": "learn", "targets": "building a facet that is not there yet", "minutes": 30},
     {"name": "full-problem", "targets": "far transfer, integration", "minutes": 50},
     {"name": "cold-re-attempt", "targets": "durability", "minutes": 45},
     {"name": "card-writing", "targets": "consolidation", "minutes": 20},
@@ -90,6 +91,10 @@ class QueueEntry:
     reps: int = 0
     due: str = ""
     overdue_days: int = 0
+
+    @property
+    def key(self) -> tuple[str, str, str]:
+        return (self.pack, self.topic, self.subtopic)
 
     def as_dict(self) -> dict:
         return {
@@ -281,6 +286,18 @@ def _weakest(entries: list[QueueEntry]) -> QueueEntry | None:
     return min(scored, key=lambda e: (e.strength, -e.overdue_days), default=None)
 
 
+def _last_post(rows: list[Row]) -> dict[tuple[str, str, str], int]:
+    """The most recent post-teaching score per facet."""
+    latest: dict[tuple[str, str, str], tuple[str, int]] = {}
+    for row in rows:
+        if row.post is None:
+            continue
+        seen = latest.get(row.key)
+        if seen is None or row.at >= seen[0]:
+            latest[row.key] = (row.at, row.post)
+    return {key: post for key, (_, post) in latest.items()}
+
+
 def qtype_means(rows: list[Row]) -> dict[str, float]:
     buckets: dict[str, list[int]] = {}
     for row in rows:
@@ -358,6 +375,20 @@ def compose(
     queue = build_queue(library, rows, level, as_of)
     budget = max(minutes - RECORDING_RESERVE, 5)
 
+    # Before the problem and the quiz set, either of which would otherwise absorb
+    # the budget and leave a facet at strength 1 without its teaching.
+    targeted: list[dict] = []
+    skipped: list[dict] = []
+    max_targeted = 1 if minutes < 30 else 2 if minutes < 60 else 3
+    allowance = max(budget - QUIZ_FLOOR, 0)
+    for block in _targeted_blocks(library, rows, level, queue):
+        if len(targeted) >= max_targeted or block["minutes"] > allowance:
+            skipped.append(block)
+            continue
+        targeted.append(block)
+        allowance -= block["minutes"]
+        budget -= block["minutes"]
+
     # A half day spent entirely on retrieval measures the cheap thing.
     max_problems = 0 if not allow_problem else 1 if minutes < 120 else 2 if minutes < 300 else 3
     problem_blocks: list[dict] = []
@@ -384,18 +415,6 @@ def compose(
             }
         )
         budget -= cost
-
-    # Before the quiz set, which would otherwise absorb the whole budget and
-    # leave a facet at strength 1 without its worked example.
-    targeted: list[dict] = []
-    max_targeted = 1 if minutes < 30 else 2 if minutes < 60 else 3
-    allowance = max(budget - QUIZ_FLOOR, 0)
-    for block in _targeted_blocks(library, rows, level, queue):
-        if len(targeted) >= max_targeted or block["minutes"] > allowance:
-            continue
-        targeted.append(block)
-        allowance -= block["minutes"]
-        budget -= block["minutes"]
 
     blocks: list[dict] = []
     if budget >= 8:
@@ -426,8 +445,18 @@ def compose(
     blocks.extend(targeted)
     blocks.extend(problem_blocks)
 
-    # A long budget can outrun the queue and the problem bank.
     notes: list[str] = []
+    dropped_learn = next((b for b in skipped if b["type"] == "learn"), None)
+    if dropped_learn is not None:
+        focus = dropped_learn["focus"]
+        notes.append(
+            f"{focus['topic']}/{focus['subtopic']} is at strength {focus['strength']} with nothing "
+            f"to retrieve, and the {dropped_learn['minutes']} minutes it needs do not fit this "
+            f"budget. The quiz set will measure the same gap again. Ask for a learn session on "
+            f"{focus['topic']}, or plan a longer one."
+        )
+
+    # A long budget can outrun the queue and the problem bank.
     if budget >= 20 and not any(b["type"] == "card-writing" for b in blocks):
         weakest = _weakest(queue) or (queue[0] if queue else None)
         if weakest is not None:
@@ -492,12 +521,42 @@ def _targeted_blocks(
     conflated = [e for e in weak if e.strength == 2]
     means = qtype_means(rows)
     predicted_gap = _calibration_gap(rows)
+    last_post = _last_post(rows)
+    claimed: set[tuple[str, str, str]] = set()
 
     def card_ref(entry: QueueEntry) -> str:
         return f"./study card {entry.topic} --pack {entry.pack}"
 
-    if weak:
-        entry = weak[0]
+    def take(pool: list[QueueEntry]) -> QueueEntry | None:
+        """The weakest unclaimed facet in the pool, so two blocks never target one facet."""
+        entry = _weakest([e for e in pool if e.key not in claimed])
+        if entry is not None:
+            claimed.add(entry.key)
+        return entry
+
+    # Retrieval practice needs something to retrieve. A facet that has never
+    # survived a rep, or whose last re-test after teaching came back weak, has
+    # nothing to draw on, and quizzing it again measures the same gap.
+    empty = [e for e in weak if e.reps <= 1 or last_post.get(e.key, 5) <= 2]
+    entry = take(empty)
+    if entry is not None:
+        out.append(
+            {
+                "type": "learn",
+                "minutes": TECHNIQUE_BY_NAME["learn"]["minutes"],
+                "targets": TECHNIQUE_BY_NAME["learn"]["targets"],
+                "focus": entry.as_dict(),
+                "card": card_ref(entry),
+                "instruction": (
+                    f"Run with the `learn` protocol on {entry.topic}/{entry.subtopic}. Cold probe "
+                    "the facet first, teach only what the probe exposes, then re-test on variants "
+                    "spaced from the teaching. Record the cold score as `measured` and the variant "
+                    "as `post`."
+                ),
+            }
+        )
+    entry = take(weak)
+    if entry is not None:
         out.append(
             {
                 "type": "faded-worked-example",
@@ -512,8 +571,8 @@ def _targeted_blocks(
                 ),
             }
         )
-    if conflated:
-        entry = conflated[0]
+    entry = take(conflated)
+    if entry is not None:
         out.append(
             {
                 "type": "contrasting-cases",
@@ -554,9 +613,8 @@ def _targeted_blocks(
                 ),
             }
         )
-    mid = [e for e in queue if e.strength == 3]
-    if mid:
-        entry = mid[0]
+    entry = take([e for e in queue if e.strength == 3])
+    if entry is not None:
         out.append(
             {
                 "type": "diagnostic-inversion",

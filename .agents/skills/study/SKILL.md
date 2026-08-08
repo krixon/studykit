@@ -25,9 +25,12 @@ Each block carries an `instruction` field. Follow it.
 
 - `quiz-set`: run the `quiz` protocol on the supplied questions.
 - `full-problem` / `cold-re-attempt`: run the `practice` protocol on the named problem.
+- `learn`: run the `learn` protocol on the facet in `focus`. It fires when the facet has nothing to retrieve, so do not open by quizzing it further.
 - `faded-worked-example`, `contrasting-cases`, `diagnostic-inversion`, `teach-back`, `estimation-drill`, `card-writing`: the instruction describes the block. Fetch the card with `./study card <topic> --pack <pack>` only if you need the material.
 
 If a block has `author_for` entries, the bank has no in-level question for those facets. Write one, ask it, and bank it (see below).
+
+`notes` reports work the budget could not hold. Read it out rather than dropping it silently.
 
 **Apply the calibration brief.** The plan's `calibration` block states the bar for the user's level, what to push on, and what not to demand. A graduate answering correctly at graduate level scores well; do not silently judge them at staff level.
 
