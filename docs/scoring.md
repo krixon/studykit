@@ -90,15 +90,11 @@ A cold score is a diagnosis, and the three bands need different treatment. Teach
 
 | Cold `measured` | What follows | Why |
 |---:|---|---|
-| 4-5 | One line confirming, or the boundary they did not volunteer. Move on. | Guidance at this level is redundant and costs working memory: expertise reversal. |
-| 3 | Name the specific gap. Move on. | The schema is there; only the missing piece needs supplying. |
-| 1-2 | **Worked example**, then a **variant** re-test later in the same session, logged as `post`. | A 1-2 means there was nothing to generate from. Correction alone produces fluency without encoding. |
+| 4-5 | One line: a confirmation, or the boundary they did not volunteer. | Guidance at this level is redundant and costs working memory: expertise reversal. |
+| 3 | The specific gap, named. | The schema is there; only the missing piece needs supplying. |
+| 1-2 | A **worked example**, then a **variant** re-test later in the same session, logged as `post`. | A 1-2 means there was nothing to generate from. Correction alone produces fluency without encoding. |
 
-Rules for the 1-2 branch:
-
-- The re-test is a **variant**, never the question just answered. Recognition lets an answer be confirmed without retrieving anything.
-- **Space it.** Put other questions between the teaching and the re-test; back-to-back is a working-memory read, not a retrieval.
-- The variant is banked like any other shown question.
+The re-test has to be a variant rather than the same question, because recognition lets an answer be confirmed without retrieving anything, and it has to be spaced by other work, because back-to-back is a working-memory read. How a session runs the ladder is in the skills; this is what the bands mean.
 
 Warrant: [research.md](research.md), *prior knowledge gates unguided struggle* and *feedback needs a second retrieval*.
 

@@ -43,6 +43,10 @@ One at a time, unless the user prefers batches.
 
 Judge against the level's bar, which `./study plan` returns in its `calibration` block and `./study levels` prints on demand.
 
+## Score a judgment rating against the option as stated
+
+The rating applies to the design on the table, not to the repaired version of it. Least-response-time balancing against a backend returning 500 in 2ms is -2, because the algorithm as specified measures elapsed time and cannot see a status code. A candidate who answers 0 on the grounds that a sensible implementation would exclude 5xx has patched the design and then rated the patch, which hides the fact that the default is the broken one. Score the delta against what was asked; the fix is the next sentence, not a substitute for the rating.
+
 ## Never score an answer that was not given
 
 A question with no answer from the candidate has no score, and no ledger row. Not a 1, not an omitted `measured` with the row kept: no row at all. A fabricated turn scored as though it were real corrupts the ledger, which is append-only, and it is worse than a missed measurement because it looks like data.

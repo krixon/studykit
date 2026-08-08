@@ -34,8 +34,6 @@ Answered as `-2 -1 0 +1 +2` plus a clause of why. Near-zero typing for a genuine
 
 **The stem must end with the ask.** A design context plus new information and then nothing is not a question: the candidate cannot tell whether you want the rating, the remedy, or both. End with "More or less appropriate?" or whichever variant fits.
 
-**The rating applies to the option as stated, not to the repaired version.** Least-response-time balancing against a backend returning 500 in 2ms is -2, because the algorithm as specified measures elapsed time and cannot see a status code. A candidate who answers 0 on the grounds that a sensible implementation would exclude 5xx has patched the design and then rated the patch, which hides the fact that the default is the broken one. Score the delta against what is on the table; the fix is the next sentence, not a substitute for the rating.
-
 Adapted from script concordance testing in medical education, which assesses reasoning under uncertainty rather than knowledge. **This is the type that targets far transfer**; weight the bank towards it.
 
 A good judgment question has a defensible answer that is not obvious, and sometimes the honest answer is 0: "it depends, and here is what on". Questions where the new information trivially settles it are recall in disguise.
@@ -78,15 +76,11 @@ As a rough guide to bank composition per level:
 
 Targets for authoring, not enforced by code. `./study progress` shows your measured mean per type: a high `recall` with a low `judgment` means the knowledge is there and inert.
 
-## Interleave, and do not announce the topic
+## Stems are self-contained
 
-Mix topics within a set and never say which card a question came from. Naming the topic pre-activates the schema and does half the retrieval for the candidate.
+A set is interleaved and the topic is never named, because naming it pre-activates the schema and does half the retrieval. Warrant: [research.md](research.md), interleaving and spacing.
 
-`./study questions` already interleaves the set it returns. Do not reorder it into topic groups.
-
-### The corollary: a stem must be self-contained
-
-Because the topic cannot be named, everything needed to fix the frame has to be in the stem, written as scenario rather than as a label.
+Everything needed to fix the frame therefore has to be in the stem, written as scenario rather than as a label.
 
 > What should an error response contain besides a status code?
 
@@ -102,21 +96,4 @@ The test: if a stem needs a topic label to be answerable, it is missing a senten
 
 ## Bank format
 
-One `[[q]]` table per question, in `packs/<pack>/questions/<topic>.toml`:
-
-```toml
-[[q]]
-id = "rl-006"
-qtype = "judgment"
-subtopic = "distributed-state"
-levels = ["senior", "lead", "staff"]
-q = "You are leasing rate-limit tokens locally across 500 nodes. New information - this tenant's limit is 10 per minute. Does local leasing become more or less appropriate?"
-a = "Much less, -2. The floor on overshoot is roughly one lease per node, so 500 nodes against a limit of 10 is a 5000 percent overshoot. Overshoot has to be judged against the limit, not in absolute terms."
-```
-
-Rules:
-
-- `id` is `<topic-prefix>-<nnn>`, stable forever, **never reused**. `./study bank add` assigns them; do not hand-write them.
-- **Anything shown is banked.** Generated a question mid-session? `./study bank add` before the session ends. Not optional: an unbanked question cannot be referenced by a ledger row, and the CLI enforces that.
-- Exposure history (`shown`, `reps`) is **not** stored on the question. It is derived from the ledger, so packs stay pristine and portable and can be shared without carrying anyone's history.
-- Never show the same question twice in one session. `./study questions` handles this; it also prefers unshown or long-unseen items.
+The TOML, the id rules and what a good `a` field contains: [authoring-packs.md](authoring-packs.md#question-banks).

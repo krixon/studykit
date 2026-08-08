@@ -122,7 +122,7 @@ a = "They are on different axes entirely. Cache-aside is a READ strategy; write-
 
 Weight the bank towards `judgment` and `discrimination`. `recall` is the floor, not the point.
 
-**A stem has to stand on its own.** The topic is never named when the question is asked, so the stem carries the frame itself, written as scenario rather than as a label, and a `judgment` stem ends with the ask. See [question-types.md](question-types.md#the-corollary-a-stem-must-be-self-contained). The cheapest way to find a stem that does not: answer it deliberately under the other reading and see whether the banked answer still applies.
+**A stem has to stand on its own.** The topic is never named when the question is asked, so the stem carries the frame itself, written as scenario rather than as a label, and a `judgment` stem ends with the ask. See [question-types.md](question-types.md#stems-are-self-contained). The cheapest way to find a stem that does not: answer it deliberately under the other reading and see whether the banked answer still applies.
 
 Write the answer as what a **strong** answer contains, not as a minimal key. The agent scores against it and uses it to name the gap, so "Less, -2, because the floor on overshoot is one lease per node" beats "Less appropriate".
 

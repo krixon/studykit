@@ -17,13 +17,15 @@ The blocks `./study plan` draws from. Each targets a specific failure, has a rou
 
 ## Notes on the less obvious ones
 
-**Contrasting cases.** Present two or three things that share surface features and differ in deep structure, and ask what separates them *before* explaining anything. The direct remedy for a score-2 conflation, and better than a correction, because a correction addresses the wrong answer rather than the missing axis.
+Each block's own instructions travel with it, in the `instruction` field `plan` returns. What follows is why they exist.
 
-**Teach-back.** Explain the concept as if to a competent engineer who has not met it. The gap between feeling able to explain something and actually explaining it is large and invisible from the inside. Cheap to run, brutal as a diagnostic, which is why the composer fires it on a calibration signal rather than on a strength signal.
+**Contrasting cases.** Two or three things that share surface features and differ in deep structure, with the ask coming before any explanation. The direct remedy for a score-2 conflation, and better than a correction, because a correction addresses the wrong answer rather than the missing axis.
 
-**Design critique.** Present a deliberately flawed design and ask what breaks. Evaluation is cheaper than generation for the same signal, so it fits budgets where a full problem does not.
+**Teach-back.** The user explains the concept as if to a competent engineer who has not met it. The gap between feeling able to explain something and actually explaining it is large and invisible from the inside. Cheap to run, brutal as a diagnostic, which is why the composer fires it on a calibration signal rather than on a strength signal.
 
-**Faded worked example.** Show a complete worked design, then re-run a variant with parts removed for the user to fill. Only for weak facets: worked examples help at low strength and actively hurt at high strength, so fade them out as strength rises.
+**Design critique.** A deliberately flawed design, and what breaks in it. Evaluation is cheaper than generation for the same signal, so it fits budgets where a full problem does not.
+
+**Faded worked example.** A complete worked design, then a variant with parts removed for the user to fill. Only for weak facets: worked examples help at low strength and actively hurt at high strength, so fade them out as strength rises.
 
 **Full problem.** The only block that measures integration, and the only place the **transfer gap** can be observed: the difference between a facet's strength in isolation and its strength when it has to be recognised inside a larger problem. Worth the time cost for that alone, and the reason the composer will spend most of a 60-minute budget on one.
 

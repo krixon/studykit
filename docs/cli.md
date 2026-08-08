@@ -149,6 +149,8 @@ Draws questions from the bank, filtered to your level, ordered by the queue, int
 ./study questions --qtype judgment --count 5
 ```
 
+Anything already recorded today is excluded, and unshown or long-unseen questions are preferred over recently answered ones.
+
 The response includes `author_for`: facets with no in-level question banked, which the agent should write and bank.
 
 ---

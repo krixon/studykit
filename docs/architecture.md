@@ -16,6 +16,16 @@ The line matters because each part fails differently. Deterministic logic that d
 
 **Anything requiring judgement is the agent.** Whether an answer named the tradeoff, whether a worked example landed, what the gap actually was.
 
+## Documentation and instruction
+
+`docs/` and `.agents/skills/` have different readers and must not overlap.
+
+**`docs/` describes.** What the system is, why the model is shaped this way, and how to author content. Its reader is a person deciding whether to trust the tool, or writing a pack. It is read outside a session.
+
+**A skill instructs.** What to do while a session is running, in the imperative, addressed to the agent. It is read at session time and its cost is paid on every session.
+
+A procedure written in both places drifts, and the copy that drifts is the one nobody is reading. So a rule about how to run a session lives in the skill and nowhere else; the doc may say why the rule exists. Per-block instructions are a third case: they live in `TECHNIQUES` and `_targeted_blocks` in `select.py` and travel with the block, because the composer already knows which facet fired it.
+
 ## Agent harnesses
 
 One copy of every instruction, symlinked into the places each harness looks:
