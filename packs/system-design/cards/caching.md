@@ -1,7 +1,5 @@
 # Caching
 
-**Area:** caching · **Levels:** graduate → staff+
-
 **One line:** Keep a copy of expensive-to-fetch data somewhere faster, trading memory and staleness for latency and load.
 
 ## Why it exists

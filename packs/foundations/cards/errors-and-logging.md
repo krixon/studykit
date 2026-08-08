@@ -1,7 +1,5 @@
 # Errors and logging
 
-**Area:** quality · **Levels:** graduate → staff+
-
 **One line:** Deciding what to do when things go wrong, and leaving behind enough evidence for whoever has to work out why.
 
 ## error-handling

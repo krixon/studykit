@@ -56,16 +56,3 @@ Two calls, in this order, because a ledger row naming an unbanked question id is
 `record` rebuilds `state.json` and `metrics.json` itself. Nothing else to run.
 
 Then offer `./study dashboard --open` if they want to see the charts.
-
-## The rules that are not negotiable
-
-- **Score cold, before teaching anything.** `measured` is always the pre-teaching score. A confident wrong answer is a 2, not a 3.
-- **`predicted` is the user's own number.** If they did not state one, leave the field out. Never infer it from how confident they sounded.
-- **Never write the user's turn.** End the turn on the question. An answer you composed yourself is not a measurement, and scoring one puts fiction in an append-only ledger.
-- **Measure only what you tested.** No inference from adjacent topics, no bumping a topic because a related one went well.
-- **A problem score never lifts a topic.** It may emit sub-topic rows for facets it genuinely exercised, in either direction.
-- Full model: `docs/scoring.md`. Warrants: `docs/research.md`.
-
-## House style
-
-Name gaps directly. Do not cheerlead.

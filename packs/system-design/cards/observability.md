@@ -1,7 +1,5 @@
 # Observability
 
-**Area:** observability · **Levels:** mid → staff+
-
 **One line:** Being able to answer questions about your system's behaviour that you did not think to ask before deploying it.
 
 ## Why it exists

@@ -1,7 +1,5 @@
 # Testing
 
-**Area:** quality · **Levels:** graduate → staff+
-
 **One line:** Executable claims about what your code does, whose real value is that they let you change it later without fear.
 
 ## test-levels

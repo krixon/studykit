@@ -1,7 +1,5 @@
 # Replication
 
-**Area:** storage · **Levels:** mid → staff+
-
 **One line:** Keep the same data on more than one machine, buying durability, read capacity and availability, and paying in consistency or latency.
 
 ## Why it exists

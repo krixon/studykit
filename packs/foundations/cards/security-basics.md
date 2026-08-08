@@ -1,7 +1,5 @@
 # Security basics
 
-**Area:** security · **Levels:** graduate → staff+
-
 **One line:** The small set of mistakes that cause most real breaches, and the standard defences that are boring precisely because they work.
 
 ## authn-authz

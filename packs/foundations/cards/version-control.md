@@ -1,7 +1,5 @@
 # Version control
 
-**Area:** tooling · **Levels:** graduate → staff+
-
 **One line:** A queryable history of every change, whose value shows up on the day you need to know why something is the way it is.
 
 ## commits-history

@@ -1,11 +1,7 @@
 """House style, enforced rather than requested.
 
-`AGENTS.md` said "No em-dashes" and then contained five of them, as did every
-card in every pack. A rule nothing checks is a rule that decays, so it is a
-test: CI runs it, and so does the pre-push hook.
-
-The banned characters are built with `chr` so this file does not itself contain
-the thing it is looking for.
+A rule nothing checks is a rule that decays. The banned characters are built
+with `chr` so this file does not itself contain the thing it is looking for.
 """
 
 import unittest
@@ -51,6 +47,19 @@ class TestHouseStyle(unittest.TestCase):
             "House style forbids long dashes. Use a colon where the clause expands what "
             "precedes it, a comma where it qualifies, a full stop where it is really a "
             "second sentence:\n  " + "\n  ".join(offences),
+        )
+
+    def test_no_card_states_its_own_area_or_levels(self):
+        offences = [
+            str(path.relative_to(ROOT))
+            for path in (ROOT / "packs").glob("*/cards/*.md")
+            if "**Area:**" in path.read_text(encoding="utf-8")
+        ]
+        self.assertEqual(
+            offences,
+            [],
+            "`./study card` renders area and levels from the manifest:\n  "
+            + "\n  ".join(offences),
         )
 
     def test_the_check_actually_looks_at_the_content(self):

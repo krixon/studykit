@@ -20,17 +20,7 @@ The 1-5 scale does not change. A 4 always means "correct with the tradeoff named
 ./study levels
 ```
 
-Prints every level's bar for each enabled pack. Abbreviated, for system-design:
-
-| Level | Bar |
-|---|---|
-| graduate | Names the component, says what problem it solves, draws a sensible box diagram. Getting the mechanism right is the whole job. |
-| mid | Correct mechanism plus the main tradeoff, and a rough sense of scale. |
-| senior | Tradeoff named and defended, a number attached, and a failure mode volunteered without being asked. |
-| lead | Everything at senior, plus the migration path and the operational burden the team inherits. |
-| staff | Correct, quantified, with a failure mode and a blast radius, and an explicit statement of what the design forecloses. |
-
-Each brief also carries `assume`, `push_on` and `avoid`. `avoid` is what stops a graduate being marked down for not producing a cost model.
+Prints every level's bar for each enabled pack, with the `assume`, `push_on` and `avoid` that go with it. `avoid` is what stops a graduate being marked down for not producing a cost model.
 
 ## Changing it
 
@@ -42,7 +32,7 @@ State and metrics rebuild on the spot. The ledger is untouched, and rows record 
 
 Moving up:
 
-- **Coverage drops**, because topics that were out of scope are now in it. That is the point.
+- **Coverage drops**, because topics that were out of scope are now in it.
 - **Existing strengths do not change**, because they are measurements, not judgements. A facet measured at 4 as a senior still reads 4 as a lead, and the next measurement at the new bar is what moves it.
 
 Moving down does the reverse. Out-of-scope measurements stay in the ledger.
@@ -55,22 +45,7 @@ One level above yours is harsh and works. One level below is comfortable and wil
 
 ## Authoring for levels
 
-In a pack:
-
-```toml
-[calibration.senior]
-bar = "Tradeoff named and defended, a number attached, and a failure mode volunteered."
-assume = "Has operated systems in production."
-push_on = ["why, not what", "what breaks at 10x", "what it costs"]
-avoid = "Do not accept a mechanism with no cost attached."
-
-[[topic]]
-id = "consistency-models"
-levels = ["senior", "lead", "staff"]
-
-[[q]]
-levels = ["mid", "senior", "lead", "staff"]
-```
+The TOML is in [authoring-packs.md](authoring-packs.md#packtoml).
 
 - **Tag generously downwards for mechanism questions and narrowly upwards for judgment ones.** "What does a load balancer do" suits everyone; "does this change the answer, given 500 nodes" does not suit a graduate, who has no basis to judge it.
 - **A topic's lowest level should be the level at which its *simplest* facet is fair**, since question tags do the finer filtering.

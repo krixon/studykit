@@ -6,9 +6,17 @@ import os
 import shutil
 import sys
 
-from .config import LEVEL_TITLES, days_between
+from .config import LEVEL_TITLES, LEVELS, days_between
 
 _STYLES = {"bold": "1", "dim": "2", "red": "31", "green": "32", "yellow": "33", "blue": "34"}
+
+
+def card(text: str, area: str, levels: tuple[str, ...]) -> str:
+    """A card as printed: its own markdown, with area and levels from the manifest."""
+    titles = [LEVEL_TITLES[name] for name in LEVELS if name in levels]
+    span = f"{titles[0]} → {titles[-1]}" if titles else ""
+    heading, _, body = text.partition("\n")
+    return f"{heading}\n\n**Area:** {area} · **Levels:** {span}\n\n{body.strip()}\n"
 
 
 def _colour_enabled() -> bool:

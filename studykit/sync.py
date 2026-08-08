@@ -1,9 +1,8 @@
 """Carrying the data directory between machines over a git remote.
 
 The data directory is its own git repository with its own remote, so the tool
-repo never sees a ledger. Only the source of truth is tracked: the derived files
-are rebuilt on every write, and committing them would produce a diff on every
-command and a conflict on every second machine.
+repo never sees a ledger. Only the source of truth is tracked; the derived files
+are rebuilt on every write.
 
 Every command here no-ops cleanly when sync is not configured.
 """

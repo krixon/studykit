@@ -1,7 +1,5 @@
 # Sharding and partitioning
 
-**Area:** partitioning · **Levels:** mid → staff+
-
 **One line:** Split one dataset across many machines so that capacity, not one server's limits, sets the ceiling.
 
 ## Why it exists

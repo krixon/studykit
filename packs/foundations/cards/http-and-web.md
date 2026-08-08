@@ -1,7 +1,5 @@
 # HTTP and the web
 
-**Area:** web · **Levels:** graduate → staff+
-
 **One line:** A stateless request-response protocol that every web system is built on, whose statelessness is the source of most of its complications.
 
 ## request-response

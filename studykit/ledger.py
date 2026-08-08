@@ -4,9 +4,7 @@ One JSON object per line, one line per measured item per session. Never edited,
 only appended. `state.json` and `metrics.json` are derived from it.
 
 A row is stamped with `at`, a full local timestamp with its offset, because when
-in the day something was measured cannot be recovered later. Scheduling still
-works in whole days: `Row.date` is derived from `at`, so several measurements of
-one facet in one sitting remain one piece of evidence.
+in the day something was measured cannot be recovered later.
 """
 
 from __future__ import annotations

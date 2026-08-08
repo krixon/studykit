@@ -1,7 +1,5 @@
 # Message queues and logs
 
-**Area:** messaging · **Levels:** mid → staff+
-
 **One line:** Decouple producers from consumers in time, so a slow or dead consumer does not become the producer's problem.
 
 ## Why it exists

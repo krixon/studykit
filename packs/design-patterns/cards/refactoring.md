@@ -1,7 +1,5 @@
 # Refactoring and smells
 
-**Area:** refactoring · **Levels:** graduate → staff+
-
 **One line:** Changing the structure of code without changing its behaviour, in steps small enough that you are never far from working.
 
 ## What refactoring is not

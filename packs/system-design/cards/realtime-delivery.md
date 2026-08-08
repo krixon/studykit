@@ -1,7 +1,5 @@
 # Real-time delivery
 
-**Area:** real-time · **Levels:** mid → staff+
-
 **One line:** Get an update to a user in under a second without asking them to keep asking.
 
 ## Why it exists

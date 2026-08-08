@@ -1,7 +1,5 @@
 # Structural patterns
 
-**Area:** patterns · **Levels:** graduate → staff+
-
 **One line:** Ways of composing objects so the arrangement, rather than inheritance, provides the behaviour you need.
 
 ## Why they exist

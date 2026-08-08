@@ -64,14 +64,12 @@ The atom of measurement, scheduling and reporting.
 
 ## Cards
 
-Plain markdown, no frontmatter. Start with an H1 and a one-line summary.
+Plain markdown, no frontmatter. Start with an H1 and a one-line summary. `./study card` prints the area and level range above it, from the manifest, so a card never states its own.
 
 **Structure the body by sub-topic**, using the sub-topic id as a heading. That is what makes question fairness mechanical: a question is fair if the card carries its grounding, and with facet-shaped headings it is obvious whether it does.
 
 ```markdown
 # Caching
-
-**Area:** caching · **Levels:** graduate → staff+
 
 **One line:** Keep a copy of expensive-to-fetch data somewhere faster.
 
@@ -120,9 +118,7 @@ a = "They are on different axes entirely. Cache-aside is a READ strategy; write-
 - Numeric tails, `ca-001`, belong to pack authors. Questions banked during a session get `ca-u<hash>`, derived from the question text, so a session can never mint an id a pack later wants and two machines that bank the same question offline agree on one id.
 - **Exposure history is not stored here.** `shown` and `reps` are derived from the ledger.
 
-Weight the bank towards `judgment` and `discrimination`. `recall` is the floor, not the point.
-
-**A stem has to stand on its own.** The topic is never named when the question is asked, so the stem carries the frame itself, written as scenario rather than as a label, and a `judgment` stem ends with the ask. See [question-types.md](question-types.md#stems-are-self-contained). The cheapest way to find a stem that does not: answer it deliberately under the other reading and see whether the banked answer still applies.
+**A stem has to stand on its own**: [question-types.md](question-types.md#stems-are-self-contained). The cheapest way to find one that does not is to answer it deliberately under the other reading and see whether the banked answer still applies.
 
 Write the answer as what a **strong** answer contains, not as a minimal key. The agent scores against it and uses it to name the gap, so "Less, -2, because the floor on overshoot is one lease per node" beats "Less appropriate".
 

@@ -1,7 +1,5 @@
 # Scoring and scheduling
 
-The measurement model. Implemented in `studykit/schedule.py` and nowhere else.
-
 ## Three constructs, never merged
 
 | Field | Is | Drives |
@@ -9,10 +7,6 @@ The measurement model. Implemented in `studykit/schedule.py` and nowhere else.
 | `predicted` | the user's own pre-answer rating | calibration only, **never** scheduling |
 | `measured` | cold-recall score, taken before any teaching | scheduling and metrics |
 | `state.json` | derived from `measured` | what comes up next |
-
-Never hand-set derived state. Never let a self-report move a schedule. `studykit/ledger.py` enforces both: it rejects a row naming a facet the pack does not declare, and rejects any attempt to write a derived field.
-
-`predicted` is the user's number. If they did not state one, the field is **absent**. It is not inferred from how confident an answer sounded, and it is not reconstructed later.
 
 ## Score scale
 
@@ -32,7 +26,7 @@ The scale is fixed; the **bar** moves with level. See [levels.md](levels.md).
 
 ## Item identity
 
-The atom is `pack / topic / subtopic`. Everything is measured, stored and scheduled at that level. Topic-level strength is derived, never stored.
+Measurement, storage and scheduling all happen at `pack / topic / subtopic`. Topic-level strength is derived, never stored.
 
 Problems are a separate item type: `pack / problem:<slug>`, always with `subtopic: overall`. They carry a performance score and never contribute strength to topics.
 
@@ -70,23 +64,19 @@ SM-2 style, on the **measured** score, from the previous interval:
 
 Problems are exempt from the `reps` cap, because a problem is a broad integration measure rather than a single data point. They still respect the ceiling.
 
-**Topic due date** is the earliest due date among its sub-topics. A topic is never "done" while any facet is stale.
+**Topic due date** is the earliest due date among its sub-topics.
 
 The multipliers are conventional, not derived. See the *Contested* section of [research.md](research.md).
 
 ## Calibration
 
-`predicted` is captured per question, before the answer, on the same 1-5 scale. It never touches scheduling. It feeds one metric: **mean signed error, `predicted - measured`**, tracked over time. Positive means overconfidence.
+`predicted` is captured per question, before the answer, on the same 1-5 scale, and is absent when the user does not give one. It feeds **mean signed error, `predicted - measured`**, tracked over time. Positive means overconfidence.
 
 ## Pretesting
 
 Every session type tests **before** it teaches. Attempting and failing before instruction beats errorless study for retention, and the failed attempt is the honest number anyway. Warrant: [research.md](research.md), retrieval before instruction.
 
-The pretest is a primer for instruction, not a replacement for it.
-
 ## The follow-up ladder
-
-A cold score is a diagnosis, and the three bands need different treatment. Teaching identically at every level wastes time at the top and fails to land at the bottom.
 
 | Cold `measured` | What follows | Why |
 |---:|---|---|
@@ -94,15 +84,13 @@ A cold score is a diagnosis, and the three bands need different treatment. Teach
 | 3 | The specific gap, named. | The schema is there; only the missing piece needs supplying. |
 | 1-2 | A **worked example**, then a **variant** re-test later in the same session, logged as `post`. | A 1-2 means there was nothing to generate from. Correction alone produces fluency without encoding. |
 
-The re-test has to be a variant rather than the same question, because recognition lets an answer be confirmed without retrieving anything, and it has to be spaced by other work, because back-to-back is a working-memory read. How a session runs the ladder is in the skills; this is what the bands mean.
-
 Warrant: [research.md](research.md), *prior knowledge gates unguided struggle* and *feedback needs a second retrieval*.
 
 ## What `post` means
 
 `post` is the variant re-test score, after teaching. It is informational and **never schedules**: `measured` stays the cold number and drives the interval alone.
 
-It earns its place as a diagnostic of the **teaching**, not the learner. A 2 that stays 2 after a worked example means the explanation missed, or the facet needs a dedicated `learn` session rather than a quiz slot. A 2 that reaches 4 means the gap was exposure, and the next rep will tell whether it stuck.
+It diagnoses the **teaching**, not the learner. A 2 that stays 2 after a worked example means the explanation missed, or the facet needs a dedicated `learn` session rather than a quiz slot. A 2 that reaches 4 means the gap was exposure, and the next rep will tell whether it stuck.
 
 ## What each session may write
 
@@ -115,11 +103,11 @@ It earns its place as a diagnostic of the **teaching**, not the learner. A 2 tha
 
 **Problem scores never propagate to topics.** A problem score measures performance on that problem. It may emit sub-topic measurements for facets it genuinely exercised, including negative ones, and it never lifts a topic's strength on its own.
 
-**Measure only what you tested.** A session scores the facets it directly exercised, and the direction follows the evidence. No inference from adjacency, no bumping a topic because a related one went well. If it was not tested, it gets no number.
+**Nothing is inferred from adjacency.** A session scores the facets it directly exercised, in the direction the evidence points. A topic does not move because a related one went well, and what was not tested gets no number.
 
 ## Technique selection by strength
 
-Worked examples help at low strength and actively hurt at high strength: expertise reversal, see [research.md](research.md). The composer picks accordingly:
+Warrant: [research.md](research.md), worked examples reverse with expertise.
 
 | Strength | Default technique |
 |---:|---|
@@ -131,10 +119,4 @@ Worked examples help at low strength and actively hurt at high strength: experti
 
 A question may only require material the pack actually carries: what is on the card, or what follows from it by reasoning the card supports. Asking for a derivation the material never introduces measures nothing and scores an unfair 1.
 
-Pretesting works because the learner has something to generate from and fails at the edge of it. A question outside the material is not a desirable difficulty, just a wrong one.
-
 If a question is worth asking and the card lacks its grounding, **the card is what needs fixing**.
-
-## The ledger is the only source of truth
-
-`~/.studykit/ledger.jsonl` is append-only and never edited. `state.json` and `metrics.json` are generated from it by `./study record` (or `./study rebuild`), never hand-edited, and lose nothing when deleted.

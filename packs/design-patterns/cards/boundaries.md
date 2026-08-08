@@ -1,7 +1,5 @@
 # Boundaries and layering
 
-**Area:** architecture · **Levels:** mid → staff+
-
 **One line:** Deciding where the walls go, which direction dependencies cross them, and what each side is allowed to know.
 
 ## layering

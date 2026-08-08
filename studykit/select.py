@@ -44,68 +44,17 @@ BUDGET_WORDS = {
     "open-ended": 60,
 }
 
-#: The block menu. `minutes` is the planning cost; `trigger` is why it fires.
+#: `minutes` is the planning cost.
 TECHNIQUES: list[dict] = [
-    {
-        "name": "quiz-set",
-        "targets": "retrieval, discrimination",
-        "minutes": 12,
-        "trigger": "anything due",
-    },
-    {
-        "name": "contrasting-cases",
-        "targets": "conflation",
-        "minutes": 10,
-        "trigger": "a confident-wrong (strength 2) on record",
-    },
-    {
-        "name": "estimation-drill",
-        "targets": "quantification",
-        "minutes": 5,
-        "trigger": "numeric scores lag the other question types",
-    },
-    {
-        "name": "diagnostic-inversion",
-        "targets": "symptom to cause",
-        "minutes": 10,
-        "trigger": "strength 3+ and never tested backwards",
-    },
-    {
-        "name": "teach-back",
-        "targets": "illusion of explanatory depth",
-        "minutes": 12,
-        "trigger": "predicted runs above measured",
-    },
-    {
-        "name": "design-critique",
-        "targets": "evaluation",
-        "minutes": 18,
-        "trigger": "strength 3-4, applied work on a small budget",
-    },
-    {
-        "name": "faded-worked-example",
-        "targets": "rebuilding a weak facet",
-        "minutes": 25,
-        "trigger": "strength 1-2",
-    },
-    {
-        "name": "full-problem",
-        "targets": "far transfer, integration",
-        "minutes": 50,
-        "trigger": "several related facets at 4+, or an unattempted problem",
-    },
-    {
-        "name": "cold-re-attempt",
-        "targets": "durability",
-        "minutes": 45,
-        "trigger": "a problem attempted two or more weeks ago and now due",
-    },
-    {
-        "name": "card-writing",
-        "targets": "consolidation",
-        "minutes": 20,
-        "trigger": "a facet with no card, or a card a question exposed as thin",
-    },
+    {"name": "quiz-set", "targets": "retrieval, discrimination", "minutes": 12},
+    {"name": "contrasting-cases", "targets": "conflation", "minutes": 10},
+    {"name": "estimation-drill", "targets": "quantification", "minutes": 5},
+    {"name": "diagnostic-inversion", "targets": "symptom to cause", "minutes": 10},
+    {"name": "teach-back", "targets": "illusion of explanatory depth", "minutes": 12},
+    {"name": "faded-worked-example", "targets": "rebuilding a weak facet", "minutes": 25},
+    {"name": "full-problem", "targets": "far transfer, integration", "minutes": 50},
+    {"name": "cold-re-attempt", "targets": "durability", "minutes": 45},
+    {"name": "card-writing", "targets": "consolidation", "minutes": 20},
 ]
 
 TECHNIQUE_BY_NAME = {t["name"]: t for t in TECHNIQUES}
@@ -313,11 +262,7 @@ def draw_questions(
 
 
 def interleave(questions: list[Question], rng: random.Random) -> list[Question]:
-    """Reorder so consecutive questions come from different topics where possible.
-
-    Blocked practice inflates in-session performance and depresses retention: if
-    you know the topic, half the retrieval is done for you.
-    """
+    """Blocked practice inflates in-session performance and depresses retention."""
     remaining = list(questions)
     rng.shuffle(remaining)
     out: list[Question] = []
@@ -481,8 +426,7 @@ def compose(
     blocks.extend(targeted)
     blocks.extend(problem_blocks)
 
-    # A long budget can outrun the queue and the problem bank. Say so rather
-    # than planning 78 minutes of a half day and calling it a session.
+    # A long budget can outrun the queue and the problem bank.
     notes: list[str] = []
     if budget >= 20 and not any(b["type"] == "card-writing" for b in blocks):
         weakest = _weakest(queue) or (queue[0] if queue else None)
@@ -644,7 +588,7 @@ def _targeted_blocks(
 
 
 def recommend(library: Library, rows: list[Row], level: str, as_of: str | None = None) -> dict:
-    """One suggested next session. Reports end with this so nobody has to choose."""
+    """One suggested next session."""
     as_of = as_of or today()
     queue = build_queue(library, rows, level, as_of)
     weak = [e for e in queue if e.strength is not None and e.strength <= 2]

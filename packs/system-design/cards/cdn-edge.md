@@ -1,7 +1,5 @@
 # CDN and edge
 
-**Area:** geo-cdn · **Levels:** graduate → staff+
-
 **One line:** Push copies of content and some computation close to users, so most requests never cross an ocean or reach your origin.
 
 ## Why it exists

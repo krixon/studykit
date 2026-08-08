@@ -2,10 +2,6 @@
 
 Two audiences, one surface. A human runs `status`, `progress` and `dashboard`;
 a coaching agent runs `plan`, `card`, `problem`, `bank add` and `record`.
-
-Agent-facing commands emit JSON, and emit only what the next step needs: `plan`
-returns question text but refers to cards and problem prompts by command rather
-than inlining them, because most sessions never open them.
 """
 
 from __future__ import annotations
@@ -401,7 +397,7 @@ def cmd_card(args) -> int:
     if topic.card is None:
         raise StudykitError(
             f"No card for {topic.id} in {pack.name}. Write one at "
-            f"{pack.root / 'cards' / (topic.id + '.md')} using templates/knowledge-card.md."
+            f"{pack.root / 'cards' / (topic.id + '.md')}."
         )
     text = topic.card.read_text(encoding="utf-8")
     if args.json:
@@ -417,7 +413,7 @@ def cmd_card(args) -> int:
             }
         )
     else:
-        sys.stdout.write(text)
+        sys.stdout.write(report.card(text, topic.area, topic.levels))
     return 0
 
 

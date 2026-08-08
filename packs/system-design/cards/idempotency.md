@@ -1,7 +1,5 @@
 # Idempotency and retries
 
-**Area:** api-schema · **Levels:** mid → staff+
-
 **One line:** Make repeating an operation harmless, because in a distributed system it will be repeated whether you planned for it or not.
 
 ## Why it exists

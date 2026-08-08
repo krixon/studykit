@@ -1,7 +1,5 @@
 # Load balancing
 
-**Area:** networking · **Levels:** graduate → staff+
-
 **One line:** Spread requests across a pool of servers so no single one is the limit, and so losing one is survivable.
 
 ## Why it exists

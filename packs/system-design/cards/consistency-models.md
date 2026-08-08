@@ -1,7 +1,5 @@
 # Consistency models
 
-**Area:** consistency · **Levels:** senior → staff+
-
 **One line:** A precise statement of which orderings of reads and writes a system may expose, and therefore which surprises your application has to handle.
 
 ## Why it exists

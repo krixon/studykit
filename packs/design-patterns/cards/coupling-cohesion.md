@@ -1,7 +1,5 @@
 # Coupling and cohesion
 
-**Area:** design-principles · **Levels:** mid → staff+
-
 **One line:** The two properties every design principle is ultimately trying to improve: how much things depend on each other, and how well the things grouped together belong together.
 
 ## Why they matter more than the patterns

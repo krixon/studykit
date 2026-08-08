@@ -1,7 +1,5 @@
 # Dependency injection
 
-**Area:** design-principles · **Levels:** graduate → staff+
-
 **One line:** Give an object its collaborators rather than letting it fetch them, so what it depends on is visible, substitutable, and decided in one place.
 
 ## inversion

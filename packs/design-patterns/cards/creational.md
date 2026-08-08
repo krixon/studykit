@@ -1,7 +1,5 @@
 # Creational patterns
 
-**Area:** patterns · **Levels:** graduate → staff+
-
 **One line:** Ways of separating *what gets constructed* from *the code that needs it*, so construction can vary without every caller changing.
 
 ## Why they exist

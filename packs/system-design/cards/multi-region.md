@@ -1,7 +1,5 @@
 # Multi-region and DR
 
-**Area:** multi-region-dr · **Levels:** senior → staff+
-
 **One line:** Run in more than one geography for latency, availability or law, and pay for it in consistency and operational complexity.
 
 ## Why it exists

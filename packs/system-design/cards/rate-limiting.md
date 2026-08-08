@@ -1,7 +1,5 @@
 # Rate limiting
 
-**Area:** rate-limiting · **Levels:** graduate → staff+
-
 **One line:** Cap how much work a caller can ask for in a window, so one caller cannot take the service down for everyone.
 
 ## Why it exists

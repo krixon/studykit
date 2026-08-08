@@ -12,7 +12,7 @@ Three parts, with a deliberate line between them.
 
 The line matters because each part fails differently. Deterministic logic that drifts between sessions is a bug you cannot see; content that lives in code cannot be shared; and judging an answer is not something you can write a function for.
 
-**Anything that must be identical every time is code.** Interval arithmetic, queue order, question selection, coverage, metrics. If the scheduler were a paragraph of instructions to a model, two identical sessions would produce different due dates and nobody would notice.
+**Anything that must be identical every time is code.** Interval arithmetic, queue order, question selection, coverage, metrics.
 
 **Anything requiring judgement is the agent.** Whether an answer named the tradeoff, whether a worked example landed, what the gap actually was.
 
@@ -22,7 +22,7 @@ The line matters because each part fails differently. Deterministic logic that d
 
 **A skill instructs.** What to do while a session runs, addressed to the agent. Read at session time, and its cost is paid every session.
 
-A rule about how to run a session therefore lives in the skill and nowhere else; the doc may say why the rule exists. Per-block instructions are a third case, in `TECHNIQUES` and `_targeted_blocks` in `select.py`, travelling with the block that fired.
+A rule about how to run a session therefore lives in the skill and nowhere else; the doc may say why the rule exists. Per-block instructions are a third case, emitted with the block by `select.py`.
 
 ## Agent harnesses
 
@@ -92,7 +92,7 @@ Dependencies run one way: `cli` → everything, `select` → `schedule` + `packs
 - **A measurement must name a facet the pack declares.** `ledger.validate` rejects anything else, so a typo cannot create a phantom facet that is never scheduled.
 - **Derived fields cannot be written.** Passing `strength`, `interval`, `due` or `reps` to `record` is an error, not a silent override.
 - **A problem row must name a problem.** `topic` must be `problem:<slug>` with `subtopic: overall`, so a problem score cannot be recorded as a topic score.
-- **A question id must be banked before it is referenced.** This is what makes "anything shown is banked" true rather than aspirational.
+- **A question id must be banked before it is referenced.**
 - **Several measurements of one facet on one date collapse to one rep.** Implemented in `compute_items`, so no session can inflate its own evidence count.
 
 ## Why not a database

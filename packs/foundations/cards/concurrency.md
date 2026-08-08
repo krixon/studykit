@@ -1,7 +1,5 @@
 # Concurrency basics
 
-**Area:** concurrency · **Levels:** graduate → staff+
-
 **One line:** Doing more than one thing at a time, where the difficulty is not the doing but the sharing.
 
 ## processes-threads

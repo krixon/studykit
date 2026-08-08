@@ -1,7 +1,5 @@
 # Consistent hashing
 
-**Area:** partitioning · **Levels:** mid → staff+
-
 **One line:** A placement function where adding or removing a node moves only about `1/N` of the keys instead of nearly all of them.
 
 ## definition

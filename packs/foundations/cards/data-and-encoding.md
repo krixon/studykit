@@ -1,7 +1,5 @@
 # Data and encoding
 
-**Area:** data · **Levels:** graduate → staff+
-
 **One line:** The representation problems - text, time, numbers - that look trivial and produce a steady supply of production bugs.
 
 ## text-encoding

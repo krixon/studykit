@@ -1,7 +1,5 @@
 # Processes and the OS
 
-**Area:** systems · **Levels:** graduate → staff+
-
 **One line:** What your program actually is once it is running, and which of its limits are set by the operating system rather than by your code.
 
 ## process-model

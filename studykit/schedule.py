@@ -1,9 +1,4 @@
-"""Scheduling: the only implementation of the interval algorithm.
-
-Change anything here and `docs/scoring.md` has to change in the same commit;
-between them they are the only two places the algorithm exists. Warrants for the
-choices are in `docs/research.md`.
-"""
+"""Scheduling: the only implementation of the interval algorithm."""
 
 from __future__ import annotations
 

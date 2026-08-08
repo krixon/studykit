@@ -8,13 +8,13 @@ Why the engine works the way it does. Each finding is recorded with the mechanis
 
 **What it licenses.** Cold measurement always comes first. `measured` is the pre-teaching score and is the only field that schedules. No session teaches before it tests.
 
-**The boundary.** In these studies instruction *immediately follows* the pretest. The failed attempt is a primer for a lesson, not a substitute for one. A pretest with no real instruction behind it is just an unanswered question.
+**The boundary.** In these studies instruction *immediately follows* the pretest. The failed attempt is a primer for a lesson, not a substitute for one.
 
 ## Prior knowledge gates unguided struggle
 
 **Finding.** Two literatures point opposite ways and the disagreement is real. Kapur's productive failure work (2008; Kapur & Bielaczyc 2012) shows learners who attempt problems before instruction outperform those taught first, on transfer especially. Kirschner, Sweller & Clark (2006) argue minimal guidance imposes extraneous cognitive load on novices and loses to worked examples.
 
-The condition that separates them is prior knowledge. Kapur is explicit that productive failure needs learners to hold the requisite prior knowledge resources to generate candidate representations. With nothing to generate from, failure is not productive, it is only failure.
+The condition that separates them is prior knowledge. Kapur is explicit that productive failure needs learners to hold the requisite prior knowledge resources to generate candidate representations.
 
 **What it licenses.** The cold attempt is never skipped, but what follows it scales with how badly it went. A score of 1-2 signals there was nothing to generate from, and triggers a worked example rather than a paragraph of correction. See the follow-up ladder in [scoring.md](scoring.md).
 
@@ -44,7 +44,7 @@ The re-test must be a variant, never the same question. Recognition lets a learn
 
 **Finding.** Learners under active methods judge that they have learned less while measurably learning more (Deslauriers et al. 2019). Separately, people substantially overestimate their ability to explain mechanisms until asked to actually do it: the illusion of explanatory depth (Rozenblit & Keil 2002).
 
-**What it licenses.** Self-report never touches scheduling. `predicted` is captured only to compute calibration error. Teach-back exists in [techniques.md](techniques.md) because the gap between feeling able to explain and explaining is invisible from the inside, and the composer fires it specifically when predicted is running above measured.
+**What it licenses.** Self-report never touches scheduling. `predicted` is captured only to compute calibration error, and the composer fires a teach-back block when it runs above `measured`.
 
 ## Recognition impedes transfer
 
@@ -58,7 +58,7 @@ The re-test must be a variant, never the same question. Recognition lets a learn
 
 - **Productive failure versus direct instruction.** Genuinely unresolved. The prior-knowledge boundary above is where the two camps come closest, not a proven constant. Effect sizes vary with domain and with how structured the failure phase is.
 
-- **Optimal spacing intervals.** The SM-2 style multipliers in [scoring.md](scoring.md) are conventional, not derived from this literature. Cepeda et al. support expanding intervals scaled to the retention interval; the specific numbers (1.6 / 2.2 / 3.0) are a guess and should be treated as one. If you have data, change them in `studykit/schedule.py`; they are three constants in one dictionary.
+- **Optimal spacing intervals.** The SM-2 style multipliers in [scoring.md](scoring.md) are conventional, not derived from this literature. Cepeda et al. support expanding intervals scaled to the retention interval; the specific numbers (1.6 / 2.2 / 3.0) are a guess and should be treated as one. If you have data, change them.
 
 ## Where this shows up
 

@@ -33,9 +33,7 @@ No dependencies, no install, no account. Python 3.12+ and a shell.
 |---|---:|---:|---:|---|
 | **foundations** | 10 | 127 | 4 | HTTP, SQL, concurrency, testing, security, encoding, the OS |
 | **design-patterns** | 8 | 93 | 3 | SOLID, GoF patterns, DI, coupling, refactoring, boundaries |
-| **system-design** | 16 | 237 | 12 | caching through multi-region, graduate to Staff+ |
-
-Every question is tagged with the levels it suits, so a graduate and a staff engineer studying the same topic get different questions and are judged against different bars.
+| **system-design** | 16 | 237 | 12 | caching through multi-region, graduate to staff |
 
 ## Levels
 
@@ -65,7 +63,7 @@ agent: Recorded. caching/hot-key 2 -> 3, next 7 Aug. Two facets came back 2;
 
 Then `./study dashboard --open` for the charts.
 
-## The design in one paragraph
+## The design
 
 Retrieval practice reliably builds near transfer and reliably fails to build far transfer, which is what matters past a junior level. So the unit of assessment is judgment, not facts: five question types weighted towards judgment and discrimination, interleaved across topics without announcing which topic a question comes from. Everything is measured at sub-topic granularity, scheduled only on cold-recall scores taken before any teaching, and never inferred from adjacent evidence. Self-reported confidence is captured but kept strictly away from scheduling, where it feeds a calibration metric instead. Every mechanism traces to a citation in [docs/research.md](docs/research.md), including the two places the evidence is genuinely contested.
 
@@ -86,7 +84,7 @@ dashboard.html    generated charts
 
 `XDG_DATA_HOME` is honoured where it is set. `STUDYKIT_DATA` overrides both, which is also how you run more than one profile.
 
-Nothing leaves your machine unless you ask it to. The ledger is the only source of truth; `state.json` and `metrics.json` are rebuilt from it on every `record` and can always be deleted.
+Nothing leaves your machine unless you ask it to.
 
 ### Syncing it
 

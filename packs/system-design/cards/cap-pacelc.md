@@ -1,7 +1,5 @@
 # CAP and PACELC
 
-**Area:** consistency · **Levels:** mid → staff+
-
 **One line:** During a network partition you must give up consistency or availability; the rest of the time you are trading consistency against latency.
 
 ## cap

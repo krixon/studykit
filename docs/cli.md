@@ -151,7 +151,7 @@ Draws questions from the bank, filtered to your level, ordered by the queue, int
 
 Anything already recorded today is excluded, and unshown or long-unseen questions are preferred over recently answered ones.
 
-The response includes `author_for`: facets with no in-level question banked, which the agent should write and bank.
+The response includes `author_for`: facets with no in-level question banked.
 
 ---
 
@@ -196,7 +196,7 @@ Appends measurements, then rebuilds `state.json` and `metrics.json`.
 
 **When a row happened.** The ledger stores `at`, a full local timestamp with its offset, and a row is stamped with the moment it is recorded. Set `at` yourself only to be exact about a session you are writing up. `--date` is the `as_of` for the rebuild that follows and has no bearing on when a measurement happened.
 
-Scheduling works in whole days, read off `at`. Several measurements of one facet in one sitting collapse to their mean and count as one rep, however far apart they were taken.
+Scheduling works in whole days, read off `at`.
 
 | Field | Required | Notes |
 |---|---|---|
@@ -259,7 +259,7 @@ With `sync_auto` on, every `record` and `bank add` pushes. A failed push never f
 
 ### `test`
 
-Runs the repository test suite with the same Python 3.12+ interpreter discovery as every other `./study` command.
+Runs the repository test suite.
 
 ```
 ./study test

@@ -1,7 +1,5 @@
 # SOLID principles
 
-**Area:** design-principles · **Levels:** graduate → staff+
-
 **One line:** Five heuristics about where to put boundaries, all of which are really about making the changes you expect cheap and the ones you do not expect possible.
 
 ## Why they exist

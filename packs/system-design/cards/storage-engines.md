@@ -1,7 +1,5 @@
 # Storage engines
 
-**Area:** storage · **Levels:** mid → staff+
-
 **One line:** How a database physically arranges bytes on disk, which decides what it is fast at and what it will never be fast at.
 
 ## Why it exists

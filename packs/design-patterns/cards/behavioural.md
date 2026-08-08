@@ -1,7 +1,5 @@
 # Behavioural patterns
 
-**Area:** patterns · **Levels:** graduate → staff+
-
 **One line:** Ways of assigning responsibility between objects so that varying behaviour does not mean editing a growing conditional.
 
 ## strategy

@@ -1,7 +1,5 @@
 # API design
 
-**Area:** api-schema · **Levels:** graduate → staff+
-
 **One line:** The contract between systems, which outlives the code behind it and is far harder to change.
 
 ## Why it exists

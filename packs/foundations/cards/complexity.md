@@ -1,7 +1,5 @@
 # Complexity and data structures
 
-**Area:** fundamentals · **Levels:** graduate → staff+
-
 **One line:** How the cost of an operation grows with the size of the input, and how the structure you chose decides that.
 
 ## big-o

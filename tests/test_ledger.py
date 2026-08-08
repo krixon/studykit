@@ -1,7 +1,7 @@
 """Ledger validation.
 
 These are the rules the scoring model previously stated in prose and that got
-violated anyway. Each test here corresponds to a rule in docs/scoring.md.
+violated anyway.
 """
 
 import unittest

@@ -1,7 +1,5 @@
 # SQL and indexes
 
-**Area:** data · **Levels:** graduate → staff+
-
 **One line:** A declarative language over a relational store, where the difference between a fast query and a slow one is usually an index and almost never the SQL syntax.
 
 ## joins

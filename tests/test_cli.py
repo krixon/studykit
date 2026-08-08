@@ -230,6 +230,13 @@ class TestReportsAndArtefacts(CliTestCase):
             flags,
         )
 
+    def test_card_is_printed_with_the_manifest_area_and_levels(self):
+        code, out = self.run_cli("card", "consistent-hashing")
+        self.assertEqual(code, 0, self.stderr)
+        self.assertIn("**Area:** partitioning", out)
+        self.assertIn("Mid → Staff+", out)
+        self.assertNotIn("**Area:**", self.run_json("card", "consistent-hashing", "--json")["card"])
+
     def test_status_and_progress_run_on_an_empty_ledger(self):
         for command in ("status", "progress", "queue", "packs", "levels"):
             code, out = self.run_cli(command)

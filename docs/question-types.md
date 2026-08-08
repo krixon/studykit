@@ -34,7 +34,7 @@ Answered as `-2 -1 0 +1 +2` plus a clause of why. Near-zero typing for a genuine
 
 **The stem must end with the ask.** A design context plus new information and then nothing is not a question: the candidate cannot tell whether you want the rating, the remedy, or both. End with "More or less appropriate?" or whichever variant fits.
 
-Adapted from script concordance testing in medical education, which assesses reasoning under uncertainty rather than knowledge. **This is the type that targets far transfer**; weight the bank towards it.
+Adapted from script concordance testing in medical education, which assesses reasoning under uncertainty rather than knowledge. **This is the type that targets far transfer.**
 
 A good judgment question has a defensible answer that is not obvious, and sometimes the honest answer is 0: "it depends, and here is what on". Questions where the new information trivially settles it are recall in disguise.
 
@@ -78,7 +78,7 @@ Targets for authoring, not enforced by code. `./study progress` shows your measu
 
 ## Stems are self-contained
 
-A set is interleaved and the topic is never named, because naming it pre-activates the schema and does half the retrieval. Warrant: [research.md](research.md), interleaving and spacing.
+The topic is never named when a question is asked. Warrant: [research.md](research.md), interleaving and spacing.
 
 Everything needed to fix the frame therefore has to be in the stem, written as scenario rather than as a label.
 
@@ -93,7 +93,3 @@ Same knowledge tested, frame fixed, and nothing pre-activated. "This is an API d
 A `judgment` stem carrying a time constraint has a second frame to fix: **design or lever**. "Prices must be visible within 60 seconds" reads as a standing requirement to one candidate and as an incident to another, and the right answers are disjoint - restructure what is cached, versus fire the purge and accept the herd. Say which you are asking for.
 
 The test: if a stem needs a topic label to be answerable, it is missing a sentence.
-
-## Bank format
-
-The TOML, the id rules and what a good `a` field contains: [authoring-packs.md](authoring-packs.md#question-banks).
