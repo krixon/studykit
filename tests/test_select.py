@@ -138,7 +138,13 @@ class TestCompose(SelectionTestCase):
     def test_a_short_budget_is_a_quiz_set_only(self):
         plan = compose(self.library, [], "senior", 10, as_of="2026-06-01", seed=1)
         self.assertEqual([b["type"] for b in plan["blocks"]], ["quiz-set"])
-        self.assertLessEqual(plan["planned_minutes"], 10)
+        self.assertLessEqual(plan["planned_minutes"], 10 + plan["overrun_allowance"])
+
+    def test_the_overrun_allowance_is_bounded_and_reported(self):
+        for budget, expected in ((10, 2), (25, 3), (45, 5), (120, 12)):
+            plan = compose(self.library, [], "senior", budget, as_of="2026-06-01", seed=1)
+            self.assertEqual(plan["overrun_allowance"], expected)
+            self.assertLessEqual(plan["planned_minutes"], budget + expected)
 
     def test_a_long_budget_includes_a_full_problem(self):
         plan = compose(self.library, [], "senior", 60, as_of="2026-06-01", seed=1)
@@ -196,11 +202,38 @@ class TestCompose(SelectionTestCase):
         self.assertIn("learn", types)
         self.assertNotIn("full-problem", types)
 
+    def test_a_budget_too_small_for_learn_falls_back_to_the_same_facet(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 28, as_of="2026-06-01", seed=1, allow_problem=False)
+        faded = next(b for b in plan["blocks"] if b["type"] == "faded-worked-example")
+        self.assertEqual(faded["focus"]["subtopic"], "hot-key")
+        self.assertNotIn("learn", [b["type"] for b in plan["blocks"]])
+
+    def test_learn_and_its_fallback_are_never_both_taken(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 120, as_of="2026-06-01", seed=1)
+        types = [b["type"] for b in plan["blocks"]]
+        self.assertIn("learn", types)
+        self.assertNotIn("faded-worked-example", types)
+
+    def test_a_drained_queue_reserves_nothing_for_a_quiz(self):
+        library = load_library(["system-design"])
+        facets = [(t.id, s) for t in library.topics("senior") for s in t.subtopics]
+        rows = [row("2026-06-01", topic, subtopic, 5) for topic, subtopic in facets]
+        plan = compose(library, rows, "senior", 25, as_of="2026-06-01", seed=1)
+        self.assertNotIn("quiz-set", [b["type"] for b in plan["blocks"]])
+
     def test_a_learn_block_that_does_not_fit_is_reported(self):
         rows = [row("2026-05-01", "caching", "hot-key", 1)]
         plan = compose(self.library, rows, "senior", 15, as_of="2026-06-01", seed=1)
         self.assertNotIn("learn", [b["type"] for b in plan["blocks"]])
         self.assertTrue(any("hot-key" in n for n in plan["notes"]))
+
+    def test_no_note_when_the_fallback_taught_the_facet_anyway(self):
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 30, as_of="2026-06-01", seed=1, allow_problem=False)
+        self.assertIn("faded-worked-example", [b["type"] for b in plan["blocks"]])
+        self.assertEqual(plan["notes"], [])
 
     def test_the_plan_carries_the_level_calibration_brief(self):
         plan = compose(self.library, [], "senior", 25, as_of="2026-06-01", seed=1)
@@ -211,7 +244,8 @@ class TestCompose(SelectionTestCase):
     def test_recording_time_is_always_reserved(self):
         plan = compose(self.library, [], "senior", 25, as_of="2026-06-01", seed=1)
         self.assertEqual(plan["recording_reserve"], 2)
-        self.assertLessEqual(plan["planned_minutes"], 25)
+        self.assertLessEqual(plan["planned_minutes"], 25 + plan["overrun_allowance"])
+        self.assertEqual(sum(b["minutes"] for b in plan["blocks"]) + 2, plan["planned_minutes"])
 
 
 class TestRecommend(SelectionTestCase):

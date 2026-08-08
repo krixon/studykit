@@ -6,6 +6,7 @@ deterministically, so the same inputs always compose the same session.
 
 from __future__ import annotations
 
+import math
 import random
 import re
 from dataclasses import dataclass
@@ -18,11 +19,18 @@ from .schedule import Item, compute_items, live_items
 #: Rough minutes per quiz question, including the follow-up a weak answer earns.
 MINUTES_PER_QUESTION = 1.8
 RECORDING_RESERVE = 2
-#: Minutes held back for the quiz set before targeted blocks may claim any budget.
-#: Retrieval is the one block that fires on any due item, so it always gets a slot.
+#: Minutes held back for the quiz set before other blocks may claim any budget.
+#: The quiz set is the only block with breadth: a targeted block measures one
+#: facet, a quiz set measures six, so without it the due queue never drains.
 QUIZ_FLOOR = 10
+#: What the floor shrinks to for the strongest diagnosis, which outranks breadth.
+MIN_QUIZ_FLOOR = 4
 #: Below this, a full problem cannot be run honestly, so the budget goes to retrieval.
 PROBLEM_FLOOR = 30
+#: Every block cost here is an estimate, so packing to the exact minute is false
+#: precision. A session may run this far over what was asked; `plan` reports it.
+OVERRUN_FRACTION = 0.1
+MIN_OVERRUN = 2
 
 QTYPE_WEIGHT = {
     "judgment": 3.0,
@@ -286,6 +294,23 @@ def _weakest(entries: list[QueueEntry]) -> QueueEntry | None:
     return min(scored, key=lambda e: (e.strength, -e.overdue_days), default=None)
 
 
+def _quiz_floor(queue: list[QueueEntry]) -> int:
+    """Only what the queue can actually fill. A drained queue reserves nothing."""
+    servable = [e for e in queue if e.reason in {"overdue", "due", "unmeasured"}]
+    if not servable:
+        return 0
+    return min(QUIZ_FLOOR, int(len(servable) * MINUTES_PER_QUESTION) + 2)
+
+
+def _priority_split(candidates: list[dict]) -> tuple[list[dict], list[dict]]:
+    """The top diagnosis and its cheaper alternatives; everything else."""
+    if not candidates:
+        return [], []
+    alt = candidates[0].get("alt")
+    head = [b for b in candidates if b.get("alt") == alt] if alt else candidates[:1]
+    return head, [b for b in candidates if not any(b is h for h in head)]
+
+
 def _last_post(rows: list[Row]) -> dict[tuple[str, str, str], int]:
     """The most recent post-teaching score per facet."""
     latest: dict[tuple[str, str, str], tuple[str, int]] = {}
@@ -373,29 +398,43 @@ def compose(
     """Fill the box. Hardest-first, interleaved, with the last two minutes reserved."""
     as_of = as_of or today()
     queue = build_queue(library, rows, level, as_of)
-    budget = max(minutes - RECORDING_RESERVE, 5)
+    overrun = max(MIN_OVERRUN, math.ceil(minutes * OVERRUN_FRACTION))
+    budget = max(minutes + overrun - RECORDING_RESERVE, 5)
+    floor = _quiz_floor(queue)
 
-    # Before the problem and the quiz set, either of which would otherwise absorb
-    # the budget and leave a facet at strength 1 without its teaching.
+    candidates = _targeted_blocks(library, rows, level, queue)
     targeted: list[dict] = []
     skipped: list[dict] = []
+    satisfied: set[str] = set()
     max_targeted = 1 if minutes < 30 else 2 if minutes < 60 else 3
-    allowance = max(budget - QUIZ_FLOOR, 0)
-    for block in _targeted_blocks(library, rows, level, queue):
-        if len(targeted) >= max_targeted or block["minutes"] > allowance:
-            skipped.append(block)
-            continue
-        targeted.append(block)
-        allowance -= block["minutes"]
-        budget -= block["minutes"]
+
+    def claim_targeted(pool: list[dict], reserve: int) -> None:
+        nonlocal budget
+        for block in pool:
+            alt = block.get("alt")
+            if alt is not None and alt in satisfied:
+                continue
+            if len(targeted) >= max_targeted or block["minutes"] > max(budget - reserve, 0):
+                skipped.append(block)
+                continue
+            block.pop("alt", None)
+            targeted.append(block)
+            budget -= block["minutes"]
+            if alt is not None:
+                satisfied.add(alt)
+
+    # The strongest diagnosis outranks both breadth and far transfer, so it claims
+    # first and against a reduced floor. Everything else queues behind the problem.
+    head, tail = _priority_split(candidates)
+    claim_targeted(head, min(MIN_QUIZ_FLOOR, floor))
 
     # A half day spent entirely on retrieval measures the cheap thing.
     max_problems = 0 if not allow_problem else 1 if minutes < 120 else 2 if minutes < 300 else 3
     problem_blocks: list[dict] = []
     chosen_slugs: set[str] = set()
-    while len(problem_blocks) < max_problems and budget - QUIZ_FLOOR >= PROBLEM_FLOOR:
+    while len(problem_blocks) < max_problems and budget - floor >= PROBLEM_FLOOR:
         problem = choose_problem(
-            library, rows, level, as_of, max_minutes=budget - QUIZ_FLOOR, exclude=chosen_slugs
+            library, rows, level, as_of, max_minutes=budget - floor, exclude=chosen_slugs
         )
         if problem is None:
             break
@@ -416,10 +455,12 @@ def compose(
         )
         budget -= cost
 
+    claim_targeted(tail, floor)
+
     blocks: list[dict] = []
-    if budget >= 8:
+    if floor and budget >= MIN_QUIZ_FLOOR:
         ceiling = 20 if minutes >= 120 else 14
-        count = max(4, min(ceiling, int(budget / MINUTES_PER_QUESTION)))
+        count = max(2, min(ceiling, int(budget / MINUTES_PER_QUESTION)))
         if problem_blocks:
             count = min(count, 8)
         questions, starved = draw_questions(
@@ -446,7 +487,9 @@ def compose(
     blocks.extend(problem_blocks)
 
     notes: list[str] = []
-    dropped_learn = next((b for b in skipped if b["type"] == "learn"), None)
+    dropped_learn = next(
+        (b for b in skipped if b["type"] == "learn" and b.get("alt") not in satisfied), None
+    )
     if dropped_learn is not None:
         focus = dropped_learn["focus"]
         notes.append(
@@ -503,6 +546,7 @@ def compose(
         "budget_minutes": minutes,
         "planned_minutes": sum(b["minutes"] for b in blocks) + RECORDING_RESERVE,
         "recording_reserve": RECORDING_RESERVE,
+        "overrun_allowance": overrun,
         "calibration": calibration,
         "blocks": blocks,
         "queue_preview": [e.as_dict() for e in queue[:10]],
@@ -538,11 +582,13 @@ def _targeted_blocks(
     # survived a rep, or whose last re-test after teaching came back weak, has
     # nothing to draw on, and quizzing it again measures the same gap.
     empty = [e for e in weak if e.reps <= 1 or last_post.get(e.key, 5) <= 2]
-    entry = take(empty)
-    if entry is not None:
+    taught = take(empty)
+    if taught is not None:
+        entry = taught
         out.append(
             {
                 "type": "learn",
+                "alt": f"teach:{entry.key}",
                 "minutes": TECHNIQUE_BY_NAME["learn"]["minutes"],
                 "targets": TECHNIQUE_BY_NAME["learn"]["targets"],
                 "focus": entry.as_dict(),
@@ -555,22 +601,28 @@ def _targeted_blocks(
                 ),
             }
         )
+    def faded_block(entry: QueueEntry, alt: str | None = None) -> dict:
+        return {
+            "type": "faded-worked-example",
+            "alt": alt,
+            "minutes": TECHNIQUE_BY_NAME["faded-worked-example"]["minutes"],
+            "targets": TECHNIQUE_BY_NAME["faded-worked-example"]["targets"],
+            "focus": entry.as_dict(),
+            "card": card_ref(entry),
+            "instruction": (
+                "Work a complete concrete example out loud with the numbers, then re-run a "
+                "variant with parts removed for the user to fill. Re-test on a variant, not "
+                "the same case."
+            ),
+        }
+
+    # The same facet at a lower price, for a budget that cannot hold the learn
+    # block. Only one of the pair is ever taken.
+    if taught is not None:
+        out.append(faded_block(taught, alt=f"teach:{taught.key}"))
     entry = take(weak)
     if entry is not None:
-        out.append(
-            {
-                "type": "faded-worked-example",
-                "minutes": TECHNIQUE_BY_NAME["faded-worked-example"]["minutes"],
-                "targets": TECHNIQUE_BY_NAME["faded-worked-example"]["targets"],
-                "focus": entry.as_dict(),
-                "card": card_ref(entry),
-                "instruction": (
-                    "Work a complete concrete example out loud with the numbers, then re-run a "
-                    "variant with parts removed for the user to fill. Re-test on a variant, not "
-                    "the same case."
-                ),
-            }
-        )
+        out.append(faded_block(entry))
     entry = take(conflated)
     if entry is not None:
         out.append(

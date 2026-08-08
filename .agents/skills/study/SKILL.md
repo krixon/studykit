@@ -19,6 +19,8 @@ If the user gave no budget, use `./study plan` (it uses their configured default
 
 State the plan in **one line**, then start. No menus, no ceremony.
 
+Block costs are estimates, so a session may run past the budget by `overrun_allowance` (10%, at least 2 minutes). `planned_minutes` is the real figure. Say it if it differs from what they asked for.
+
 ## Run
 
 Each block carries an `instruction` field. Follow it.
