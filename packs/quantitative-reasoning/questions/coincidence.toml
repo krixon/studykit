@@ -1,0 +1,125 @@
+# Question bank: coincidence
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "coincidence"
+
+[[q]]
+id = "co-001"
+qtype = "numeric"
+subtopic = "birthday-bound"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A table keys its rows on a random 32-bit integer. Roughly how many rows before there is about an even chance that two of them collide?"
+a = "About 77,000. Collisions appear near the square root of the space, not near its size: the space holds 4,294,967,296 values, and the even-odds point is roughly 1.18 times its square root, which is 77,000 rows. That is an unremarkable table, not a large one, which is why a random 32-bit key is never safe. The instinct worth carrying: halve the bits, halve the exponent, so 32 bits of space gives about 16 bits' worth of collision resistance."
+derivation = [
+  "bits = 32",
+  "space = 2 ** bits",
+  "coefficient = 1.18",
+  "n50 = round(coefficient * sqrt(space))",
+  "resistance_bits = bits / 2",
+]
+
+[[q]]
+id = "co-002"
+qtype = "numeric"
+subtopic = "rare-events-at-scale"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A defect occurs on one request in a million. The service handles 10,000 requests per second. How often does it occur, and what does that mean for a bug nobody could reproduce?"
+a = "Once every 100 seconds - a bit under a thousand times a day. Expected occurrences are the probability times the number of trials, so a one-in-a-million event at 10,000 per second is 0.01 per second. This is the arithmetic behind 'we could not reproduce it' and 'it happens constantly' both being true: reproducing it at ten requests per second takes over a day of continuous attempts, while production meets it every couple of minutes. Any probability per operation becomes a rate the moment you know the operation count, and at scale the word 'rare' stops carrying information."
+derivation = [
+  "p_denominator = 1000000",
+  "rps = 10000",
+  "per_second = rps / p_denominator",
+  "seconds_between = 1 / per_second",
+  "per_day = per_second * 86400",
+]
+
+[[q]]
+id = "co-003"
+qtype = "discrimination"
+subtopic = "independent-failures"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Three replicas are each available 99.9% of the time. One argument multiplies the failure probabilities and reports six nines for the group. What has to be true for that multiplication to be valid, and what usually makes it false?"
+a = "The failures have to be independent, and they are not. Multiplying assumes nothing can take out more than one replica at a time, whereas the replicas share a rack, a power feed, a network, a deployment pipeline, a configuration store and an image - and a bad deploy or config push hits all three at once. So the real availability is set by the largest common cause rather than by the per-replica figure, and it is usually software rather than hardware. The useful question is not how many nines each has but what the biggest thing is whose failure takes all of them, because adding a fourth replica does not move that number."
+derivation = [
+  "replicas = 3",
+  "per_replica_pct = 99.9",
+]
+
+[[q]]
+id = "co-004"
+qtype = "numeric"
+subtopic = "independent-failures"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A request must call five services in sequence, each independently available 99.9% of the time, and fails if any one fails. What is the availability of the request path, and what does composing reliable parts do to reliability?"
+a = "99.5%. Serial dependencies multiply, so 0.999 to the fifth is 0.995, which turns three nines into two and a bit - the composite is less reliable than any of its parts, and every service added makes it worse. That is the arithmetic reason a deep synchronous call chain is an availability decision, not just a latency one. The remedies remove the dependency from the critical path rather than improve the parts: cache, default, degrade, or make the call asynchronous, because getting each service to four nines is much harder than needing one fewer of them."
+derivation = [
+  "services = 5",
+  "per_service_pct = 99.9",
+  "p = per_service_pct / 100",
+  "path_pct = round(100 * p ** services, 1)",
+]
+
+[[q]]
+id = "co-005"
+qtype = "judgment"
+subtopic = "id-collisions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Random identifiers are being shortened so they fit in a URL people can read aloud, and the team proposes truncating a hash to 64 bits on the grounds that it is still an enormous space. New information: the identifiers must be unique across all tenants for the lifetime of the product. Does truncating to 64 bits remain safe?"
+a = "Not on that reasoning, so around -1, and the correction is cheap. Sixty-four bits gives about 32 bits of collision resistance, so the even-odds point is near five billion identifiers - large, but a lifetime global figure is exactly the sort of number that reaches billions, and the argument was made about the size of the space rather than the count of identifiers. Two fixes, both better than adding bits: scope the identifier to a tenant so the count that matters is per tenant, and add a unique constraint so a collision is a retryable error rather than silent corruption. Compute the probability over the lifetime, not per insert."
+derivation = [
+  "bits = 64",
+  "resistance_bits = bits / 2",
+  "coefficient = 1.18",
+  "n50 = coefficient * sqrt(2 ** bits)",
+]
+
+[[q]]
+id = "co-006"
+qtype = "diagnostic"
+subtopic = "correlated-retries"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A dependency recovers from a brief outage and is immediately knocked over again, then recovers and is knocked over again, with the pattern settling into a rhythm. Load from real users is normal throughout. Most likely cause?"
+a = "Synchronised retries. Every client failed at the same instant, so every client's backoff schedule is aligned, and each retry wave arrives as a spike shaped like the original event - recovery is met by the whole backlog at once, which causes the next failure and re-aligns everyone again. The rhythm is the backoff interval. The fix is to break the correlation rather than reduce the load: full jitter on the backoff, so the same number of retries arrives spread out. Halving the retry rate only delays the next spike; randomising it removes the spike."
+
+[[q]]
+id = "co-007"
+qtype = "judgment"
+subtopic = "rare-events-at-scale"
+levels = ["senior", "lead", "staff"]
+q = "A suspected fault was not observed in a test run of 5,000 requests, and the team concludes it is not present. New information: the fault was hypothesised to occur about once in every 5,000 requests. Does the clean run support the conclusion?"
+a = "Barely at all, -2. At one in 5,000 over 5,000 trials the expected count is one, and when the expected count is one the chance of seeing none is about 37% - so a clean run is an ordinary outcome whether or not the fault exists. The test had no power to detect what it was looking for. Seeing it with reasonable confidence needs several times the exposure, on the order of 30,000 requests, and exposure is what is short here rather than time. State the expected count before running, and treat an absence as evidence only when that count is comfortably above one."
+derivation = [
+  "p_denominator = 5000",
+  "trials = 5000",
+  "expected = trials / p_denominator",
+  "p_none = round(100 * exp(-expected))",
+  "trials_for_confidence = 30000",
+]
+
+[[q]]
+id = "co-008"
+qtype = "discrimination"
+subtopic = "correlated-retries"
+levels = ["senior", "lead", "staff"]
+q = "Two causes of a sudden origin load spike after a quiet period: in one, many cached entries were written at the same moment with the same lifetime; in the other, many clients are retrying on an aligned schedule. What do the two have in common, and why does adding capacity fix neither?"
+a = "Both are coordination rather than volume: the total work is unchanged and its arrival has been concentrated into an instant. Capacity sized for the mean does not help because the problem is the peak-to-mean ratio, and sizing for the peak means paying for idle capacity to absorb a spike you created. Both are fixed by removing the alignment - jitter the cache lifetimes so expiry spreads, jitter the backoff so retries spread. Anything that makes many independent actors act simultaneously has this shape, which is why cron on the hour belongs in the same family."
+
+[[q]]
+id = "co-009"
+qtype = "recall"
+subtopic = "birthday-bound"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Random values are drawn from a space of size N. Roughly how many draws before a collision becomes likely, and what is the rule of thumb for identifier bit lengths that follows?"
+a = "About the square root of N - more precisely around 1.18 times it for even odds. The rule that follows is that halving the bits halves the exponent of the resistance: a 64-bit identifier gives about 32 bits' worth of collision resistance, not 64, and truncating a hash to 64 bits leaves you where a 32-bit space would have. The practical consequence is to compute the collision probability against the number of identifiers you will ever mint, over the whole lifetime, rather than against the size of the space."
+
+[[q]]
+id = "co-010"
+qtype = "recall"
+subtopic = "rare-events-at-scale"
+levels = ["mid", "senior", "lead", "staff"]
+q = "How do you turn a per-operation probability into something you can plan around, and what does an expected count near one tell you about a clean test run?"
+a = "Multiply it by the operation count: expected occurrences are probability times trials, which converts 'one in a million' into a rate as soon as you know the throughput. When that expected count is near one, seeing zero occurrences is unremarkable - the chance of none is about 37% - so a clean run is weak evidence of absence. Anything you want to observe with confidence needs an expected count comfortably above one, which usually means more exposure rather than more time."
+derivation = [
+  "expected = 1",
+  "p_none_pct = round(100 * exp(-expected))",
+]

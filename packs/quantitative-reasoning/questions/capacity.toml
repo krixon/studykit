@@ -1,0 +1,138 @@
+# Question bank: capacity
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "capacity"
+
+[[q]]
+id = "cp-001"
+qtype = "numeric"
+subtopic = "amdahl"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A job is 10% serial and 90% parallelisable. On 16 workers, what speedup do you get, and what is the best any number of workers could ever give?"
+a = "6.4x on 16 workers, and 10x however many you add. Speedup is one over the serial fraction plus the parallel fraction divided by the worker count, so 16 workers buy 6.4x and the ceiling as workers go to infinity is one over the serial fraction. The consequence for where to spend effort: going from 16 workers to 160 moves you from 6.4x to 9.5x, whereas halving the serial fraction raises the ceiling to 20x. Look for the shared thing that serialises - a lock, a leader, one database, a sequence generator - before buying machines."
+derivation = [
+  "serial_pct = 10",
+  "parallel_pct = 90",
+  "serial = serial_pct / 100",
+  "workers = 16",
+  "speedup = round(1 / (serial + (1 - serial) / workers), 1)",
+  "ceiling = 1 / serial",
+  "many_workers = 160",
+  "speedup_many = round(1 / (serial + (1 - serial) / many_workers), 1)",
+  "halved_ceiling = 1 / (serial / 2)",
+]
+
+[[q]]
+id = "cp-002"
+qtype = "numeric"
+subtopic = "storage-growth"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A pipeline ingests 10 MB per second and keeps everything for 30 days. What does storage settle at, and why does it stop growing?"
+a = "About 25 TB. Ten megabytes a second is 864,000 MB a day, and thirty days of that is 25,920,000 MB, which is 24.7 TB. It stops growing because retention makes it a stock rather than an unbounded flow: once the oldest day being deleted equals the newest day arriving, the total is flat. That is the difference between a bounded and an unbounded cost, and retention is the only lever with unbounded return - everything else, replication factor, indexes, compression, is a multiplier on this figure. Count those multipliers before quoting it as the bill."
+derivation = [
+  "mb_per_second = 10",
+  "seconds_per_day = 86400",
+  "retention_days = 30",
+  "mb_per_day = mb_per_second * seconds_per_day",
+  "total_mb = mb_per_day * retention_days",
+  "total_tb = round(total_mb / 1024 / 1024, 1)",
+]
+
+[[q]]
+id = "cp-003"
+qtype = "numeric"
+subtopic = "growth-rates"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Traffic is growing 10% a month. By what factor does it grow over a year, and how long until it doubles?"
+a = "3.1x over a year, doubling in about 7 months. Compounding is what people underestimate: 1.1 to the twelfth is 3.14, not the 2.2x you get by adding ten per cent twelve times. The shortcut for the doubling time is about 70 divided by the percentage per period, so 10% a month gives 7 months. The practical use is comparing the doubling time to your provisioning lead time - if capacity takes a quarter to add and load doubles in seven months, you are ordering hardware for a load you have not seen yet, every time."
+derivation = [
+  "monthly_pct = 10",
+  "rate = 1 + monthly_pct / 100",
+  "months = 12",
+  "yearly_factor = round(rate ** months, 2)",
+  "naive_factor = round(1 + monthly_pct * months / 100, 1)",
+  "rule_numerator = 70",
+  "doubling_months = round(rule_numerator / monthly_pct)",
+]
+
+[[q]]
+id = "cp-004"
+qtype = "numeric"
+subtopic = "headroom"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A three-member pool runs at 70% utilisation. One member is lost to an ordinary restart. What utilisation do the survivors run at, and what does that say about the original figure?"
+a = "105%, so the survivors cannot serve the load at all and the restart becomes an outage. The original 70% was not headroom, it was a number that looked comfortable while assuming nothing ever goes away - and members going away is routine rather than exceptional. Sizing has to state what it survives: to tolerate losing one of three you need utilisation below about 67% after the loss, which means below 44% before it. Quote capacity as what you can lose, not as a percentage of what you have."
+derivation = [
+  "members = 3",
+  "utilisation_pct = 70",
+  "total_load = members * utilisation_pct",
+  "survivors = members - 1",
+  "after_loss_pct = round(total_load / survivors)",
+  "safe_before_pct = round(survivors * 66 / members)",
+]
+
+[[q]]
+id = "cp-005"
+qtype = "discrimination"
+subtopic = "headroom"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Two ways of reporting the same spare capacity: one as a percentage of the resource, the other as an interval of time. Which one gets acted on, and what does it include that the other cannot?"
+a = "The interval, because it can be compared to a lead time. A percentage is a state with no rate attached, so nobody can tell whether it will last a year or a fortnight, and it invites the response that there is still room. Expressing it as time folds in the growth rate, which turns it into a decision: run out in seven weeks against three weeks to provision leaves four weeks to act, and that subtraction is the actual output. The percentage also tempts you to measure against 100% of the resource, which for anything latency-sensitive overstates usable capacity by roughly a third."
+derivation = [
+  "full_resource_pct = 100",
+  "usable_pct = 67",
+  "overstatement = round(full_resource_pct / usable_pct, 2)",
+]
+
+[[q]]
+id = "cp-006"
+qtype = "judgment"
+subtopic = "amdahl"
+levels = ["senior", "lead", "staff"]
+q = "A batch job's worker count is being raised from 32 to 64 because the run is taking too long. New information: the workers all take a lock on a shared counter once per item. Does doubling the workers become more or less likely to help?"
+a = "Less, and it may make the run slower, so -2. A lock taken once per item is serial work whose share grows with the worker count, and coordination overhead does not merely flatten the curve - past some concurrency the cost of contention exceeds the work added, so throughput declines rather than plateaus. Doubling the workers can therefore lengthen the run. Measure where throughput peaks rather than assuming it rises, and remove the shared counter first: batch the updates, shard the counter, or accumulate per worker and combine at the end."
+
+[[q]]
+id = "cp-007"
+qtype = "judgment"
+subtopic = "cost-per-unit"
+levels = ["senior", "lead", "staff"]
+q = "Infrastructure spend rose 40% over two quarters and a programme is being started to reduce it. New information: requests served rose 60% over the same period. Does the spend rise indicate an efficiency problem?"
+a = "No, the opposite, so -2 on the premise: cost per request fell by about 13%, so the system got more efficient while the bill grew. Totals are not comparable across a period in which the workload changed; the figure that carries information is the unit rate. That is not an argument against a cost programme, it is an argument about where to point it - the total rising in line with growth is expected, and what would justify urgency is cost per request rising, which means something is scaling worse than linearly. Check the unit rate before starting the programme, or you will optimise something that was already improving."
+derivation = [
+  "cost_growth_pct = 40",
+  "request_growth_pct = 60",
+  "cost_factor = 1 + cost_growth_pct / 100",
+  "request_factor = 1 + request_growth_pct / 100",
+  "unit_change_pct = round(100 * (cost_factor / request_factor - 1))",
+  "unit_fall_pct = abs(unit_change_pct)",
+]
+
+[[q]]
+id = "cp-008"
+qtype = "diagnostic"
+subtopic = "growth-rates"
+levels = ["mid", "senior", "lead", "staff"]
+q = "User numbers grew by half over a year, and the load on the service more than doubled in the same period. Nothing about the product's features changed. Most likely cause?"
+a = "Work per user grew as well, so the two multiply rather than track each other. Half again as many users each doing half again as much is 2.25x, which fits: activity per user tends to rise as a product matures and habits form, and any feature whose cost depends on how many other users someone is connected to grows faster than linearly in the user count. The lesson for forecasting is to project the two factors separately, because a model driven by user growth alone will consistently under-predict, and it will under-predict by more the longer the horizon."
+derivation = [
+  "user_factor = 1.5",
+  "per_user_factor = 1.5",
+  "load_factor = user_factor * per_user_factor",
+]
+
+[[q]]
+id = "cp-009"
+qtype = "recall"
+subtopic = "headroom"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What are the two things that make headroom more than a subtraction from a resource limit?"
+a = "The limit is a latency rather than a resource ceiling, and the binding constraint is often not the resource you are graphing. Because waiting time explodes near saturation, usable capacity ends at the utilisation where you still meet the percentile - typically 60 to 70% - so headroom measured against 100% is roughly double the truth. And the answer is the minimum over every constraint: CPU, memory, connection pool, descriptors, downstream quota, database connections. Express the result as time rather than percentage, and subtract the lead time to provision, because that difference is the number anyone can act on."
+
+[[q]]
+id = "cp-010"
+qtype = "recall"
+subtopic = "storage-growth"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What determines the steady-state size of a store that retains data for a fixed window, and what multipliers are routinely left out of the estimate?"
+a = "Ingest rate times retention window: once the oldest data being deleted matches the newest arriving, the total stops growing, which is what makes retention the only lever with unbounded return. The multipliers people forget are replication factor, backups and snapshot chains, secondary indexes, and write amplification from the storage engine, which for a log-structured one can be ten to thirty times the logical bytes. Compression cuts text by 70 to 80% and does nothing for data already compressed."

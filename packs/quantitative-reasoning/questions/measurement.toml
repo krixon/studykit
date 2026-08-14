@@ -1,0 +1,96 @@
+# Question bank: measurement
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "measurement"
+
+[[q]]
+id = "me-001"
+qtype = "numeric"
+subtopic = "sample-size"
+levels = ["senior", "lead", "staff"]
+q = "A canary served 100 requests and 3 of them failed, against a baseline failure rate near zero. How wide is the uncertainty on that 3%, and what can you conclude?"
+a = "Roughly plus or minus 10 percentage points, so the honest reading is somewhere between zero and 13% and the measurement cannot distinguish a serious regression from nothing at all. Uncertainty on a proportion falls as one over the square root of the sample count, which at 100 samples is 0.1, and precision is expensive: getting the interval to one point needs 10,000 requests. The decision to make is not whether to roll back on 3%, it is to keep the canary running until the sample supports a claim, while watching a signal the sample can support."
+derivation = [
+  "samples = 100",
+  "failures = 3",
+  "observed_pct = 100 * failures / samples",
+  "interval_pct = round(100 / sqrt(samples))",
+  "upper_pct = observed_pct + interval_pct",
+  "samples_for_one_point = 10000",
+]
+
+[[q]]
+id = "me-002"
+qtype = "discrimination"
+subtopic = "sampling-bias"
+levels = ["senior", "lead", "staff"]
+q = "Two trace sampling strategies, both keeping one trace in a hundred. One decides at the start of the request, the other after the request finishes. Which one keeps the traces you wanted, and what does the other cost you?"
+a = "Deciding after the outcome keeps them. Choosing at the start is blind to what the request turns out to be, so it keeps one per cent of everything - including one per cent of the rare slow or failing traces, which are the entire reason anyone opens a tracing tool. Deciding at the end can keep every error and every slow request and discard the uninteresting bulk, so the same storage buys a far more useful sample. The cost is that spans must be buffered until the request completes, which is memory and complexity in the collection path, and that the sample is no longer representative of the whole - fine for debugging, wrong for computing a rate from."
+
+[[q]]
+id = "me-003"
+qtype = "diagnostic"
+subtopic = "load-test-validity"
+levels = ["senior", "lead", "staff"]
+q = "A load test shows the service comfortably handling twice the expected peak. In production at the expected peak, the database is saturated and the cache hit rate is far below what the test showed. Most likely cause?"
+a = "The test's key distribution. Synthetic load usually draws keys uniformly at random, while real traffic is heavily skewed, and the two produce opposite cache behaviour: uniform keys over a large space mean almost every request misses, so a test that showed a good hit rate was probably reusing a small set of keys and hitting nearly always. Either way the test measured a working set that does not exist. Second candidate is data volume changing the query plan. Replay a sample of real traffic, or synthesise with a realistic skew, before trusting a headroom figure."
+
+[[q]]
+id = "me-004"
+qtype = "judgment"
+subtopic = "before-after"
+levels = ["senior", "lead", "staff"]
+q = "A change is judged effective because error rates fell sharply in the week after it shipped, compared with the week before. New information: the change was prioritised because that previous week had the worst error rates on record. Does the comparison support the conclusion?"
+a = "No, -2, and this is regression to the mean. An intervention triggered by an extreme period is compared against that extreme, and an extreme period is followed by a more typical one whether or not anything was done - so the improvement was partly or entirely guaranteed before the change shipped. The comparison also inherits every other difference between two calendar weeks. The way to make the claim is a concurrent control: run the change on a share of live traffic and compare the arms against each other, so anything affecting both cancels out."
+
+[[q]]
+id = "me-005"
+qtype = "discrimination"
+subtopic = "aggregation-traps"
+levels = ["senior", "lead", "staff"]
+q = "An alert can be defined on errors per second or on the proportion of requests that error. Traffic on this service varies by an order of magnitude between day and night. Which definition fails in which direction?"
+a = "The count fires spuriously at peak, because a constant proportion of a much larger volume is a much larger number, and it goes quiet during an outage where traffic has collapsed - the worst moment to be silent. The proportion is stable across the traffic cycle, which is what you want, and it becomes noisy at very low volume where a handful of requests makes the ratio swing. So the usual answer is to alert on the proportion with a minimum-volume condition attached, and to treat the count as a severity input rather than the trigger."
+
+[[q]]
+id = "me-006"
+qtype = "judgment"
+subtopic = "load-test-validity"
+levels = ["senior", "lead", "staff"]
+q = "A load test is configured to hold the target request rate and confirms the service meets its latency objective there. New information: the team wants to know how much growth the service can absorb before it needs work. Does the test answer the question?"
+a = "No, -2: it confirms a point and says nothing about the margin, which could be five per cent or five times. Because latency rises as one over one minus utilisation, being comfortable at the target is consistent with the cliff being immediately beyond it. Ramp until throughput stops rising and latency turns up, and report that knee - which is the capacity figure. Ramping also protects you from assuming the curve is monotonic: with contention, throughput can decline past its peak, so the maximum has to be found rather than extrapolated."
+
+[[q]]
+id = "me-007"
+qtype = "numeric"
+subtopic = "sampling-bias"
+levels = ["senior", "lead", "staff"]
+q = "A load generator sends a request, waits for the response, then sends the next. It is aimed at 100 requests per second. The service stalls for 1 second. How many requests does the generator fail to issue during the stall, and what does that do to the measured latency?"
+a = "100 - the whole second's worth. The generator stops issuing precisely while the service is unable to answer, so none of those requests are measured, and the stall contributes one slow observation instead of a hundred. That is coordinated omission, and it understates the tail badly: the requests a real user population would have sent, and waited on, never exist in the sample. Issue at the intended rate regardless of outstanding responses, so a stall produces the pile-up it would produce in reality, and the recorded latency includes the waiting."
+derivation = [
+  "target_rps = 100",
+  "stall_s = 1",
+  "missing_requests = target_rps * stall_s",
+  "recorded_observations = 1",
+]
+
+[[q]]
+id = "me-008"
+qtype = "discrimination"
+subtopic = "aggregation-traps"
+levels = ["senior", "lead", "staff"]
+q = "Every endpoint's latency improved, and the service's overall latency got worse. Both figures are computed correctly from the same data. What is being measured by the aggregate that is not being measured per endpoint?"
+a = "The mix. An aggregate over a population is a weighted average, so it moves when the weights move even if every component improved - traffic shifted towards the endpoints that are inherently slower, and the overall figure is reporting that shift rather than a regression. This is Simpson's paradox, and the practical consequence is that a service-level aggregate cannot be read as a statement about the code. Segment before concluding: compare like traffic to like traffic, or hold the mix fixed by weighting the components by a reference distribution."
+
+[[q]]
+id = "me-009"
+qtype = "recall"
+subtopic = "sample-size"
+levels = ["senior", "lead", "staff"]
+q = "How does uncertainty on a measured proportion change with the number of samples, and how many samples does a 99th percentile need to mean anything?"
+a = "Uncertainty falls as one over the square root of the sample count, so quadrupling the samples halves the interval and precision gets expensive quickly - a rough interval on a proportion is plus or minus one over the square root of n. For a 99th percentile you need on the order of a thousand samples per window, because only one in a hundred lands above it and you need enough of those to have any resolution; a 99.9th percentile needs ten thousand. Below that the figure moves with who happened to arrive rather than with anything about the system."
+derivation = [
+  "samples_p99 = 1000",
+  "samples_p999 = 10000",
+  "quadruple = 4",
+  "interval_change = 1 / sqrt(quadruple)",
+]

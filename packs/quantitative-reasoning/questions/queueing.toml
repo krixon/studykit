@@ -1,0 +1,126 @@
+# Question bank: queueing
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "queueing"
+
+[[q]]
+id = "qu-001"
+qtype = "numeric"
+subtopic = "littles-law"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service takes 2,000 requests per second and each spends 50 ms inside it. How many requests are in flight at any moment, and what does that number decide?"
+a = "100. Items in the system equals arrival rate times time in the system, so 2,000 per second at 0.05 s is 100 concurrent requests. That number is the floor for every per-request resource: threads, connections, in-flight buffers. It is also the relationship to read backwards - a pool capped below 100 caps throughput regardless of spare CPU, which is how a pool size silently becomes a throughput limit. The identity assumes nothing about the distribution and holds for any stable system, which is what makes it the most dependable formula here."
+derivation = [
+  "rps = 2000",
+  "latency_ms = 50",
+  "latency_s = latency_ms / 1000",
+  "in_flight = rps * latency_s",
+]
+
+[[q]]
+id = "qu-002"
+qtype = "numeric"
+subtopic = "littles-law"
+levels = ["mid", "senior", "lead", "staff"]
+q = "The same service, still taking 2,000 requests per second, degrades so that each request now spends 500 ms inside it. How many are in flight, and what fails first?"
+a = "1,000, ten times the previous 100. A tenfold latency rise is a tenfold rise in required concurrency, so the thing that fails first is whichever per-request resource is capped: the thread pool, the connection pool, the file descriptor limit. That is why a downstream slowdown presents as resource exhaustion rather than as slowness - the latency is the cause and the exhaustion is the symptom you get paged for. It also explains why a fixed pool is a crude circuit breaker: it refuses work rather than accumulating a thousand in-flight requests nobody is waiting for any more."
+derivation = [
+  "rps = 2000",
+  "latency_ms = 500",
+  "latency_s = latency_ms / 1000",
+  "in_flight = rps * latency_s",
+  "previous_in_flight = 100",
+  "factor = in_flight / previous_in_flight",
+]
+
+[[q]]
+id = "qu-003"
+qtype = "numeric"
+subtopic = "utilisation-latency"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A queue with random arrivals is running at 80% utilisation, and a capacity plan proposes taking it to 90% to save on machines. By what factor does waiting time change, and what does that say about the last tenth of capacity?"
+a = "It doubles: the multiplier is one over one minus utilisation, so 5x at 80% and 10x at 90%. The last tenth of nominal capacity costs as much waiting time as the first eighty per cent did, which is why usable capacity for anything latency-sensitive stops well short of full and why a target around 60 to 70% is normal rather than wasteful. The saving in machines is real and it is being paid for in a doubled queueing delay, so the question is whether the latency objective has that much slack in it - not whether there is CPU left."
+derivation = [
+  "rho_before = 0.8",
+  "rho_after = 0.9",
+  "factor_before = 1 / (1 - rho_before)",
+  "factor_after = 1 / (1 - rho_after)",
+  "change = factor_after / factor_before",
+  "pct_before = rho_before * 100",
+  "pct_after = rho_after * 100",
+  "target_low_pct = 60",
+  "target_high_pct = 70",
+]
+
+[[q]]
+id = "qu-004"
+qtype = "discrimination"
+subtopic = "concurrency-limits"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Two overload controls: one caps how many requests may be in progress at once, the other caps how many may arrive per second. A downstream dependency becomes five times slower while request volume is unchanged. Which control notices, and why?"
+a = "The concurrency cap notices; the rate cap does not. Arrivals have not changed, so a rate limit sees nothing wrong, while the slowdown multiplies in-flight work by five and the concurrency cap binds immediately - it is bounding items in the system directly, so by Little's law it bounds waiting time too. That is the general reason to prefer it as an overload control: a rate limit protects against too many callers and a concurrency limit protects against having become slow, and the second failure is the more common one."
+
+[[q]]
+id = "qu-005"
+qtype = "judgment"
+subtopic = "queue-depth"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A work queue's bound is being raised because items are occasionally rejected at peak. New information: consumers drain at a steady rate that does not rise with the queue depth, and the producers retry anything rejected. Does raising the bound help?"
+a = "No, -2, and it makes the failure worse in a quieter way. Depth is latency: a deeper queue at an unchanged drain rate is more waiting, so items are still not served in time, they now fail after a long delay instead of immediately, and the fast rejection that was giving producers a clear signal becomes a timeout. Meanwhile the queue absorbs load it will re-emit. Raising the bound is right only when the burst is genuinely transient and the mean arrival rate is below the drain rate. Otherwise the honest options are more drain capacity or shedding sooner."
+
+[[q]]
+id = "qu-006"
+qtype = "judgment"
+subtopic = "variability"
+levels = ["senior", "lead", "staff"]
+q = "A slow reporting endpoint and the main read path share one worker pool, which is comfortably below its concurrency limit on average. New information: the reports are requested in bursts at the start of each hour. Does sharing the pool remain acceptable?"
+a = "No, -2. Average utilisation is the wrong statistic: queueing delay rises with the variability of arrivals and of service times, and this arrangement maximises both - long jobs mixed with short ones, arriving in a coordinated burst. The read path waits behind reports it has nothing to do with, at exactly the moment the burst lands, while the pool's average looks healthy. Separate the pools so the expensive work cannot consume the capacity the cheap work needs, and spread the schedule so the arrivals stop being simultaneous. Bulkheads are this argument made concrete."
+
+[[q]]
+id = "qu-007"
+qtype = "diagnostic"
+subtopic = "utilisation-latency"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Traffic grew about 20% over a quarter and latency was stable throughout. This week it grew another 5% and the 99th percentile has quadrupled. CPU, memory and network are all well short of their limits. Most likely cause?"
+a = "The system has crossed into the steep part of the utilisation curve on whatever its actual bottleneck is. Waiting time scales as one over one minus utilisation, so it is nearly flat for most of the range and then vertical, which is exactly the pattern described: a quarter of growth absorbed invisibly, then a small increment producing a large jump. That the graphed resources look fine means the binding constraint is something else - a connection pool, a lock, a single-threaded stage, a downstream quota. Find the resource whose utilisation is near one, not the one with a convenient dashboard."
+derivation = [
+  "quarter_growth_pct = 20",
+  "week_growth_pct = 5",
+]
+
+[[q]]
+id = "qu-008"
+qtype = "discrimination"
+subtopic = "queue-depth"
+levels = ["senior", "lead", "staff"]
+q = "Under sustained overload, one queue serves its oldest item first and another serves its newest. Both are bounded and both shed the excess. Which delivers more useful work, and what property of the items decides it?"
+a = "Whether the value of an item decays with age. If a request has a deadline or a client that has already given up, serving oldest-first spends capacity on answers nobody is waiting for and every survivor is stale - the queue delivers a uniformly useless set. Serving newest-first abandons the old backlog and returns fresh answers to callers still present, so under overload it delivers more value from the same capacity. For work whose value does not decay, a payment to settle or a job to run, oldest-first is right and starving the old items is the failure to avoid."
+
+[[q]]
+id = "qu-009"
+qtype = "recall"
+subtopic = "littles-law"
+levels = ["mid", "senior", "lead", "staff"]
+q = "State the relationship between the number of items in a system, the rate they arrive at, and the time each spends inside. What does it assume?"
+a = "Items in the system equals arrival rate times time in the system. It assumes almost nothing: no particular distribution of arrivals or service times, no randomness, no independence. What it does require is a stable system observed over a long enough interval - arrivals must not exceed the rate you can serve, or there is no steady state, the queue grows without bound and time-in-system is not a number at all. That minimal set of assumptions is what makes it the most reliably applicable result in the subject."
+
+[[q]]
+id = "qu-010"
+qtype = "recall"
+subtopic = "utilisation-latency"
+levels = ["mid", "senior", "lead", "staff"]
+q = "For a queue with random arrivals, how does waiting time behave as utilisation rises, and what utilisation would you target for a latency-sensitive service?"
+a = "It scales as one over one minus utilisation, so the curve is nearly flat across most of the range and then vertical: 5x the unloaded wait at 80% busy, 10x at 90%, 100x at 99%. Target somewhere around 60 to 70% for anything latency-sensitive, because the remaining capacity is not usable without breaking the latency objective. Batch work is the opposite case and should run a machine near full, since throughput is the goal and waiting time is nobody's concern."
+derivation = [
+  "target_low_pct = 60",
+  "target_high_pct = 70",
+  "pct_80 = 80",
+  "pct_90 = 90",
+  "pct_99 = 99",
+  "rho_80 = 0.8",
+  "factor_80 = 1 / (1 - rho_80)",
+  "rho_90 = 0.9",
+  "factor_90 = 1 / (1 - rho_90)",
+  "rho_99 = 0.99",
+  "factor_99 = 1 / (1 - rho_99)",
+]

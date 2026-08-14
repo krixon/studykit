@@ -31,15 +31,18 @@ No dependencies, no install, no account. Python 3.12+ and a shell.
 
 | Pack | Topics | Questions | Problems | For |
 |---|---:|---:|---:|---|
-| **foundations** | 10 | 127 | 4 | HTTP, SQL, concurrency, testing, security, encoding, the OS |
-| **design-patterns** | 8 | 93 | 3 | SOLID, GoF patterns, DI, coupling, refactoring, boundaries |
-| **system-design** | 16 | 237 | 12 | caching through multi-region, graduate to staff |
+| **foundations** | 10 | 186 | 4 | HTTP, SQL, concurrency, testing, security, encoding, the OS |
+| **design-patterns** | 8 | 112 | 3 | SOLID, GoF patterns, DI, coupling, refactoring, boundaries |
+| **system-design** | 16 | 263 | 12 | caching through multi-region, graduate to staff |
+| **quantitative-reasoning** | 6 | 60 | 0 | estimation, tails, queueing, coincidence, capacity, measurement |
 
 ## Levels
 
 `graduate` · `mid` · `senior` · `lead` · `staff`
 
-Your level does three things: filters the question bank, filters which topics and problems are in scope, and sets the **calibration brief** the agent judges you against. At graduate, a correct mechanism scores well. At staff, an unquantified claim with no failure mode does not.
+Your level does three things: sets the mix of question types you are asked, filters which topics and problems are in scope, and sets the **calibration brief** the agent judges you against. At graduate, a correct mechanism scores well. At staff, an unquantified claim with no failure mode does not.
+
+The mix is a starting point rather than a rule: your measured score per type moves it, so a type you answer well is asked less often. Questions written for other levels are deprioritised, never withheld.
 
 ```
 ./study levels                    # see every level's bar

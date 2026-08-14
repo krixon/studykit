@@ -1,0 +1,84 @@
+[pack]
+name = "quantitative-reasoning"
+title = "Quantitative reasoning"
+description = "The arithmetic the other packs lean on and none of them teach: estimation, tails, queueing, coincidence, capacity and measurement."
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+areas = ["estimation", "latency", "queueing", "probability", "capacity", "measurement"]
+
+[calibration.graduate]
+bar = "Gets to a number, states the units, and can say which figure the answer is most sensitive to. An order of magnitude is a pass."
+assume = "Can do the arithmetic. Has probably never been asked to put a number on a design."
+push_on = ["what are the units", "which figure dominates", "is that per second or per day", "sanity-check the magnitude"]
+avoid = "Do not demand precision. A right answer arrived at by a wrong route is worth less than a rough answer with the reasoning visible."
+
+[calibration.mid]
+bar = "A number with the working shown, the dominant term identified, and a statement of what would change the conclusion."
+assume = "Has sized something in anger and been wrong about it at least once."
+push_on = ["show the working", "which term dominates", "what would change the answer", "what did you assume"]
+avoid = "Do not require a closed-form model where an estimate answers the question."
+
+[calibration.senior]
+bar = "The right model, not just the right arithmetic. Names which effect is being measured and where the model stops applying."
+assume = "Can estimate. The question is whether the estimate is of the right quantity."
+push_on = ["is that the quantity that matters", "where does this model break", "what does the tail do", "what happens at double the load"]
+avoid = "Do not accept a computed figure whose model was never stated."
+
+[calibration.lead]
+bar = "Everything at senior, plus a figure a team can act on: what to measure, what to alert on, and what number means stop."
+assume = "Has to make other people's estimates comparable."
+push_on = ["what would you have the team measure", "what threshold", "how would you make this reproducible"]
+avoid = "Do not reward a model only its author can apply."
+
+[calibration.staff]
+bar = "Fluent, with the assumption that breaks the estimate named before anyone asks, and the cases where the usual figure is wrong."
+assume = "Everything below is assumed."
+push_on = ["which assumption fails first", "when is this rule of thumb wrong", "what second-order effect did we drop"]
+avoid = "Do not accept a rule of thumb stated without the regime it holds in."
+
+[[topic]]
+id = "estimation"
+title = "Back of the envelope"
+area = "estimation"
+prefix = "es"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["powers-of-two", "unit-discipline", "rate-conversion", "dominant-term", "sanity-checks"]
+
+[[topic]]
+id = "tails"
+title = "Tails and percentiles"
+area = "latency"
+prefix = "ta"
+levels = ["graduate", "mid", "senior", "lead", "staff"]
+subtopics = ["mean-vs-percentile", "tail-amplification", "percentile-arithmetic", "retries-and-tails", "measuring-tails"]
+
+[[topic]]
+id = "queueing"
+title = "Queueing intuition"
+area = "queueing"
+prefix = "qu"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["littles-law", "utilisation-latency", "variability", "queue-depth", "concurrency-limits"]
+
+[[topic]]
+id = "coincidence"
+title = "Coincidence and collision"
+area = "probability"
+prefix = "co"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["birthday-bound", "id-collisions", "independent-failures", "rare-events-at-scale", "correlated-retries"]
+
+[[topic]]
+id = "capacity"
+title = "Capacity and growth"
+area = "capacity"
+prefix = "cp"
+levels = ["mid", "senior", "lead", "staff"]
+subtopics = ["headroom", "amdahl", "growth-rates", "storage-growth", "cost-per-unit"]
+
+[[topic]]
+id = "measurement"
+title = "Measurement and sampling"
+area = "measurement"
+prefix = "me"
+levels = ["senior", "lead", "staff"]
+subtopics = ["sample-size", "sampling-bias", "load-test-validity", "aggregation-traps", "before-after"]

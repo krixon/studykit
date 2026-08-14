@@ -1,0 +1,146 @@
+# Question bank: estimation
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "estimation"
+
+[[q]]
+id = "es-001"
+qtype = "numeric"
+subtopic = "rate-conversion"
+levels = ["graduate", "mid"]
+q = "A product team says the new feature will handle a million events a month and asks whether you need a queue in front of it. What is that in events per second?"
+a = "About 0.4 per second. A month is roughly 2.6 million seconds, so a million events a month is 0.39 per second - one every two and a half seconds. Nothing about that needs a queue for throughput reasons, and the conversion is the whole answer: 'a million a month' sounds like scale and is less than one per second. The figure worth memorising is that 1 per second is about 2.6 million a month, so any monthly number under a few million is a rate you can ignore."
+derivation = [
+  "events_per_month = 1000000",
+  "seconds_per_month = 2600000",
+  "per_second = events_per_month / seconds_per_month",
+  "reference_rate = 1",
+  "reference_monthly = reference_rate * seconds_per_month",
+]
+
+[[q]]
+id = "es-002"
+qtype = "discrimination"
+subtopic = "unit-discipline"
+levels = ["graduate", "mid"]
+q = "Two figures describe the same system's data: one says how much there is, the other says how fast it arrives. Someone plans capacity by adding them. What are the two kinds of quantity, and what has to happen to one before they can be combined?"
+a = "A stock and a flow. A stock is an amount at an instant, measured in bytes; a flow is a rate, measured in bytes per unit time. They cannot be added because they do not share units. A flow becomes a stock only by integrating it over a window, so the combination you want is current stored bytes plus arrival rate times retention. Writing the unit on every intermediate value is what catches this, because the mistake produces the wrong unit before it produces the wrong number."
+
+[[q]]
+id = "es-003"
+qtype = "numeric"
+subtopic = "powers-of-two"
+levels = ["graduate", "mid"]
+q = "Every one of 4,000,000 users has a profile of about 2 KB. Roughly how much storage is that, without reaching for a calculator?"
+a = "About 8 GB. Four million profiles at two kilobytes each is 8,000,000 KB; divide by 1024 twice and you get 7,812 MB and then 7.6 GB, which rounds to 8. Treating a million as two to the twentieth and a thousand as two to the tenth turns the multiplication into addition of exponents, leaving only the leading digit to track. Getting 8 GB rather than 8 MB or 8 TB is the entire value of the estimate. Note the drift from dividing by a thousand instead: that route gives 8.0 GB, 4.9% high, which never matters here and does matter in a disk-full alert."
+derivation = [
+  "users = 4000000",
+  "profile_kb = 2",
+  "binary_kilo = 1024",
+  "total_kb = users * profile_kb",
+  "total_mb = total_kb / binary_kilo",
+  "total_gb = total_mb / binary_kilo",
+  "decimal_gb = total_kb / 1000 / 1000",
+  "drift_pct = round(100 * (decimal_gb - total_gb) / total_gb, 1)",
+]
+
+[[q]]
+id = "es-004"
+qtype = "numeric"
+subtopic = "dominant-term"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A request writes a 40 byte log line, a 300 byte audit record and one 2 MB image to storage, at 500 requests per second. Which term decides your storage bill, and what is the total write rate?"
+a = "The image, by four orders of magnitude, and about 1,000 MB/s. The image contributes 1,048,576,000 bytes per second against 20,000 for the log line and 150,000 for the audit record, so the two small terms together are 0.016% of the total and it does not matter whether either is right. That is the output of the estimate: this is a bandwidth and object-storage problem, and effort spent on log volume is spent on 0.0019% of the bill. Compute each term to one significant figure, compare, and drop anything an order of magnitude below the largest."
+derivation = [
+  "rps = 500",
+  "log_bytes = 40",
+  "audit_bytes = 300",
+  "image_mb = 2",
+  "binary_kilo = 1024",
+  "image_bytes = image_mb * binary_kilo * binary_kilo",
+  "log_rate = rps * log_bytes",
+  "audit_rate = rps * audit_bytes",
+  "image_rate = rps * image_bytes",
+  "total_mb_s = round(image_rate / binary_kilo / binary_kilo + audit_rate / binary_kilo / binary_kilo)",
+  "small_share_pct = round(100 * (log_rate + audit_rate) / image_rate, 3)",
+  "log_share_pct = round(100 * log_rate / image_rate, 4)",
+]
+
+[[q]]
+id = "es-005"
+qtype = "judgment"
+subtopic = "sanity-checks"
+levels = ["graduate", "mid"]
+q = "An estimate for an internal expense-approval tool comes out at 40,000 requests per second, and the arithmetic has been checked twice. New information: the company has about 5,000 employees. Does the figure become more or less believable, and what do you do next?"
+a = "Far less believable, -2, and the point is that arithmetic review cannot find this. 40,000 per second across 5,000 employees is 8 requests per second per person sustained, all day, on a tool people touch a few times a month. The error is in the model, not the sum - almost always a rate confused with a total, a per-day figure treated as per-second, or a factor of a thousand lost in a unit conversion. Bound the answer against something known before quoting it: employees times plausible actions per day, converted to a rate, gives something in the single digits per second."
+derivation = [
+  "estimate_rps = 40000",
+  "employees = 5000",
+  "rps_per_employee = estimate_rps / employees",
+]
+
+[[q]]
+id = "es-006"
+qtype = "discrimination"
+subtopic = "rate-conversion"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Two figures for the same service, both correct: one is used to choose how many machines to run and the other to forecast the invoice. What are they, and what goes wrong if each is used for the other's job?"
+a = "Peak and mean. Size for peak, because the machines have to be there when the traffic is; cost for mean, because you pay for the area under the curve. Using the mean to size gives you a service that fails every day at its busiest hour, and a diurnal web workload peaks at two to three times its mean, so that is not a small error. Using the peak to forecast cost overstates the bill by the same factor and gets a viable design rejected. Any rate quoted without saying which one it is cannot be used for either."
+
+[[q]]
+id = "es-007"
+qtype = "diagnostic"
+subtopic = "unit-discipline"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Two engineers estimate the same pipeline's daily storage independently. One gets 90 GB, the other 90 TB. Both have checked their multiplication. Where is the error almost certainly hiding?"
+a = "In a unit conversion, and the factor of a thousand names it: somewhere one of them treated a per-second rate as per-millisecond, or MB as GB, or wrote a kilobyte where a byte belonged. Finding it is fast if both wrote units on every intermediate value, because the step where the unit stops making sense is the step that is wrong. If neither did, the quickest route is re-deriving the figure a different way - bytes per record times records per day - and seeing which of the two it lands on. Checking the multiplication again cannot find this, because the multiplication is right."
+derivation = [
+  "estimate_gb = 90",
+  "estimate_tb = 90",
+  "factor = 1000",
+]
+
+[[q]]
+id = "es-008"
+qtype = "judgment"
+subtopic = "dominant-term"
+levels = ["senior", "lead", "staff"]
+q = "An estimate has three terms and no single one dominates: they come out within about 20% of each other. The author presents this as a well-balanced design. Does the absence of a dominant term support that reading?"
+a = "Treat it as a warning rather than a result, so around -1. Real systems are lopsided, so three terms landing within 20% is more often a sign that the same figure has been used three times, or that the terms are not independent, or that the model has been tuned until it looked tidy. Check for a shared input driving all three. If it survives that, it is a genuine and useful finding - the design has no single lever, every optimisation buys at most a third, and the sensible move is to reduce total work rather than optimise a component. The reason to be suspicious first is that an estimate whose sensitivity is flat also cannot be checked, since no input moves the answer enough to test."
+derivation = [
+  "spread_pct = 20",
+  "terms = 3",
+  "max_single_saving_share = round(100 / terms)",
+]
+
+[[q]]
+id = "es-009"
+qtype = "recall"
+subtopic = "powers-of-two"
+levels = ["graduate", "mid"]
+q = "Roughly how many seconds are in a day, and what is the approximation worth using in your head instead?"
+a = "86,400, and the useful approximation is 100,000. It is 16% high, which never matters in an estimate, and it makes every division trivial: a rate per day divided by ten to the fifth is a rate per second, and back the other way a per-second figure times ten to the fifth is a daily total. The two other conversions worth holding: a month is about 2.6 million seconds and a year about 31.5 million, so 1 per second is about 2.6 million a month."
+derivation = [
+  "exact_seconds_per_day = 86400",
+  "approx_seconds_per_day = 100000",
+  "error_pct = round(100 * (approx_seconds_per_day - exact_seconds_per_day) / exact_seconds_per_day)",
+  "seconds_per_month = 2600000",
+  "seconds_per_year = 31500000",
+  "reference_rate = 1",
+]
+
+[[q]]
+id = "es-010"
+qtype = "recall"
+subtopic = "sanity-checks"
+levels = ["graduate", "mid"]
+q = "You have an estimate and two minutes before you have to quote it. Name three checks worth spending that time on."
+a = "Bound it: is the answer bigger than the whole internet or smaller than one request, both of which happen. Compare it to a known scale, so a figure that exceeds global card-payment volume for an internal tool gets caught. Check the direction: double an input and confirm the answer moves the way it should, which catches a sign or reciprocal error that arithmetic review will not. A fourth if there is time: re-derive one figure a second way, which is the cheapest review available and either confirms the magnitude or names the mistake."
+
+[[q]]
+id = "es-011"
+qtype = "discrimination"
+subtopic = "dominant-term"
+levels = ["graduate", "mid"]
+q = "Two ways of reporting an estimate: one gives the total, the other names which input the total moves with. Why is the second usually the more useful output?"
+a = "Because it tells you what to do. A total answers whether the design fits and nothing else, and it is only as good as its weakest assumption. Naming the sensitivity says which assumption to go and check, which lever would change the outcome, and what kind of problem you have - 'dominated by the image payload, so this is a bandwidth question rather than a request-rate one' redirects the work. It also makes the estimate reviewable, because a reader can attack the input that matters instead of the arithmetic."

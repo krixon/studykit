@@ -1,0 +1,124 @@
+# Question bank: tails
+# Format and authoring rules: docs/authoring-packs.md
+# `levels` gates who is asked. Ids are stable forever and never reused.
+topic = "tails"
+
+[[q]]
+id = "ta-001"
+qtype = "discrimination"
+subtopic = "mean-vs-percentile"
+levels = ["graduate", "mid"]
+q = "A dashboard reports one latency figure that barely moves during an incident users are complaining loudly about, and a second figure that triples. What are the two quantities, and why does one of them hide the incident?"
+a = "A mean and a high percentile. The mean is an average over every request, so a small fraction becoming very slow moves it hardly at all - it is diluted by the majority that were fine. A percentile is a threshold with a fixed share of traffic above it, so it tracks what the unlucky requests actually experienced. The mean hides the incident because the incident is a minority event, which is what every incident is. Quote the median for what a typical request gets and a high percentile for what the worst get; the mean answers neither question well."
+
+[[q]]
+id = "ta-002"
+qtype = "numeric"
+subtopic = "tail-amplification"
+levels = ["graduate", "mid"]
+q = "A page assembles its content by calling 20 backends and cannot render until all of them answer. Each backend independently answers quickly 99% of the time. What share of page loads waits on at least one slow backend?"
+a = "18.2%. The chance that all 20 are quick is 0.99 to the twentieth, which is 81.8%, so nearly a fifth of page loads hit at least one slow backend even though every backend is individually meeting a 99% target. The uncomfortable reframing: a 99th-percentile promise from each part has become roughly a 82nd-percentile experience for the whole. This is why fan-out width is itself a latency decision, and why reducing the number of calls on the critical path returns more than tuning any one of them."
+derivation = [
+  "backends = 20",
+  "fast_pct = 99",
+  "p_fast = fast_pct / 100",
+  "all_fast_pct = round(100 * p_fast ** backends, 1)",
+  "any_slow_pct = round(100 - all_fast_pct, 1)",
+]
+
+[[q]]
+id = "ta-003"
+qtype = "numeric"
+subtopic = "tail-amplification"
+levels = ["senior", "lead", "staff"]
+q = "A query is scattered to 100 shards and gathered. Each shard is quick 99% of the time. What share of queries waits on a slow shard, and what does that do to the argument for adding shards to spread load?"
+a = "63.4%: only 36.6% of queries find all 100 shards quick. Most queries are now slow, so the fan-out has converted a 99% per-shard guarantee into a majority-slow service. It inverts the usual argument for sharding, because each shard added to spread load also multiplies the chance of catching a slow one, and the effect is exponential in the shard count while the load relief is linear. The remedies are to stop needing every shard on the read path - a shard key present in the query - or to answer on a deadline with partial results, or to hedge to a replica."
+derivation = [
+  "shards = 100",
+  "fast_pct = 99",
+  "p_fast = fast_pct / 100",
+  "all_fast_pct = round(100 * p_fast ** shards, 1)",
+  "any_slow_pct = round(100 - all_fast_pct, 1)",
+]
+
+[[q]]
+id = "ta-004"
+qtype = "discrimination"
+subtopic = "percentile-arithmetic"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service makes two sequential calls, each with a stated 99th-percentile latency. A colleague adds the two figures to get the pair's 99th percentile, and separately averages each host's figure to get the fleet's. Both are wrong. What operation is valid on these quantities, and what is not?"
+a = "Means add; percentiles do not, and percentiles cannot be averaged either. Adding assumes both slow events coincide, which is rare, so the pair's real figure is below the sum - the sum is a bound, not a value. Averaging across hosts weights a host serving 1% of traffic the same as one serving half, so the result is not a percentile of anything. Percentiles are order statistics and need the underlying distribution: aggregate histogram buckets or a sketch, then compute the percentile once from the combined data. The same argument forbids a weekly figure derived from seven daily ones."
+derivation = [
+  "small_host_share_pct = 1",
+]
+
+[[q]]
+id = "ta-005"
+qtype = "judgment"
+subtopic = "retries-and-tails"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Tail latency on a dependency is being addressed by retrying any request that exceeds a timeout. New information: the dependency's slow responses are caused by it running near its capacity limit rather than by intermittent packet loss. Does retrying become more or less appropriate?"
+a = "Much less, -2, and it turns a latency problem into an outage. A retry on saturation adds a second request to a system whose problem is the number of requests, so the load rises exactly where it is already the constraint and the timeouts multiply - the positive feedback that is the retry storm. Retrying is right when the cause is transient and independent of load. Here the tail remedy that does work is a hedge to a different replica, which bets on independence rather than on the condition clearing, plus a retry budget capping retries as a small fraction of total traffic so the mechanism degrades instead of amplifying."
+
+[[q]]
+id = "ta-006"
+qtype = "diagnostic"
+subtopic = "measuring-tails"
+levels = ["mid", "senior", "lead", "staff"]
+q = "An endpoint's 99th-percentile latency chart is jagged, swinging by a factor of three between adjacent one-minute buckets, while the median is flat and traffic is steady at about 3 requests per second. Most likely cause?"
+a = "Not enough samples per bucket to estimate that percentile. At 3 per second a one-minute bucket holds about 180 requests, so the 99th percentile is the second slowest request in the window - one or two observations, moving on who happened to arrive rather than on system behaviour. Resolving a 99th percentile needs on the order of a thousand samples per window. Widen the window until each holds enough, or track a lower percentile that the traffic can support, and read the flat median as evidence the system is steady."
+derivation = [
+  "rps = 3",
+  "window_s = 60",
+  "samples = rps * window_s",
+  "tail_fraction = 100",
+  "observations_above_p99 = samples / tail_fraction",
+  "samples_needed = 1000",
+]
+
+[[q]]
+id = "ta-007"
+qtype = "judgment"
+subtopic = "mean-vs-percentile"
+levels = ["graduate", "mid"]
+q = "A team sets its latency objective as an average response time under 200 ms, which the service comfortably meets. New information: a tenth of requests take longer than two seconds. Does the objective remain a useful target?"
+a = "No, -2: the objective is being met by a service that is failing a tenth of its users badly. An average tolerates any amount of badness as long as enough requests are fast, so it cannot express the thing anyone cares about, and a tenth of requests at two seconds is compatible with a comfortable average. State the objective as a percentile - a share of requests under a threshold - which makes the tail the subject rather than a rounding error. Keep the median alongside it, because the two together say both what typical looks like and how consistent it is."
+derivation = [
+  "objective_ms = 200",
+  "tail_fraction_denominator = 10",
+  "tail_latency_s = 2",
+]
+
+[[q]]
+id = "ta-008"
+qtype = "recall"
+subtopic = "measuring-tails"
+levels = ["graduate", "mid"]
+q = "Response times are recorded only for requests that completed successfully. What does that do to the reported latency of a service that is beginning to fail?"
+a = "It improves it. The slowest requests are the ones that time out, and excluding them removes the worst observations from the sample, so the reported figure gets better as the service gets worse. The metric moves opposite to reality exactly when you are relying on it. Any latency figure has to state how it treats failures and timeouts - normally by recording the timeout duration for a timed-out request - or it is measuring the requests that survived rather than the experience of the users."
+
+[[q]]
+id = "ta-009"
+qtype = "recall"
+subtopic = "mean-vs-percentile"
+levels = ["graduate", "mid"]
+q = "What does a 99th-percentile latency of 300 ms tell you, and what does it deliberately not tell you?"
+a = "That 99 requests in every 100 finished within 300 ms. It says nothing whatever about the remaining one: that request might have taken 301 ms or thirty seconds, and the figure is identical either way. A percentile is a threshold and a count, not a description of the tail beyond it, which is why a single percentile is never enough - pair it with the median to see how consistent the system is, and with a higher percentile or a maximum if the very worst case matters to you."
+derivation = [
+  "percentile = 99",
+  "threshold_ms = 300",
+  "within_per_hundred = 99",
+]
+
+[[q]]
+id = "ta-010"
+qtype = "diagnostic"
+subtopic = "percentile-arithmetic"
+levels = ["graduate", "mid"]
+q = "A fleet-wide latency figure is computed by taking each host's reported figure and averaging them. During an incident affecting one host out of forty, the fleet figure barely moves, while users on that host are timing out. Most likely cause?"
+a = "Averaging summaries rather than aggregating the underlying data. Each host contributes equally to the average regardless of how much traffic it served or how bad it was, so one host in forty can be catastrophically slow and shift the mean by a fortieth of its own change. Worse, the quantity being averaged is a percentile, and percentiles cannot be averaged into anything meaningful at all. Collect histogram buckets or a sketch from each host, add them, and compute the percentile once from the combined distribution."
+derivation = [
+  "hosts = 40",
+  "affected_hosts = 1",
+  "dilution = affected_hosts / hosts",
+]
