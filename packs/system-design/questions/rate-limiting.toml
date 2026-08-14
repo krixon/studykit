@@ -120,3 +120,35 @@ subtopic = "definitions"
 levels = ["graduate", "mid", "senior", "lead", "staff"]
 q = "Which status code for a rate-limited request, and what should accompany it?"
 a = "429 Too Many Requests, with Retry-After so the client knows when to return, and ideally headers giving the limit, remaining, and reset time. 503 is a different claim - it says the service is unhealthy, not that the caller exceeded a quota."
+
+[[q]]
+id = "rl-016"
+qtype = "discrimination"
+subtopic = "algorithms"
+levels = ["graduate", "mid"]
+q = "Two counting schemes both enforce the same nominal rate. One lets a caller pass twice the intended amount in a short span without ever exceeding its own counter; the other paces the caller and permits a configurable initial burst. What is the defect in the first, and what makes it a defect rather than a rounding error?"
+a = "The boundary defect. Counting per calendar window and resetting at the boundary means a burst at the end of one window and another at the start of the next are counted separately, so twice the limit passes back to back while both counters read as compliant. It is a defect rather than rounding because the excess arrives as a spike, which is exactly the shape a protection limiter exists to stop. A token bucket refills continuously, so there is no boundary to sit either side of, and the burst it does allow is one you chose."
+
+[[q]]
+id = "rl-017"
+qtype = "discrimination"
+subtopic = "definitions"
+levels = ["graduate", "mid"]
+q = "Three teams ask for a limiter. One wants the service to stay inside its capacity, one wants no tenant to starve the others, one wants a purchased plan enforced exactly. Which of these tolerates being approximate, and which cannot?"
+a = "Protection tolerates it easily: it cares about total load, so being a few percent out for a moment costs nothing and an eventually consistent counter is fine. Fairness needs per-tenant accounting and tolerates some slack, since the goal is that no tenant is starved rather than an exact figure. The commercial one cannot be approximate, because the number appears on an invoice and has to be explainable and defensible to the customer. Asking which job it is comes before choosing an algorithm, because the three want different designs."
+
+[[q]]
+id = "rl-018"
+qtype = "judgment"
+subtopic = "contract-keys"
+levels = ["graduate", "mid"]
+q = "A public endpoint is limited per client IP address, which the team finds simple and requires no authentication. New information: a large share of the traffic arrives from mobile networks and corporate proxies. Does the IP remain a sound key?"
+a = "No, -2, and it fails in both directions at once. Carrier-grade NAT and corporate egress put thousands of unrelated users behind one address, so a legitimate user is throttled by strangers' traffic, which is the fairness failure. Meanwhile anyone who wants more simply uses more addresses, which is cheap, so it does not hold against the abuse it was for. Key on something the caller has to own - an API key, an account, an authenticated principal - and keep the address as a coarse backstop for unauthenticated paths."
+
+[[q]]
+id = "rl-019"
+qtype = "diagnostic"
+subtopic = "failure-modes"
+levels = ["graduate", "mid"]
+q = "The shared store holding the limiter counters becomes unreachable. Every request to the service now returns a rate-limit rejection, including the first request of the day from a caller who has used nothing. What decision produced this, and what is the alternative and its risk?"
+a = "The limiter fails closed: unable to read a count, it treats the request as over the limit, so a dependency outage becomes a total outage even though capacity is fine. Failing open admits traffic while the store is down, which keeps the service usable and gives up the protection for the duration - the right default for a protection limiter, and the wrong one for a commercial limiter where unmetered use is revenue lost. The middle course is falling back to a local per-node limit, which is approximate and bounded rather than absent."

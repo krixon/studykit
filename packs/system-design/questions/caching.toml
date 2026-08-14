@@ -162,3 +162,35 @@ subtopic = "placement"
 levels = ["senior", "lead", "staff"]
 q = "You are adding a CDN in front of an API. New information - responses are per-user personalised. More or less appropriate?"
 a = "Less, -2 for the personalised responses themselves, which are uncacheable at a shared edge and would just be a pass-through you pay for. Still +1 for the static or shared subset if you can split the response, which is the actual design move - separate the personalised fragment from the cacheable shell."
+
+[[q]]
+id = "ca-021"
+qtype = "discrimination"
+subtopic = "read-strategies"
+levels = ["graduate", "mid"]
+q = "Two read designs. The cache tier goes down entirely. In one design the service gets slower; in the other it stops answering. What is the difference in who fetches on a miss, and why does it decide the outage behaviour?"
+a = "In cache-aside the application reads the source itself on a miss, so with the cache gone every request is a miss and the service degrades to the speed of the database. In read-through the cache fetches from the source and the application only ever talks to the cache, so the cache is a hard dependency and its outage is your outage. That is the trade for the gain: read-through puts the miss logic in one place instead of duplicating it in every caller."
+
+[[q]]
+id = "ca-022"
+qtype = "discrimination"
+subtopic = "eviction"
+levels = ["graduate", "mid"]
+q = "A value can leave a cache for two unrelated reasons, and confusing them leads people to tune the wrong knob when the hit rate is poor. What are the two, and which one does adding memory fix?"
+a = "It expired, or it was evicted to make room. Expiry is a time bound you chose, so a value goes whether or not there is space, and the knob is the TTL. Eviction is pressure: the cache is full and a policy picked a victim, so the knob is size, or the policy if the wrong things are being chosen. Adding memory fixes only the second. If a low hit rate is caused by a thirty-second TTL on data that changes daily, a larger cache changes nothing."
+
+[[q]]
+id = "ca-023"
+qtype = "judgment"
+subtopic = "placement"
+levels = ["graduate", "mid"]
+q = "A team is moving a cache from a shared tier the services call over the network into the memory of each service instance, to remove a network hop. New information: the fleet is autoscaled and instances are replaced several times a day. Does the move become more or less appropriate?"
+a = "Less, around -1. An in-process cache removes the hop and is the fastest option available, but its contents die with the instance, so a fleet that recycles often is repeatedly cold and the origin absorbs every warm-up. It also multiplies memory by the instance count and gives you no way to invalidate anything centrally. It stays defensible for small, hot, rarely-changing data with a short TTL, where a cold start costs little. A -2 overstates it and a 0 ignores that the churn is what changes the answer."
+
+[[q]]
+id = "ca-024"
+qtype = "diagnostic"
+subtopic = "hot-key"
+levels = ["graduate", "mid"]
+q = "A cache cluster shows a healthy overall hit rate and plenty of spare memory, and one of its nodes is at its network limit while the others are idle. Requests routed to that node are slow. Most likely cause?"
+a = "A hot key. Keys are distributed across nodes by hash, so a single key taking a large share of all reads lands its entire traffic on whichever node owns it, and that node saturates while the cluster average looks fine. Aggregate hit rate hides it because the hot key is being hit successfully. Adding nodes does not help, since the key still lives on exactly one. Replicate that key under several suffixed names and pick one at random, or hold it in-process in front of the shared tier."

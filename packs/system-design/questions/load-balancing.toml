@@ -112,3 +112,35 @@ subtopic = "failure-modes"
 levels = ["lead", "staff"]
 q = "You are adding retries at the gateway to improve reliability. New information - the client SDK already retries three times, and the service calls a downstream that also retries. More or less appropriate?"
 a = "Much less, -2. Three layers at three attempts each is up to 27 requests for one logical call, and the amplification peaks exactly when the system is least able to take it. Retry at one layer, ideally closest to the caller where the deadline is known, and give the others a budget of zero."
+
+[[q]]
+id = "lb-015"
+qtype = "discrimination"
+subtopic = "algorithms"
+levels = ["graduate", "mid"]
+q = "Two distribution strategies over an identical pool. One sends the same number of requests to each backend; the other sends to whichever backend is currently handling the fewest. When do these behave identically, and what makes the second win?"
+a = "They behave the same when every request costs about the same, because then request count and load are the same measurement. The second wins when request cost is uneven: a backend that picked up three slow requests stops receiving work without anyone having to measure or predict cost, because in-flight count is a live proxy for how busy it is. Round robin keeps feeding it, so tail latency comes from a queue behind one host while others idle."
+
+[[q]]
+id = "lb-016"
+qtype = "discrimination"
+subtopic = "health-checks"
+levels = ["graduate", "mid"]
+q = "Two ways of learning that a backend is broken. One notices before any user is affected and costs a request per backend per interval; the other costs nothing and only tells you after users have hit the fault. What are they, and why would you run both?"
+a = "Active probing on an interval, and passive inference from real traffic such as error rates and timeouts. Active buys early detection and pays a constant traffic cost. Passive is free and reactive by construction: it needs real failures to see anything. Both, because they catch different things - a probe can pass while the code path users actually take is broken, and passive signals catch exactly that, whereas passive alone means every fault is discovered by a customer."
+
+[[q]]
+id = "lb-017"
+qtype = "judgment"
+subtopic = "topology"
+levels = ["graduate", "mid"]
+q = "A service is spread across two sites, with visitors sent to one or the other by DNS. The team's plan for a site outage is to update DNS to point at the survivor. New information: the record's TTL is respected by some resolvers and ignored by others, which cache for longer. Does DNS remain an adequate failover mechanism?"
+a = "No, -2 as a failover mechanism, while remaining fine as a spreading mechanism. Changing a record only affects resolvers that come back to ask, so recovery time is set by the longest cache anyone keeps, not by your TTL, and you cannot control that. Meanwhile a share of traffic keeps arriving at a dead site. DNS gets you cheap global spread; failover in seconds needs something that does not depend on clients re-resolving, such as anycast, a health-checked global balancer, or shifting the address itself."
+
+[[q]]
+id = "lb-018"
+qtype = "diagnostic"
+subtopic = "failure-modes"
+levels = ["graduate", "mid"]
+q = "One backend was restarted for maintenance and never came back up. Traffic to the pool is still being distributed evenly across every member including that one, and roughly a third of requests fail immediately. Most likely cause?"
+a = "Health checking is absent or not wired into the routing decision. Spreading load and avoiding dead hosts are two different jobs, and a pool configured only for the first will happily send its share to a host that is not listening. The immediate failure rather than a timeout points at connection refused, which is what a stopped process gives you. Check that a health check exists, that its failure threshold is low enough to act, and that the balancer is actually removing members on it rather than only reporting them."

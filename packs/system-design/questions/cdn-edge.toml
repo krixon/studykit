@@ -104,3 +104,27 @@ subtopic = "tls-latency"
 levels = ["senior", "lead", "staff"]
 q = "Someone argues a CDN is pointless for your API because responses are dynamic and uncacheable. More or less appropriate as an argument?"
 a = "Weaker than it sounds, -1. Even with a zero hit rate, terminating TLS near the user removes handshake round trips, and the CDN keeps warm long-lived connections back to origin so the request skips connection setup entirely. For first-time visitors on mobile networks that can dominate total time."
+
+[[q]]
+id = "cd-014"
+qtype = "discrimination"
+subtopic = "what-it-caches"
+levels = ["graduate", "mid"]
+q = "Two directives set a lifetime on the same response, and one applies to a visitor's browser while the other applies to the shared cache in front of your origin. Why would you deliberately set them to different values?"
+a = "Because they buy different things. The shared lifetime is what removes load from your origin and can be long, since one copy serves everyone and you can purge it. The browser lifetime is a copy you cannot reach: once handed out, it is stale until it expires no matter what you do. So the usual shape is a long shared lifetime and a short browser one, which gives you origin offload plus the ability to push a change out quickly. `s-maxage` overrides `max-age` for the shared cache, which is what makes the pair expressible in one header."
+
+[[q]]
+id = "cd-015"
+qtype = "discrimination"
+subtopic = "invalidation"
+levels = ["graduate", "mid"]
+q = "Two ways of making sure nobody is served an old copy of an asset. One tells the edge to drop the key; the other changes the key whenever the bytes change. Why is only one of them free of a propagation delay?"
+a = "Because the second has nothing to propagate. Putting a content hash in the filename means a changed file is a different URL, which was never cached, so the new bytes are fetched on first request and the old URL can be kept for a year. A purge is a message that has to reach every edge location, taking seconds to a minute, during which some users get the old copy - which makes it useless as a consistency mechanism. Purge is for content whose URL genuinely must stay stable, like an article page."
+
+[[q]]
+id = "cd-016"
+qtype = "judgment"
+subtopic = "what-it-caches"
+levels = ["graduate", "mid"]
+q = "A page is served through a shared edge cache and a header is added declaring that the response depends on the request's cookie, so that the cache keys on it. New information: every visitor to the site carries a distinct session cookie from their first request onwards. Does adding that header achieve what was intended?"
+a = "It makes the cache correct and useless, so around -1: correctness was necessary and this is the wrong way to pay for it. Keying on a value unique per visitor means every request is a distinct key and a guaranteed miss, so the hit rate is effectively zero and you are paying for a cache that only forwards. The shape that works is splitting the response: cache a shared shell at the edge with no dependence on the cookie, and fetch the personal fragment separately. Declaring the dependence is right; doing it on a value that never repeats is what makes it futile."

@@ -112,3 +112,27 @@ subtopic = "compatibility"
 levels = ["senior", "lead", "staff"]
 q = "Describe expand-migrate-contract for a breaking field change."
 a = "Expand - add the new field alongside the old, write both, read the old. Migrate - switch reads to the new field, backfill history, move consumers across, and prove with telemetry that nobody reads the old one. Contract - remove the old field. There is no shortcut for the middle step; the telemetry is what makes the last step safe rather than hopeful."
+
+[[q]]
+id = "ap-015"
+qtype = "discrimination"
+subtopic = "versioning"
+levels = ["graduate", "mid"]
+q = "Two ways of changing a published response shape. One issues a new numbered surface alongside the old; the other never removes or repurposes a field and only adds optional ones. What does each cost you, and which cost do large APIs usually decide they prefer?"
+a = "A new numbered surface makes the change obvious and greppable, and encourages copying the whole surface for one field, after which you are supporting two of everything and the real work is retiring the old one. Additive-only keeps a single surface and pays in accumulated fields that can never be deleted and a schema that only grows. Large APIs generally take the second, because permanent clutter is cheaper than permanent duplication, and because the hard part was never issuing the new version but chasing the last callers off the old one."
+
+[[q]]
+id = "ap-016"
+qtype = "discrimination"
+subtopic = "styles"
+levels = ["graduate", "mid"]
+q = "A mobile screen needs data assembled from six places. One API style makes the client issue six requests; another lets the client describe what it wants in one. What has moved rather than disappeared, and what is now yours to control?"
+a = "The assembly work, and with it the cost. Six resource-shaped requests put the round trips on the client, which is expensive on a mobile network, and each response is independently cacheable by URL. A client-specified query collapses it to one round trip and moves the fan-out inside your service, so the client can now author something expensive and cost control lives in your resolvers, plus caching gets harder because it is one URL with a body. Both are defensible; the choice is who owns the round trips and who owns the cost."
+
+[[q]]
+id = "ap-017"
+qtype = "judgment"
+subtopic = "pagination"
+levels = ["graduate", "mid"]
+q = "A listing endpoint pages by offset, which the team keeps because the interface shows numbered pages. New information: the list is ordered newest first and new items arrive continuously while a user is reading. Does offset paging remain acceptable?"
+a = "No, -2 for correctness, and the numbered pages are a weaker requirement than they look. An insert ahead of the reader shifts every subsequent position by one, so the next page repeats an item already seen or skips one entirely, and nobody notices because the response looks valid. Cost also grows with the offset, because the database still walks the rows it discards. Keyset paging on the sort key plus a tiebreaker is stable under writes and constant cost per page; what it gives up is jumping to page forty, which is almost never a real requirement."
