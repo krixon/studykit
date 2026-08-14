@@ -128,3 +128,11 @@ subtopic = "partitions"
 levels = ["senior", "lead", "staff"]
 q = "Why is increasing partition count after the fact painful?"
 a = "Because it changes the key-to-partition mapping, so a key that used to land on partition 3 now lands on partition 7 while messages for it still sit unprocessed on 3. Per-key ordering breaks across the change. The mitigation is over-provisioning up front, or an explicit migration where you drain first."
+
+[[q]]
+id = "mq-017"
+qtype = "judgment"
+subtopic = "queue-vs-log"
+levels = ["mid", "senior"]
+q = "Work is distributed to a pool of workers through a broker that deletes each message once acknowledged, which suits the job perfectly. New information: a second team now wants to react to the same events, and a third wants to reprocess last month's to backfill a new field. Does the existing choice remain adequate?"
+a = "No, -2, and both new requirements fail for the same reason. Deletion on acknowledgement means a message goes to exactly one consumer and is then gone, so a second independent consumer is not a configuration change and reprocessing history is impossible because the history does not exist. A log retains messages for a window and has each consumer group track its own offset, which makes the second consumer trivial and the backfill a matter of rewinding. This is the everyday case where 'add another consumer' is either a line of config or a re-architecture, decided by what you picked before anyone asked."

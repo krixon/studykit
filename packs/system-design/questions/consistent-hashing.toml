@@ -112,3 +112,11 @@ subtopic = "hot-key"
 levels = ["senior", "lead", "staff"]
 q = "What question separates the three imbalances a ring-based system can show?"
 a = "Is the KEY hot, the RANGE hot, or the SLOT hot. A hot key is workload skew - replicate the value. A hot range is key-design skew - change the key. A hot slot is assignment skew - add virtual nodes. Only the last is a hashing problem."
+
+[[q]]
+id = "ch-015"
+qtype = "judgment"
+subtopic = "virtual-nodes"
+levels = ["mid", "senior"]
+q = "A ring places one point per node, and the team is content because the hash function is uniform. New information: the cluster has a handful of nodes rather than hundreds. Does one point per node remain acceptable?"
+a = "No, -2. Uniformity of the hash is not the issue; variance is. A few random points divide a circle badly, so some nodes own several times the arc of others, and the load imbalance follows the arc. With hundreds of points the variance averages out, which is exactly why virtual nodes exist: give each physical node many positions and its share converges on its intended fraction. It also lets you weight a bigger machine by giving it more points, and it makes a departing node's keys spread over many successors rather than landing entirely on one."

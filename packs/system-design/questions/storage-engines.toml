@@ -120,3 +120,11 @@ subtopic = "durability"
 levels = ["senior", "lead", "staff"]
 q = "Local fsync and quorum acknowledgement. Which failures does each survive?"
 a = "fsync survives process death and machine restart, and not disk failure or machine loss. Quorum acknowledgement survives losing that machine and its disk entirely, because the log entry exists on other machines. They are different guarantees, and the question to ask any datastore is which one it makes when it returns success."
+
+[[q]]
+id = "se-016"
+qtype = "judgment"
+subtopic = "btree-vs-lsm"
+levels = ["mid", "senior"]
+q = "A write-heavy workload is moving to an engine whose advantage is turning random writes into sequential ones. New information: the service publishes a tail-latency target and the storage sits on NVMe. Does the move become more or less compelling?"
+a = "Less, around -1, and worth separating into two effects. NVMe narrows the gain: the advantage came from avoiding random seeks, which was decisive on spinning disks and is measurable rather than dramatic on flash. The tail-latency target is the sharper problem, because compaction runs in the background and collides with traffic, giving a good median with periodic spikes - a profile that reads fine on averages and breaches a p99 target. Write-heavy still favours the newer engine on throughput and space; if the tail is contractual, the predictable latency of in-place updates is worth paying write amplification for."

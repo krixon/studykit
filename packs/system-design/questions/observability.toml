@@ -120,3 +120,11 @@ subtopic = "alerting"
 levels = ["senior", "lead", "staff"]
 q = "Why multi-window multi-burn-rate alerting rather than a single threshold?"
 a = "Because you want two urgency levels from one SLO. A fast burn rate over a short window catches a severe failure within minutes and pages. A slow burn over a long window catches a persistent low-level problem and opens a ticket. The short window gives speed, the long window suppresses noise from brief blips, and requiring both reduces false pages."
+
+[[q]]
+id = "ob-016"
+qtype = "judgment"
+subtopic = "cardinality"
+levels = ["mid", "senior"]
+q = "Latency is tracked as a metric, and to investigate a complaint the team proposes adding the customer identifier as a label so they can slice by tenant. New information: the service has a large and growing number of customers. Does adding the label become more or less advisable?"
+a = "Much less, -2, and the cost lands on the monitoring system rather than the service. A metric's cost is the number of distinct label combinations, so a label with one value per customer multiplies every series by the customer count and keeps growing - which is how a metrics backend gets taken down by a well-intentioned label. Metrics are for bounded dimensions. The per-tenant question belongs to a signal that carries arbitrary context: a trace to localise it, or structured logs to aggregate over, both of which hold the identifier without multiplying anything pre-aggregated."

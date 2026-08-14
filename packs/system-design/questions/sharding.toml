@@ -128,3 +128,11 @@ subtopic = "cross-shard-tx"
 levels = ["senior", "lead", "staff"]
 q = "A query scatter-gathers across 20 shards, each with a p99 of 50ms. Roughly what is the query p99, and why?"
 a = "Well above 50ms - the query waits for the slowest of 20, so the tail of the maximum matters, not the tail of one. If each shard independently exceeds 50ms one percent of the time, the chance at least one does is about 1 - 0.99^20, roughly 18 percent. Fan-out converts a rare tail event into a common one."
+
+[[q]]
+id = "sh-017"
+qtype = "judgment"
+subtopic = "shard-key"
+levels = ["mid", "senior"]
+q = "A shard key is chosen for its even spread across the fleet, which the team has confirmed with a distribution test. New information: the key is not present in the predicate of the query that serves the main product page. Does the key remain a good choice?"
+a = "No, -2, and the distribution test measured the wrong half of the requirement. A key needs three things: high cardinality, an even spread of writes, and presence on the read path. Missing the third turns every read of that page into a scatter-gather across every shard, so latency becomes the slowest shard's and total load multiplies by the shard count - the fleet is perfectly balanced and uniformly busy doing work one shard could have done. Balance without locality is the classic version of this mistake."

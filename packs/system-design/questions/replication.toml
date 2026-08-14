@@ -112,3 +112,11 @@ subtopic = "sync-vs-async"
 levels = ["mid", "senior", "lead", "staff"]
 q = "N=3, W=2, R=2. How many nodes can you lose and still read and write, and why does W + R > N matter?"
 a = "One. With two nodes up you can still assemble both quorums. W + R > N (here 4 > 3) forces the read set and write set to overlap in at least one node, so a read is guaranteed to see a node that took the last acknowledged write."
+
+[[q]]
+id = "rp-015"
+qtype = "judgment"
+subtopic = "sync-vs-async"
+levels = ["mid", "senior"]
+q = "Followers replicate asynchronously, and reads are spread across them to add capacity. New information: the flow that matters most writes a record and then immediately reads it back to render a confirmation page. Does asynchronous replication remain suitable for this flow?"
+a = "Not for this flow, -2, though it may stay right for everything else. The write is acknowledged by the leader before the follower has it, so a read routed to a follower can legitimately return the previous state or nothing at all, and the user sees their own change missing. This is the read-your-writes case, and the remedies are local rather than architectural: route reads to the leader for a short window after a write, or pin that session to the leader, or have the client pass the version it wrote and let a lagging follower wait or redirect. Switching everything to synchronous replication buys correctness here by putting a remote round trip on every write."

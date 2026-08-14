@@ -104,3 +104,11 @@ subtopic = "pacelc"
 levels = ["senior", "lead", "staff"]
 q = "Same-region quorum versus cross-region quorum. What is the latency gap and why does it settle the EL versus EC argument?"
 a = "Roughly 1-3ms same-region against 50-150ms cross-region, so one to two orders of magnitude. That gap is the entire else half of PACELC - it is why a globally consistent write is a product decision, not a configuration one, and why most systems keep consistency regional and accept eventual consistency between regions."
+
+[[q]]
+id = "cp-014"
+qtype = "judgment"
+subtopic = "quorum"
+levels = ["mid", "senior"]
+q = "A leaderless store is configured so that the number of nodes written plus the number read exceeds the total, and the team treats reads as guaranteed to see the latest write. New information: writes are considered successful once the required number of nodes have acknowledged, and a failed node is later brought back with stale data. Is the guarantee sound?"
+a = "No, -1 to -2: the condition is necessary and not sufficient. Overlap guarantees a read set intersects a write set, so at least one node holds the newest value, but it does not guarantee the reader can tell which value that is, nor that a partial write is resolved rather than left divergent. Making it hold needs the machinery around it: versioning so the newest is identifiable, read repair to fix what the read exposed, and anti-entropy to reconcile a node that returns with old state. Treating the inequality alone as linearizability is the common overreach."

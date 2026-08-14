@@ -112,3 +112,11 @@ subtopic = "connection-scaling"
 levels = ["senior", "lead", "staff"]
 q = "After every deploy, the push tier takes ten minutes to stabilise and briefly serves errors, even though the deploy itself is quick. Why?"
 a = "Every connection on a replaced node reconnects at once, so the surviving and new nodes take a synchronised reconnect spike on top of normal load, each reconnect costing a TLS handshake and a state resynchronisation. Fix with jittered reconnect backoff on the client, an accept-rate cap on the server, and draining connections gradually before terminating a node."
+
+[[q]]
+id = "rt-015"
+qtype = "judgment"
+subtopic = "transports"
+levels = ["mid", "senior"]
+q = "A live status feed is being built on a full-duplex persistent connection, on the grounds that it is the modern way to push. New information: the client only ever receives from this feed and never sends on it, and a share of users sit behind corporate proxies. Does the choice become more or less appropriate?"
+a = "Less, around -1 to -2. Full duplex buys the ability for the client to send, which is being paid for and not used, and it does so with its own protocol that proxies frequently mishandle. A server-to-client stream over ordinary HTTP goes through that infrastructure, and brings automatic reconnection with a last-seen event id, which is work you would otherwise write yourself. Keep the full-duplex transport when the client genuinely needs to send at low latency; for a feed it is the under-used simpler option that wins."
