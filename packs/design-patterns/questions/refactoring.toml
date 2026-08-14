@@ -104,3 +104,12 @@ subtopic = "duplication"
 levels = ["senior", "lead", "staff"]
 q = "Two services each have their own copy of the customer model, so you are extracting a shared library. More or less appropriate?"
 a = "Less, -1 to -2. Duplication across a module or service boundary is often correct - the copies let the services deploy and evolve independently, whereas a shared model couples their release cycles and turns every change into a cross-team negotiation. Remove duplication inside a boundary; think hard before removing it across one."
+
+[[q]]
+id = "rf-014"
+qtype = "numeric"
+subtopic = "duplication"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A block of logic appears in two places. Extracting it into a shared abstraction takes an afternoon. Six months later the two callers have diverged, and the shared thing carries three boolean flags and two special cases to serve both; unwinding it means understanding every caller. Counting the flags and special cases as the ongoing cost, what does the rule of three say the second occurrence should have bought, and why does the arithmetic favour waiting?"
+a = "Nothing but a note. Two occurrences give two data points, which cannot show you the axis of variation, so abstracting at two is a guess - and here it was wrong five times over, since 3 flags plus 2 special cases is 5 accommodations bolted onto a shared thing to keep two callers working. The afternoon saved is dwarfed by that, because duplication is visible and mechanical to remove whereas a wrong abstraction has to be understood before it can be unwound. Wait for the third occurrence, which is the first one that shows what actually varies."
+derivation = ["occurrences = 2", "flags = 3", "special_cases = 2", "accommodations = flags + special_cases"]

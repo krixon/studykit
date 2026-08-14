@@ -96,3 +96,36 @@ subtopic = "ocp"
 levels = ["mid", "senior", "lead", "staff"]
 q = "You are applying SOLID rigorously to a script that will be deleted next month. More or less appropriate?"
 a = "Less, -2. Every one of these principles costs indirection now to make future change cheap. With no future, there is no return. They earn their keep in code that has been alive long enough to change repeatedly, and nowhere else."
+
+[[q]]
+id = "so-013"
+qtype = "discrimination"
+subtopic = "srp"
+levels = ["graduate", "mid"]
+q = "Two people apply the same principle to one large class. One ends up with three cohesive classes; the other with nine classes of one method each, where following a single operation means opening all nine. What did the second person use as the unit, and what is the right one?"
+a = "The second used size, splitting until each piece was small. The unit is a reason to change, better stated as one responsibility to one actor: if the finance team's rules and the reporting team's rules live in one class, two groups request changes to the same file and collide. Splitting along that axis gives you the three. Splitting by size gives you indirection with no seam behind it, because all nine still change together for the same reason. Small is not the goal, cohesive is."
+
+[[q]]
+id = "so-014"
+qtype = "discrimination"
+subtopic = "lsp"
+levels = ["graduate", "mid"]
+q = "A square is a rectangle in every sense a biology teacher would accept, and making one a subtype of the other breaks callers. What is the test the taxonomy passes and the code fails?"
+a = "Substitutability by behaviour rather than resemblance by category. The rule is that a subtype must be usable anywhere its supertype is without the caller knowing, so what matters is the contract callers rely on, not whether the words form a sensible hierarchy. A caller that sets width and then height and expects both to hold is relying on their independence, which the square cannot honour. Inheriting because the sentence 'is a' sounds true is the trap; the question is whether every promise the supertype made still holds."
+
+[[q]]
+id = "so-015"
+qtype = "judgment"
+subtopic = "isp"
+levels = ["graduate", "mid"]
+q = "A wide interface is to be split so that no caller depends on methods it does not use. New information: there is one implementation and one caller, and the split is proposed because a second caller is expected next year. Does the split become more or less worth doing now?"
+a = "Less, around -1. The principle is real and the timing is the whole question: with one caller there is no client being forced to depend on anything it does not use, so the split buys nothing today and commits you to a shape guessed from a caller that does not exist. Wait for the second case, then split along what it actually needs. Going from a concrete interface to a narrower one once you can see both callers is cheap; unwinding a division that turned out to be along the wrong axis is not."
+
+[[q]]
+id = "so-016"
+qtype = "numeric"
+subtopic = "ocp"
+levels = ["graduate", "mid"]
+q = "A payment type is identified by a branch that appears in the pricing module, the receipt renderer, the refund path and the reconciliation report. Two new payment types are being added this quarter. How many of those branch sites must be edited, and how many edits is that in total?"
+a = "All four sites, twice each, so eight edits, and every one is a chance to miss a site - which is the failure this principle names. Adding behaviour requires modifying existing code in four places, so the module is open for neither extension nor safety. Replacing the branches with polymorphism or a registry makes each new type one new class and zero edits to the four call sites. Note the four is the cost that matters, not the two: the edits scale with the number of places that switch on the type."
+derivation = ["sites = 4", "new_types = 2", "edits = sites * new_types"]

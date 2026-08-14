@@ -88,3 +88,27 @@ subtopic = "singleton"
 levels = ["graduate", "mid", "senior"]
 q = "You are making the configuration object a singleton so any class can read settings. More or less appropriate?"
 a = "Less, -1 to -2. It works and it hides the dependency: nothing in a class's signature shows that it reads configuration, and a test that needs different settings must mutate a global. Inject the configuration, or better the specific values a class needs, so the requirement is visible."
+
+[[q]]
+id = "cr-012"
+qtype = "discrimination"
+subtopic = "builder"
+levels = ["graduate", "mid"]
+q = "An object needs many optional settings. One approach offers a series of constructors covering the plausible combinations; the other assembles the object step by step and produces it at the end. What goes wrong with the first as the number of optional settings grows?"
+a = "The combinations multiply, so you either write a constructor per plausible subset or you write one long parameter list where the caller passes nulls and defaults positionally and nobody can read the call site. Adding one more optional setting makes it worse again. Assembling step by step names each value at the point it is supplied, lets the caller set only what it cares about, and gives one place to validate that the finished combination is coherent before handing it over."
+
+[[q]]
+id = "cr-013"
+qtype = "judgment"
+subtopic = "object-lifetime"
+levels = ["graduate", "mid"]
+q = "A service object is created once at startup and shared by every request, because constructing it is expensive. New information: it holds the identity of the current user, set at the start of each request. Does sharing one instance remain safe?"
+a = "No, -2, and it is a correctness bug rather than a design preference. A single shared instance holding per-request state means concurrent requests overwrite each other's identity, so one user's work is done as another user - intermittent, load-dependent, and invisible in a test that issues one request at a time. Keep the expensive, immutable part shared and pass the identity in as an argument, or scope the instance holding it to the request."
+
+[[q]]
+id = "cr-014"
+qtype = "diagnostic"
+subtopic = "singleton"
+levels = ["graduate", "mid"]
+q = "A suite of tests passes when each test file is run on its own and fails when the whole suite runs together, with failures that move around as tests are reordered. Most likely cause?"
+a = "Shared mutable state living for the lifetime of the process, typically a single global instance holding a cache, a registry or a configuration that one test mutates and the next inherits. It passes in isolation because each file gets a fresh process. The moving failures are the giveaway: order decides who writes before whom. The reason a global instance is treated as a design problem rather than a convenience is exactly this - it is a dependency nothing declares, so nothing resets it."

@@ -96,3 +96,12 @@ subtopic = "module-seams"
 levels = ["senior", "lead", "staff"]
 q = "A tangled monolith is being split into microservices to improve modularity. More or less likely to work?"
 a = "Less, -2 as stated. Splitting a tangle distributes the tangle and adds a network between the pieces, so every implicit coupling becomes a runtime failure mode. Get the boundary right in-process first, where moving it costs a refactor rather than a migration, then extract when there is a reason - independent scaling, deployment, or a team boundary - worth the operational cost."
+
+[[q]]
+id = "bo-013"
+qtype = "numeric"
+subtopic = "layering"
+levels = ["senior", "lead", "staff"]
+q = "A request passes through five layers, each of which maps the payload into its own representation, and each mapping is hand-written both inbound and outbound. Adding one field to the payload means editing how many mapping functions? What does that number tell you about which layers are earning their place?"
+a = "Ten: five layers, two directions each. A field that carries no logic anywhere touches 10 functions, which is the concrete version of the complaint that layers cost more than they return. The test for each layer is whether it does anything with the field or merely restates it: a layer that only maps is charging you two edits per field for no decision. Collapse the ones that only translate, or share a representation across adjacent layers, and keep the boundaries where something is genuinely transformed or enforced."
+derivation = ["layers = 5", "directions = 2", "mapping_functions = layers * directions"]

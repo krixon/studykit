@@ -88,3 +88,36 @@ subtopic = "adapter"
 levels = ["senior", "lead", "staff"]
 q = "You need to intercept, defer or deny a call. Which of the four wrapping patterns, and why not the others?"
 a = "Proxy. Adapter is out because the interface should not change. Decorator is out because you may need not to call through at all, and a decorator always delegates. Facade is out because it wraps a subsystem and simplifies rather than controlling access to one object."
+
+[[q]]
+id = "st-012"
+qtype = "discrimination"
+subtopic = "decorator"
+levels = ["graduate", "mid"]
+q = "Two wrapping objects, each holding another object of a compatible type, look identical in a diagram. In one the wrapper offers the same interface as the thing it wraps; in the other the interface differs. What is each for, and why is the interface the thing that tells them apart?"
+a = "Same interface is a decorator, adding behaviour such as caching, retrying or logging before or after delegating; different interface is an adapter, making something incompatible fit. The interface is the discriminator because it is the only structural difference - both are an object holding an object - and it follows from the intent. A decorator has to be substitutable for what it wraps so it can stack, and an adapter exists precisely because it is not substitutable. Naming the intent is what makes these vocabulary rather than trivia."
+
+[[q]]
+id = "st-013"
+qtype = "discrimination"
+subtopic = "facade"
+levels = ["graduate", "mid"]
+q = "One wrapper exists because callers found the underlying set of classes hard to use; another exists because a vendor's type would otherwise appear throughout your code. What is each doing, and which one is about the number of things a caller must know?"
+a = "The first is a facade: it presents one simple entry point over several collaborating classes, and the point is reducing what a caller must know and orchestrate. The second is an adapter: it translates one interface into another so the foreign type stops at the boundary and replacing the vendor touches one class. Facade is about simplifying a surface you own; adapter is about fitting something you do not. A facade may hide many objects, an adapter usually wraps one."
+
+[[q]]
+id = "st-014"
+qtype = "diagnostic"
+subtopic = "proxy"
+levels = ["graduate", "mid"]
+q = "Reading a field off an object returned by a data-access layer issues a database query, and doing it inside a loop issues one per iteration. The code contains no query at that point. Most likely cause?"
+a = "The returned object is a stand-in rather than the real thing, and touching the field triggers the load it deferred. The whole purpose of the substitute is to be indistinguishable from the real object, which is why the code shows no query: the fetch happens on attribute access. In a loop that produces one query per iteration and the classic N+1. Fix it by asking for the related data up front, so the collection arrives loaded rather than promising to load itself later."
+
+[[q]]
+id = "st-015"
+qtype = "numeric"
+subtopic = "decorator"
+levels = ["graduate", "mid"]
+q = "A repository needs caching, retrying and logging, and any combination of the three may be wanted. Using a subclass per combination, how many subclasses cover every combination? Using wrappers of the same interface instead, how many classes, and what happens to each count when a fourth concern is added?"
+a = "Eight subclasses, because every one of the three concerns is independently present or absent, and adding a fourth doubles it to sixteen. Three wrappers, one per concern, and a fourth concern makes four. The subclass count grows exponentially with the number of concerns and the wrapper count grows by one each time, which is the argument for composing behaviour at runtime rather than fixing it at compile time. The combination is then chosen by wiring rather than by picking a class name."
+derivation = ["concerns = 3", "subclasses = 2 ** concerns", "wrappers = concerns", "with_fourth_sub = 2 ** 4", "with_fourth_wrap = 4"]

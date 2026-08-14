@@ -88,3 +88,21 @@ subtopic = "leaky-abstractions"
 levels = ["mid", "senior", "lead", "staff"]
 q = "What is a weak justification for introducing an abstraction?"
 a = "That it might let you swap the implementation one day. Swappability is rarely exercised and is usually the wrong reason on its own. The good reasons are that it lets a caller be understood without the implementation, and that it lets the thing be tested without the real dependency."
+
+[[q]]
+id = "co-012"
+qtype = "numeric"
+subtopic = "coupling-kinds"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Nine services depend on a shared library, and three of them also read and write a mutable structure that library exposes as global state. A field on that structure is being renamed. How many services must be changed and released together for the rename, and how many would need it if each of the nine had been passed only the values it uses?"
+a = "The three sharing the global must change and deploy together with the library, because they read and write the same live structure and a half-renamed field is a broken read - so four coordinated releases counting the library. The other six recompile against the new library on their own schedule. Had each been handed only the values it needs, the rename is internal to the library and zero services are forced to move together. That is the cost the coupling table is ranking: shared mutable state converts a local rename into a synchronised deployment, whereas passing data keeps it local."
+derivation = ["services = 9", "sharing_global = 3", "coordinated = sharing_global + 1", "independent = services - sharing_global", "with_data_coupling = 0"]
+
+[[q]]
+id = "co-013"
+qtype = "numeric"
+subtopic = "leaky-abstractions"
+levels = ["senior", "lead", "staff"]
+q = "A repository interface is meant to hide the store behind it. Of its fourteen methods, four take a parameter that only means anything to the current engine, and two more return that engine's own error type. A replacement engine is being evaluated. How many of the fourteen methods have to change, and what does that fraction tell you about the abstraction?"
+a = "Six of fourteen, which is 43%, so nearly half the surface is engine-specific and the interface is not an abstraction over storage but a thin renaming of one engine. The number is the useful part: an abstraction's value is exactly the share of its surface that survives swapping the thing behind it, and a leak is measurable rather than a matter of taste. Below some threshold you are better off admitting the dependency and writing the second implementation as a separate adapter, because a leaky interface costs indirection and delivers no substitutability."
+derivation = ["methods = 14", "engine_params = 4", "engine_errors = 2", "leaking = engine_params + engine_errors", "pct = round(100 * leaking / methods)"]

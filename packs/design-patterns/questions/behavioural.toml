@@ -96,3 +96,27 @@ subtopic = "command"
 levels = ["mid", "senior", "lead", "staff"]
 q = "You are wrapping every service call in a command object for consistency. More or less appropriate?"
 a = "Less, -2 without a reason. The pattern costs a class per operation and earns it only if you need at least one of storage, deferral, audit or undo. If you only ever call the thing immediately, call it."
+
+[[q]]
+id = "be-013"
+qtype = "discrimination"
+subtopic = "state"
+levels = ["graduate", "mid"]
+q = "Two designs replace a conditional with a set of interchangeable objects behind one interface. In the first the caller chooses which object to use; in the second the objects decide what replaces them. What separates them, and why is the second not just the first with more steps?"
+a = "Who owns the transition. In the first the caller picks an interchangeable algorithm and the object has no opinion about what comes next - swapping a pricing rule does not imply a following rule. In the second each object represents a situation the system is in and knows which situations may follow, so the set encodes a machine with legal transitions. That is the substance: the second enforces that an order cannot go from delivered back to pending, which a set of interchangeable algorithms has no way to express."
+
+[[q]]
+id = "be-014"
+qtype = "judgment"
+subtopic = "template-method"
+levels = ["graduate", "mid"]
+q = "Several jobs share a fixed sequence of steps and differ in two of them, so a base class fixes the sequence and leaves those two for subclasses to fill in. New information: one new job needs the same steps in a different order. Does the base class remain the right shape?"
+a = "Less appropriate, around -1 to -2. Fixing the sequence in a base class is exactly what the shape is for, and its cost is that the order is the one thing a subclass cannot vary, so a job needing a different order either subverts the structure with flags or reimplements it. If the odd job is genuinely an exception, keeping the base class and writing that one separately is honest. If order is going to vary generally, the sequence belongs in a composed pipeline where the steps are objects and the order is data, and inheritance was fixing the wrong thing."
+
+[[q]]
+id = "be-015"
+qtype = "diagnostic"
+subtopic = "command"
+levels = ["graduate", "mid"]
+q = "A user action is recorded as an object and put on a queue for a worker to carry out later. After a deployment, a batch of the queued items fails to run, and the ones that fail are all older than the deployment. Most likely cause?"
+a = "The recorded objects no longer match what the code expects to read: a field was renamed, removed or given a new required value, so items serialised before the change cannot be reconstructed after it. Turning an action into a stored object means its shape becomes a persisted format with the compatibility obligations of one, and the deployment is the moment old and new meet. Handle it the way any format migration is handled - version the payload, keep readers tolerant of missing fields, and drain or migrate the backlog before removing support."
