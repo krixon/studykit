@@ -96,3 +96,43 @@ subtopic = "atomicity"
 levels = ["senior", "lead", "staff"]
 q = "How do you replace a file's contents safely with no locks?"
 a = "Write to a temporary file in the same directory, fsync it, then rename it over the target. Rename within a filesystem is atomic, so any reader sees either the whole old file or the whole new one and never a partial write. Same directory matters, because rename across filesystems is not atomic."
+
+[[q]]
+id = "cc-013"
+qtype = "discrimination"
+subtopic = "processes-threads"
+levels = ["graduate", "mid"]
+q = "A colleague says the service is not concurrent because the machine has one core. What is being conflated, and which of the two does a single core actually rule out?"
+a = "Concurrency with parallelism. Concurrency is structuring work so tasks can progress independently, which is a design property and entirely possible on one core: the tasks interleave, and while one waits on I/O another runs. Parallelism is tasks literally executing at the same instant, which needs more than one core. A single-core machine can be highly concurrent and cannot be parallel, and a single-threaded event loop serving tens of thousands of connections is the everyday proof."
+
+[[q]]
+id = "cc-014"
+qtype = "discrimination"
+subtopic = "races-locks"
+levels = ["graduate", "mid"]
+q = "Two remedies for a shared counter that keeps losing increments: one makes the increment indivisible in hardware, the other stops other threads entering the surrounding code at all. What is the axis, and when does the cheaper one stop being enough?"
+a = "How much is protected. An atomic operation covers exactly one variable and costs close to nothing; a mutex covers whatever region you put it around and costs contention. The atomic stops being enough as soon as correctness spans more than one variable, or spans a read followed by a decision followed by a write. Checking a balance and then deducting from it cannot be made correct by two atomics, because another thread can interleave between them. Cheaper still than either is not sharing the value at all."
+
+[[q]]
+id = "cc-015"
+qtype = "discrimination"
+subtopic = "deadlock"
+levels = ["graduate", "mid"]
+q = "Two failures look identical from outside: the work never finishes. In one, every thread is blocked and the CPU is idle. In the other, threads are busy and no work completes. What are these called, and what distinguishes their causes?"
+a = "Deadlock and livelock. Deadlock is threads blocked waiting on locks each other holds, so nothing runs and the CPU shows nothing happening; it needs a circular wait, which consistent lock ordering prevents. Livelock is threads actively responding to each other, changing state, retrying and yielding without progressing, so the CPU looks busy. Starvation is a third case worth separating: work does progress, but one thread never gets a turn."
+
+[[q]]
+id = "cc-016"
+qtype = "judgment"
+subtopic = "async-io"
+levels = ["graduate", "mid"]
+q = "A service spends nearly all its time waiting on a database, and the team is rewriting it on an event loop to raise the number of concurrent requests it can hold. New information: each request also resizes an uploaded image, in-process and synchronously. Does the rewrite become more or less likely to deliver what they want?"
+a = "Much less, -2, unless the image work moves. An event loop wins by removing the memory and context-switch cost of a thread per waiting request, and it makes nothing compute faster. A synchronous CPU-bound call on the loop blocks every other request on that loop, so the resize serialises the whole service and the concurrency they bought disappears under load. Push the resize to a thread pool, a process pool or a separate worker, and the original reasoning holds again."
+
+[[q]]
+id = "cc-017"
+qtype = "judgment"
+subtopic = "atomicity"
+levels = ["graduate", "mid"]
+q = "A counter guarded by a mutex is showing up in a profile as a contention point, and someone proposes swapping the mutex for an atomic increment. New information: the code inside the lock reads the counter, and if it is below a limit, increments it. Does the swap become more or less appropriate?"
+a = "Less, -2. The lock is not protecting an increment, it is protecting a read, a decision and a write, and an atomic increment cannot express that. Replacing it lets two threads both read a value under the limit and both increment past it, which is the original race with the lock removed. A compare-and-swap loop expresses check-then-set correctly and is the atomic primitive that fits; a plain atomic increment does not."

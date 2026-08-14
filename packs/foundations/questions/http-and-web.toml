@@ -96,3 +96,51 @@ subtopic = "cors-origins"
 levels = ["mid", "senior", "lead", "staff"]
 q = "A browser reports a CORS error on a POST with a JSON body, but the same request works from curl. What is likely happening?"
 a = "The preflight is failing. A POST with a JSON content type is not a simple request, so the browser sends an OPTIONS request first and only proceeds if the response permits the origin, method and headers. curl sends no preflight, so it never sees the problem. Handle OPTIONS and return the right Allow headers."
+
+[[q]]
+id = "ht-013"
+qtype = "discrimination"
+subtopic = "headers-caching"
+levels = ["graduate", "mid"]
+q = "A page showing someone's account balance is served with a directive whose name reads as though it prevents caching, and the browser writes a copy to disk anyway. A different directive would have prevented that. What separates the two, and which one did they want?"
+a = "Whether a copy may be stored at all, against whether a stored copy may be used without checking. `no-cache` permits storing and requires revalidation before reuse. `no-store` forbids keeping it. For a balance on a shared machine they wanted `no-store`, because `no-cache` leaves the response on disk where the next person can find it. `private` is a third axis again: it permits storing, but only by the browser and never by a shared cache."
+
+[[q]]
+id = "ht-014"
+qtype = "discrimination"
+subtopic = "cookies-sessions"
+levels = ["graduate", "mid"]
+q = "Two ways of keeping someone logged in. One lets you throw them out instantly and costs a lookup on every single request; the other costs nothing per request and leaves you unable to throw them out at all. What is the axis, and which way does each design fall?"
+a = "Where the state lives. An opaque session id in the cookie keeps the real state on the server, so revocation is a delete and every request pays a lookup. A signed token carries the state in the request itself, so the server stores nothing and validates by signature, which means a valid token stays valid until it expires no matter what you do. Revocation is the price of statelessness, bought back with short expiry plus refresh, or a deny-list that reintroduces the lookup you were avoiding."
+
+[[q]]
+id = "ht-015"
+qtype = "discrimination"
+subtopic = "cors-origins"
+levels = ["graduate", "mid"]
+q = "A colleague argues the API needs no authorisation checks on a sensitive endpoint, because the browser rule already blocks any request that does not come from your own domain. What is being confused with what, and what is that rule actually protecting?"
+a = "A browser-enforced restriction is being read as an access control. The same-origin policy and CORS are rules a browser applies to script running in a page; curl, a server, a proxy and a script ignore them entirely. What it protects is your users from other websites reading their data, because the browser attaches their cookies automatically. It protects nothing about your API from anyone who is not using a browser, so the authorisation check is still the only thing standing there."
+
+[[q]]
+id = "ht-016"
+qtype = "judgment"
+subtopic = "methods-status"
+levels = ["graduate", "mid"]
+q = "Cancelling a subscription is wired to an ordinary link, so clicking it issues a GET. New information: the team has turned on a browser feature that fetches links when the pointer hovers over them. Does GET become more or less appropriate here, and what is the mechanism?"
+a = "Far less, -2. GET is defined as safe, meaning it does not change state, and everything in the chain acts on that: prefetchers, proxies, caches and retry logic will all issue it without a user deciding to. Hovering now cancels subscriptions. The property was already violated before the prefetcher existed; the new information only made the consequence visible. A state change belongs behind POST, or DELETE if you want the idempotence."
+
+[[q]]
+id = "ht-017"
+qtype = "judgment"
+subtopic = "headers-caching"
+levels = ["graduate", "mid"]
+q = "A profile page is served with a directive that lets any shared cache keep it and hand it to anyone who asks for the same URL. New information: the page greets the visitor by name, resolved from their session cookie. More or less appropriate?"
+a = "Less, -2, and it is a data leak rather than a performance question. A shared cache keyed on the URL alone will serve the first person's greeting to the second. The fix is `private`, so only the visitor's own browser stores it. `Vary: Cookie` makes the cache key correct in principle, but on a site where everyone carries a distinct cookie it drops the shared hit rate to nothing, so it buys correctness and no caching."
+
+[[q]]
+id = "ht-018"
+qtype = "judgment"
+subtopic = "request-response"
+levels = ["graduate", "mid"]
+q = "A mobile client opens a fresh HTTPS connection for each of the several small requests it makes on startup, and someone proposes optimising the server's handler to shave time off each one. New information: the client and the server are on different continents. Does tuning the handler become more or less appropriate?"
+a = "Less, -2 or -1. A fresh HTTPS connection spends two to three round trips on TCP and TLS before any of your data moves, and a cross-continent round trip is on the order of a hundred milliseconds. The startup cost is dominated by connection setup and distance, neither of which the handler touches. Reuse the connection with keep-alive, or multiplex over HTTP/2, and the several setups collapse to one. Handler time is worth attention once it is a visible share of the total."

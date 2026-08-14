@@ -96,3 +96,43 @@ subtopic = "coverage"
 levels = ["senior", "lead", "staff"]
 q = "Line coverage and branch coverage. Why is the difference worth knowing?"
 a = "A line containing a condition can be fully line-covered with only one side of the condition ever taken, so the untested branch is invisible. Branch coverage counts both outcomes, which is much closer to the question you actually care about."
+
+[[q]]
+id = "ts-013"
+qtype = "discrimination"
+subtopic = "doubles"
+levels = ["graduate", "mid"]
+q = "Two replacements for a database in a test. One returns whatever answers the test was told to return; the other is a working in-memory implementation with real behaviour. What does the second catch that the first cannot?"
+a = "Anything that depends on the dependency behaving like itself. A stub returns canned answers, so it agrees with whatever the test author believed, including a wrong belief: it will happily return two rows for a query that would really return none. A fake implements the actual semantics, so it catches a wrong query, a missed constraint, an ordering assumption or a value the real thing would have rejected. The general trap is a system of components mocked into agreeing with each other while being collectively broken."
+
+[[q]]
+id = "ts-014"
+qtype = "discrimination"
+subtopic = "what-to-assert"
+levels = ["graduate", "mid"]
+q = "Two tests over the same function pass today. After a refactor that changes nothing a caller can observe, one still passes and the other fails. What distinguishes what they were asserting on?"
+a = "Observable behaviour against internal steps. The surviving test states a claim about the result or effect the caller can see, which the refactor preserved by definition. The broken one asserted on how the work was done - which collaborators were called, in what order, with what - so it was pinned to the implementation and every improvement now costs a test edit. That is what makes a suite a tax on change instead of a licence for it, and it is the usual symptom of mocking inside code you own."
+
+[[q]]
+id = "ts-015"
+qtype = "discrimination"
+subtopic = "flakiness"
+levels = ["graduate", "mid"]
+q = "Two intermittently failing tests. One fails only when the suite is run in a different order; the other fails on a loaded machine and never on a laptop. What is the cause in each case, and what is the fix for each?"
+a = "Shared mutable state that is not reset, and a timing assumption. Order dependence means one test leaves something behind - a database row, a global, a cached singleton - that another relies on or trips over; the fix is isolating and resetting state, and randomising order to keep it exposed. The load-sensitive one is usually a sleep that is long enough when nothing else is running; the fix is waiting for a condition rather than a duration, and injecting a clock instead of reading the real one."
+
+[[q]]
+id = "ts-016"
+qtype = "judgment"
+subtopic = "test-levels"
+levels = ["graduate", "mid"]
+q = "A team has thorough unit tests over every component and is deciding whether the middle layer of slower tests against a real database in a container is worth its cost. New information: each component's dependencies are replaced in tests by doubles the team wrote themselves. Does that layer become more or less worth paying for?"
+a = "More, +2. Unit tests with hand-written doubles verify each component against the team's belief about its neighbours, and nothing verifies the belief. Everything that lives between components - the SQL, the serialisation, the wiring, a column that is nullable when the double was not - is exactly what those tests cannot see, and it is what the middle layer exists for. The pyramid is advice about feedback speed and diagnosis cost, not a reason to skip the layer where integration bugs live."
+
+[[q]]
+id = "ts-017"
+qtype = "judgment"
+subtopic = "coverage"
+levels = ["graduate", "mid"]
+q = "A team sets a rule that no change may lower the coverage percentage. New information: most of the uncovered code is error-handling paths. Does the rule become more or less likely to improve the suite?"
+a = "More likely to point somewhere useful, and still a weak instrument, so around +1. Untested error handling is the code that runs when things are already going badly, so it is worth covering and the rule will push people at it. What the rule cannot tell the difference between is a test that exercises a path and a test that asserts something about it: coverage counts lines executed, so a test calling the function and asserting nothing satisfies it. Expect the number to be met with assertions nobody would defend unless review asks what each new test claims."

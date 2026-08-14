@@ -96,3 +96,43 @@ subtopic = "structure-choice"
 levels = ["graduate", "mid", "senior"]
 q = "A page is fast in testing with 20 records and takes 40 seconds with 2000. The code loops over records and, for each one, searches a list of related items. What is the shape of the problem?"
 a = "Nested iteration, so O(n squared) - 100x more records is 10,000x more work. Build a map from the related items keyed by whatever the inner search looks up, then each lookup is O(1) and the whole thing becomes O(n)."
+
+[[q]]
+id = "cx-013"
+qtype = "discrimination"
+subtopic = "big-o"
+levels = ["graduate", "mid"]
+q = "A colleague describes the same lookup as constant time in one sentence and linear in the next, and is right both times. What distinguishes the two claims, and which of them should you plan around when the keys arrive from strangers?"
+a = "Average case against worst case. A hash lookup is O(1) on average and O(n) when everything collides in one bucket. Plan around the worst case when the input is attacker-controlled, because an attacker who can engineer colliding keys chooses which case you get. That is the algorithmic complexity attack, and randomised hash seeds are the mitigation."
+
+[[q]]
+id = "cx-014"
+qtype = "discrimination"
+subtopic = "structure-choice"
+levels = ["graduate", "mid"]
+q = "You hold a set of usernames and need to answer two questions: is this exact name taken, and which names begin with 'mar'. One structure answers the first instantly and cannot answer the second at all without reading everything. What property separates them?"
+a = "Whether the structure maintains an order. A hash-based set scatters keys by hash, so it answers exact membership in O(1) average and has no notion of what is adjacent to a key, making a prefix query a full scan. A balanced tree or sorted map keeps keys in order, so membership costs O(log n) but a prefix or range query costs the same log to find the start and then a walk. Pay the log if you need ranges."
+
+[[q]]
+id = "cx-015"
+qtype = "discrimination"
+subtopic = "memory-locality"
+levels = ["graduate", "mid"]
+q = "Two collections hold the same values and the same number of them. Walking one end to end is dramatically faster than walking the other, and both walks visit every element exactly once. What accounts for the gap, and why does the notation not show it?"
+a = "Memory layout. A contiguous array is prefetched by the CPU, so most accesses hit cache; a pointer-based structure scatters its nodes, so each step risks a cache miss costing around a hundred times a hit. Big-O deliberately drops constant factors, and this is a constant factor spanning two orders of magnitude. Both walks are O(n) and the notation is describing growth, not speed."
+
+[[q]]
+id = "cx-016"
+qtype = "discrimination"
+subtopic = "sorting-searching"
+levels = ["graduate", "mid"]
+q = "You sort a list of orders by customer, then sort that result by date, expecting orders to come out grouped by date and by customer within each date. With one sort implementation it works and with another the customer grouping is destroyed. What property decides it?"
+a = "Stability. A stable sort preserves the relative order of elements that compare equal, so the earlier sort by customer survives inside each date. An unstable sort is free to reorder equal elements and throws that away. Multi-key sorting by sorting repeatedly only works on a stable sort, least significant key first."
+
+[[q]]
+id = "cx-017"
+qtype = "judgment"
+subtopic = "structure-choice"
+levels = ["graduate", "mid"]
+q = "A review comment asks you to replace a linear scan inside a loop with a set lookup, on the grounds that it turns quadratic work into linear. New information: the collection being scanned holds about a dozen items and is a fixed list of currency codes that has not changed in years. Does the change become more or less appropriate, and why?"
+a = "Less, around -1. The asymptotic argument is correct and irrelevant at this size: a scan of a dozen contiguous items is a handful of cache-friendly comparisons, and building a set costs an allocation and hashing on every call. The crossover where hashing wins is usually in the hundreds. -2 overstates it, because the change is harmless rather than wrong, and a 0 misses that the fixed size is what removes the risk the comment is guarding against. Accepting it as written is how asymptotic reasoning gets applied to collections too small for it to mean anything."

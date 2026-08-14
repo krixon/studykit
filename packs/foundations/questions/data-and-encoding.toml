@@ -112,3 +112,43 @@ subtopic = "validation"
 levels = ["senior", "lead", "staff"]
 q = "Parse, do not validate. What does that actually mean?"
 a = "Convert input into a type that cannot represent an invalid state - an Email type rather than a string you checked - so the check happens once and downstream code cannot forget it. A validated string is still a string, and nothing stops the next function receiving an unvalidated one."
+
+[[q]]
+id = "de-015"
+qtype = "discrimination"
+subtopic = "time-and-zones"
+levels = ["graduate", "mid"]
+q = "A meeting is scheduled for nine in the morning next November. One system stores the instant with a fixed offset from UTC; another stores the local time plus a zone name. A government then changes when daylight saving starts. What happens in each, and which was right?"
+a = "The fixed offset was computed under the old rules, so the stored instant now maps to a different local time and the meeting moves - it might be at eight or ten. The zone name plus local time is re-resolved with the updated rules, so nine in the morning is still nine in the morning. The second is right for a future event, because the user's intent was a wall-clock time, not an instant. For something that already happened the reverse holds: the instant is the fact, and UTC is how to keep it."
+
+[[q]]
+id = "de-016"
+qtype = "discrimination"
+subtopic = "numbers-money"
+levels = ["graduate", "mid"]
+q = "Two services compute the same total from the same inputs and disagree by a penny, repeatedly and in the same direction. Both use the same currency type. What are the two likeliest causes, and which one does the consistent direction point at?"
+a = "A differing rounding rule, or a float somewhere in the chain. The consistent direction points at rounding: half-up always pushes the midpoint away from zero, while half-even sends it to the nearest even digit and avoids that systematic bias, so two systems using different rules will drift the same way every time. Float error would be erratic in direction, and its presence anywhere in the calculation is a separate bug. The rule has to be specified rather than inherited from whatever each language defaults to."
+
+[[q]]
+id = "de-017"
+qtype = "discrimination"
+subtopic = "text-encoding"
+levels = ["graduate", "mid"]
+q = "A name displays correctly in one service and as mangled symbols in another. A well-meaning fix re-encodes the mangled output to repair it. Why does that fix make things worse, and what is the thing to look for instead?"
+a = "The mangling is text that was encoded one way and decoded another, so the bytes are intact and only the interpretation was wrong. Re-encoding the misread result adds a second wrong transformation on top of the first, so the original bytes are now genuinely lost rather than merely misread. Find the boundary where the wrong decoding happened - a connection, a file read, a header, a platform default that differs between a laptop and a server - and set the encoding explicitly there."
+
+[[q]]
+id = "de-018"
+qtype = "judgment"
+subtopic = "serialisation"
+levels = ["graduate", "mid"]
+q = "An internal service will publish events as JSON, chosen because everyone can read it and no tooling is needed. New information: the payload carries record ids generated as large 64-bit integers, and one consumer is written in JavaScript. Does JSON become more or less suitable?"
+a = "Less as currently specified, around -1, and the fix is smaller than changing format. JSON numbers are doubles in JavaScript, so an integer above two to the fifty-third loses precision and the id silently becomes a different id - the worst kind of failure, because it looks like a value rather than an error. Send large ids as strings and the problem disappears. A -2 would be treating this as a reason to adopt a schema format, which solves it but buys tooling and a registry for a problem that quoting the field also solves."
+
+[[q]]
+id = "de-019"
+qtype = "judgment"
+subtopic = "validation"
+levels = ["graduate", "mid"]
+q = "Usernames are compared for uniqueness with a straight equality check on the stored string. New information: the service accepts names in any language, and users are reporting that a name is rejected as taken when the one they can see is spelled differently. Does the equality check remain sufficient?"
+a = "No, -2, and the cause is that two different byte sequences can be the same text. An accented character can be a single code point or a base letter plus a combining mark, and both display identically, so equality says they differ while a human says they do not. Normalise to a canonical form before comparing and before storing, or the uniqueness constraint means something other than what anyone thinks it means. Note this cuts both ways: it also lets someone register a visually identical name."

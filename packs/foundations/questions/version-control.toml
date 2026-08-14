@@ -104,3 +104,43 @@ subtopic = "finding-bugs"
 levels = ["senior", "lead", "staff"]
 q = "You reset --hard and lost two hours of committed work. What recovers it?"
 a = "git reflog. It records every position HEAD has held, including commits no branch points at any more, so you can find the old hash and reset or cherry-pick back to it. Unreferenced commits survive for about 90 days before garbage collection, which is why almost nothing committed is ever truly lost."
+
+[[q]]
+id = "vc-014"
+qtype = "discrimination"
+subtopic = "merge-vs-rebase"
+levels = ["graduate", "mid"]
+q = "Two ways to bring your branch up to date with main. One leaves your commits with the ids they already had; the other gives them new ids. Which is which, and what rule follows from the ids alone?"
+a = "A merge adds a commit with two parents and leaves existing commits untouched. A rebase replays your commits onto the new base, and since a commit's id is a hash of its content including its parent, changing the parent produces new ids. The rule that follows: never rebase commits anyone else has pulled, because their history still refers to the old ids and reconciling the two is painful. Rebase your own unpushed work, merge anything shared."
+
+[[q]]
+id = "vc-015"
+qtype = "discrimination"
+subtopic = "commits-history"
+levels = ["graduate", "mid"]
+q = "You need to find out which change introduced a particular string into the codebase, and separately why the line above it is written the way it is. Two different history tools answer these. What does each do, and why would the first not be answered by reading the log?"
+a = "`git log -S \"string\"` searches for commits where the number of occurrences of that text changed, so it finds the change that introduced or removed it directly. Reading the log will not do it because the log shows messages, not content, and the string may have arrived in any of thousands of commits. `git blame` names the commit that last touched a given line, which then gives you a message and a ticket explaining why. Blame answers who and which commit; log -S answers when something appeared."
+
+[[q]]
+id = "vc-016"
+qtype = "discrimination"
+subtopic = "branching"
+levels = ["graduate", "mid"]
+q = "Two teams both report painful merges. One keeps branches alive for weeks; the other merges daily but reformats whole files while working in them. Both problems present as conflicts. What is the actual cause in each, and which one is not solved by merging more often?"
+a = "Divergence, and unnecessary churn. The long-lived branch accumulates weeks of change on both sides and delivers all of it as conflicts at once, which merging more often genuinely fixes: merge frequency beats merge strategy. Reformatting is different in kind - a whitespace or import reshuffle touches every region, so any concurrent edit collides no matter how often you merge. That one is fixed by not mixing formatting with behavioural change, or by formatting the whole codebase once in its own commit."
+
+[[q]]
+id = "vc-017"
+qtype = "judgment"
+subtopic = "commits-history"
+levels = ["graduate", "mid"]
+q = "A branch is about to be merged as a single squashed commit, discarding the intermediate steps. New information: the branch is fourteen commits of which twelve are 'wip' and 'fix typo', and the other two are a deliberate two-step migration where the first commit must be deployable on its own. Does squashing become more or less appropriate?"
+a = "Less as a blanket action, around -1, and the answer is to do both. The twelve noise commits are pure gain to discard. Squashing the migration into them destroys the one thing the history was carrying: that the first step was deployable alone, which is what anyone doing the next migration needs to see, and what a revert would need. Clean the noise by rebasing the branch, keep the two migration commits distinct, then merge. Squash-everything is the right default only when nothing in the sequence was meaningful."
+
+[[q]]
+id = "vc-018"
+qtype = "judgment"
+subtopic = "conflicts"
+levels = ["graduate", "mid"]
+q = "A conflict is resolved by keeping your side, because the other side's change looked like a formatting difference. The merge is clean and the branch compiles. New information: the other side's commit message says it guards against a missing profile for users created before a migration. Does the resolution become more or less trustworthy?"
+a = "Much less, -2, and the compile proving nothing is the point. Resolving a conflict means understanding both intentions, and keeping your side here silently discarded someone else's bug fix; the code is syntactically fine and the bug is back. A clean merge is not evidence of a correct merge, which is why the tests get run after resolving and not before. Read the other side's commit message during the resolution, not after."

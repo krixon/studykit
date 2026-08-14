@@ -104,3 +104,43 @@ subtopic = "what-not-to-log"
 levels = ["senior", "lead", "staff"]
 q = "You redact secrets carefully, and an audit still finds tokens in the logs. Where did they come from?"
 a = "Exception messages and stack traces. An error raised while parsing or validating often includes the offending input verbatim, which is exactly the data you were careful not to log. Sanitise error messages at the boundary, not just the fields you log deliberately."
+
+[[q]]
+id = "er-014"
+qtype = "discrimination"
+subtopic = "error-handling"
+levels = ["graduate", "mid"]
+q = "A record not being found and a value being null where the type says it cannot be are both handled the same way in a codebase: caught, logged, and execution continues. One of these deserves that treatment and one does not. Which, and what is the axis?"
+a = "Whether it is an expected condition or a bug. A missing record is part of the design: it happens in normal operation, the caller can do something sensible about it, and it deserves a modelled outcome. A null where the type forbids one is a programming error, and handling it gracefully means the bug ships and produces a quiet wrong answer instead of a loud stop. Expected conditions get handled; bugs should fail fast and loudly. Catching broadly enough to cover both is what erases the distinction."
+
+[[q]]
+id = "er-015"
+qtype = "discrimination"
+subtopic = "exceptions-vs-results"
+levels = ["graduate", "mid"]
+q = "Two ways of signalling that a function can fail. With one, a caller who ignores the possibility still compiles; with the other they cannot. What does each buy, and what is the cost of the safer one?"
+a = "Exceptions keep failure out of the signature: the happy path reads cleanly, and nothing forces a caller to know failure is possible or to handle it, so uncaught paths are easy to leave behind. A result type puts failure in the return type, so the compiler makes every caller confront it and nobody forgets. The cost is noise at every call site, and composing several fallible calls needs language support to stay readable. Neither is universally right; being inconsistent within one codebase is what is actually wrong."
+
+[[q]]
+id = "er-016"
+qtype = "discrimination"
+subtopic = "what-not-to-log"
+levels = ["graduate", "mid"]
+q = "A request fails and three audiences need something from it: the person who hit the error, the engineer who will fix it, and whoever answers the support call. What does each need, and which of the three things must never reach the first audience?"
+a = "The user needs a message describing what to do next. The engineer needs the stack trace and the inputs that produced it, in the logs. Support needs a correlation id that ties the user's report to that log entry. The stack must never reach the user: it discloses internals useful to an attacker and is meaningless to them anyway. The correlation id is what lets you show the user nothing sensitive and still find the exact failure."
+
+[[q]]
+id = "er-017"
+qtype = "judgment"
+subtopic = "log-levels"
+levels = ["graduate", "mid"]
+q = "A noisy service is quietened by raising the log level in production so that informational lines are dropped. New information: the request handler logs the inbound request's parameters at that informational level, and nothing else records them. Does raising the level become more or less appropriate?"
+a = "Less, around -1, and the remedy is not to leave the level down. Levels exist so volume can be reduced without losing the important lines, and this configuration has made an important line unimportant: the next production bug arrives with no record of what was asked for. Move the parameters to the error path, or log them structurally at a level that survives, then raise the level. Turning the volume down while the evidence lives in the discarded band is what makes an incident unreconstructable."
+
+[[q]]
+id = "er-018"
+qtype = "judgment"
+subtopic = "error-handling"
+levels = ["graduate", "mid"]
+q = "A catch-all handler wraps the body of a request handler, converting anything thrown into a 500 and logging it. A reviewer objects that catching everything is a known anti-pattern. New information: this is the outermost frame of the request, and without it an exception reaches the web server and returns a blank response with no log line. Does the catch-all become more or less defensible?"
+a = "More, +2. The anti-pattern is catching broadly in the middle of a call chain, where it swallows failures a caller could have handled and turns a bug into a wrong answer. At the top of a request or job there has to be a boundary that catches everything, because the alternative is an unlogged failure and an empty response. That boundary is the one place a bare catch-all belongs, and what makes it correct rather than lazy is that it logs with the cause chained and does not continue as though the work succeeded."

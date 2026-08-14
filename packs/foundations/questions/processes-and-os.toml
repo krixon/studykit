@@ -104,3 +104,43 @@ subtopic = "environment-config"
 levels = ["mid", "senior", "lead", "staff"]
 q = "What should happen at startup if a required configuration value is missing?"
 a = "The process should exit immediately with a message naming the missing key. Failing fast at startup turns a mystery null three hours later on an uncommon path into an obvious error before any traffic arrives. Log the effective configuration too, with secrets redacted."
+
+[[q]]
+id = "os-014"
+qtype = "discrimination"
+subtopic = "memory"
+levels = ["graduate", "mid"]
+q = "A monitoring dashboard shows one figure for a process's memory in the tens of gigabytes and another in the hundreds of megabytes. Both are correct. Which of them decides whether the process gets killed, and why is the other so large?"
+a = "The resident set size, the smaller figure, is physical memory actually in use and is what the OOM killer and a container's cgroup limit measure. The virtual size is address space the process has reserved, which includes mappings never touched, memory-mapped files and large allocations not yet paged in, so it is routinely enormous and means almost nothing about pressure. Alerting on virtual size produces noise; alerting on resident set size predicts the kill."
+
+[[q]]
+id = "os-015"
+qtype = "discrimination"
+subtopic = "process-model"
+levels = ["graduate", "mid"]
+q = "A command's output is piped into another tool, and the diagnostic messages appear on the terminal rather than in the pipe. A colleague calls this a bug. Which stream is which, and what breaks if the diagnostics are moved into the pipe?"
+a = "Program output goes to stdout, which is what the pipe captures; diagnostics go to stderr, which is why they reach the terminal instead. That is the design and not a bug. Moving diagnostics to stdout corrupts the data the next tool is parsing, so a log line lands in the middle of the JSON and the consumer fails. The separation is what lets the same command be both readable by a person and consumable by a program."
+
+[[q]]
+id = "os-016"
+qtype = "discrimination"
+subtopic = "files-descriptors"
+levels = ["graduate", "mid"]
+q = "A service starts failing to accept new connections and to open files, reporting the same error for both. The code that leaks is nowhere near either symptom. What is being exhausted, and why does the error appear so far from its cause?"
+a = "The per-process file descriptor limit. Sockets, pipes and files all consume descriptors from one small pool, so a leak in any of them starves all of the others, and whatever tries to open something next is what fails - which is usually innocent code. The leak is almost always a descriptor not closed on an error path, so the remedy is a scope-bound construct that closes regardless of how the block exits, plus raising a default limit that is far too low for a server."
+
+[[q]]
+id = "os-017"
+qtype = "judgment"
+subtopic = "signals-shutdown"
+levels = ["graduate", "mid"]
+q = "A container image runs the service through a small shell script as its entry point, which works fine in testing. New information: deploys are taking the full grace period and in-flight requests are being dropped at the end of it. Does the shell script remain a reasonable entry point?"
+a = "No, -2, and the symptom names the mechanism. The script is PID 1, which does not get default signal handlers, and a shell that is not explicitly forwarding signals will not pass SIGTERM to the service it launched. So the service never learns it should stop, sits until the grace period expires, and is then SIGKILLed with requests still in flight. Exec the service so it replaces the shell and becomes PID 1 itself, or use an init that forwards signals and reaps orphans."
+
+[[q]]
+id = "os-018"
+qtype = "judgment"
+subtopic = "memory"
+levels = ["graduate", "mid"]
+q = "A service occasionally vanishes with no log line and no stack trace, and the team is adding more logging inside the request handler to catch it. New information: the host has swap disabled and the service holds an in-memory cache with no eviction policy. Does adding handler logging become more or less likely to find it?"
+a = "Less, -1 or -2: the logging cannot run because nothing in the process gets to run. An unbounded cache grows until the limit is hit, and the OOM killer sends SIGKILL, which is not catchable and permits no cleanup or final log line - which is exactly why the disappearance is silent. Look at dmesg and the exit code, where 137 is 128 plus 9 and names SIGKILL. Then bound the cache. Swap being off is what makes it a fast kill rather than a slow collapse."

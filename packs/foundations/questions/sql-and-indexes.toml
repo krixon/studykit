@@ -104,3 +104,43 @@ subtopic = "transactions"
 levels = ["senior", "lead", "staff"]
 q = "Why should transactions be kept short?"
 a = "A transaction holds locks, so a long one blocks other writers, and in an MVCC database it also prevents cleanup of old row versions, which bloats storage and slows every other query. Long transactions are one of the classic causes of a database that gets gradually worse for no visible reason."
+
+[[q]]
+id = "sq-014"
+qtype = "discrimination"
+subtopic = "joins"
+levels = ["graduate", "mid"]
+q = "A query is meant to list every customer alongside their orders from this year, including customers who ordered nothing. It was written to keep all customers, and a filter on the order date was added afterwards. Customers with no orders have vanished. What happened, and where does the filter belong?"
+a = "Filtering on the right-hand table in the WHERE clause turned the outer join into an inner one. The join produced the customer row with nulls for the order columns, then the WHERE compared a null date against the year and a comparison with null is not true, so the row was discarded. Move the date condition into the ON clause, where it restricts which orders match rather than which joined rows survive."
+
+[[q]]
+id = "sq-015"
+qtype = "discrimination"
+subtopic = "indexes"
+levels = ["graduate", "mid"]
+q = "An index exists over two columns together. Queries filtering on the first column are fast, queries filtering on both are fast, and queries filtering on only the second are as slow as having no index at all. Why is the third case different from the first two?"
+a = "The index is sorted by the first column, and only within equal values of the first is it sorted by the second. Seeking requires knowing where to start, and the second column alone gives you no starting point, so the whole index would have to be read, which is not cheaper than reading the table. This is the leading-column rule. Serving the second column alone needs its own index."
+
+[[q]]
+id = "sq-016"
+qtype = "discrimination"
+subtopic = "normalisation"
+levels = ["graduate", "mid"]
+q = "Two designs both put the customer's name on the order row. One is a bug waiting to happen and the other is correct. What distinguishes them?"
+a = "Whether it is a copy of a fact or a different fact. Copying the current name onto the order to save a join is denormalisation: change the name and the copies disagree, and you now own the problem of keeping them in step. Recording the name as it stood when the order was placed is a separate fact with its own meaning, which is what an invoice legally requires, and the customer record changing later must not alter it. Same column, opposite correctness, and the question that separates them is whether the value is supposed to follow the customer or not."
+
+[[q]]
+id = "sq-017"
+qtype = "judgment"
+subtopic = "indexes"
+levels = ["graduate", "mid"]
+q = "A table of orders is queried constantly by status and the plan shows a full scan, so an index on the status column is proposed. New information: the column holds only 'pending' or 'complete', and almost every row is complete. Does the index become more or less appropriate?"
+a = "Less as proposed, around -1, but the right index still exists. A plain index on a column with two values is close to useless for the common case, because so many rows match that the planner reads the table anyway and you have paid maintenance on every write for nothing. The rare value is different: a partial index covering only the pending rows is small, stays useful, and serves exactly the query anyone actually runs. A 0 misses that the shape of the fix changes, and a -2 overstates it, because the query being asked is real."
+
+[[q]]
+id = "sq-018"
+qtype = "judgment"
+subtopic = "n-plus-one"
+levels = ["graduate", "mid"]
+q = "A page renders a list and issues one extra query per item to fetch a related field. It is comfortably fast, so the team decides to leave it. New information: the list is paginated at twenty items and the pagination limit is enforced server-side and cannot be raised by the caller. Does leaving it become more or less defensible?"
+a = "More, and this is a case where 0 or +1 is the honest answer rather than a reflex fix. The pattern is only pathological because N grows; a hard server-side cap of twenty bounds the damage at twenty cheap indexed lookups. What to check before agreeing: that the cap really cannot be raised by a parameter, that the related lookup is indexed, and that nothing else reuses the same code path without the cap. Note the cost is per request, so heavy traffic on this page still multiplies it."

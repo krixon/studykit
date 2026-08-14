@@ -104,3 +104,43 @@ subtopic = "transport"
 levels = ["senior", "lead", "staff"]
 q = "What does TLS protect, and what does it say nothing about?"
 a = "It protects data in transit between two endpoints. It says nothing about storage, backups, logs, or what the other end does with the data once it arrives - and nothing at all if certificate validation has been disabled to make something work."
+
+[[q]]
+id = "sc-014"
+qtype = "discrimination"
+subtopic = "authn-authz"
+levels = ["graduate", "mid"]
+q = "A service has a flawless login flow and a bug that lets any registered user read any other user's records by changing a number in the URL. Which of the two concerns is intact and which is broken, and what is the shape of the fix?"
+a = "Authentication is intact, authorisation is broken; establishing who you are was never the same question as what you may see. This is insecure direct object reference. The fix is to scope the query by the authenticated principal rather than bolt on a separate ownership check - `WHERE id = ? AND customer_id = ?` - so a foreign id returns nothing by construction. A separate check placed after the fetch works until the day someone adds a second code path and forgets it."
+
+[[q]]
+id = "sc-015"
+qtype = "discrimination"
+subtopic = "injection"
+levels = ["graduate", "mid"]
+q = "Two defences against untrusted input reaching a query. One rejects input matching a list of dangerous patterns; the other sends the query and the values over separate channels. Why is only one of them a fix, and what is the other good for?"
+a = "Parameterised queries are the fix, because the value never gets parsed as part of the statement, so there is nothing for a clever encoding to escape from. Pattern-based filtering is a fix you have to win repeatedly against every encoding trick that exists or will be invented, and you lose once. Validation is a useful second layer for its own reasons - rejecting nonsense early, enforcing your domain rules - and a poor first line. The general principle is to never build an instruction by concatenating a string with untrusted data, in SQL, a shell command, HTML or a file path."
+
+[[q]]
+id = "sc-016"
+qtype = "discrimination"
+subtopic = "password-storage"
+levels = ["graduate", "mid"]
+q = "Two hashing algorithms are proposed for storing credentials. One is widely praised for its speed. What makes that a disqualifying property here, and what are the other two properties the right choice must have?"
+a = "Speed is what an attacker with the stolen hashes gets to use: a fast hash lets a GPU try billions of candidates a second, so the algorithm must be deliberately slow, with a tunable cost factor set so verification takes on the order of a hundred milliseconds. It also needs a per-user salt, so identical passwords hash differently and one precomputed table cannot attack everyone at once, and memory-hardness, which denies the attacker the advantage of cheap parallel hardware. Argon2id, scrypt or bcrypt; not MD5 or SHA-256, whose fitness for other jobs is exactly why they are wrong for this one."
+
+[[q]]
+id = "sc-017"
+qtype = "judgment"
+subtopic = "authn-authz"
+levels = ["graduate", "mid"]
+q = "An administrative action is protected by hiding its button from anyone without the admin role, and the reviewer is satisfied. New information: the same action is reachable by a documented API endpoint used by the mobile app. Does the protection become more or less adequate?"
+a = "It was never adequate, and the new information makes that visible rather than causing it, so -2. Hiding a control in the interface is presentation, not authorisation: the endpoint behind it accepts a request from anyone who constructs one, and a browser's developer tools are enough. The mobile client is no better as a place to enforce it, because you do not control what runs there. Authorisation has to be checked on the server, on every path into the action."
+
+[[q]]
+id = "sc-018"
+qtype = "judgment"
+subtopic = "password-storage"
+levels = ["graduate", "mid"]
+q = "A team plans to force every user to change their password every ninety days. New information: they already check new passwords against a list of known-breached credentials and allow long passphrases with paste. Does the rotation policy become more or less worth adding?"
+a = "Less, -2, and it undercuts what they already have right. Forced periodic rotation produces predictable variations on one password and pushes people towards shorter, more memorable choices, which is the opposite of what breach-checking and long passphrases are buying. Current guidance is explicit that rotation on a schedule has no measured benefit. Rotate on evidence of compromise, which is a different trigger and a genuinely useful one."
