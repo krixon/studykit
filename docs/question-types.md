@@ -66,7 +66,7 @@ levels = ["senior", "lead", "staff"]
 
 The type ladder and the level ladder are correlated but not the same. A graduate-appropriate `judgment` question exists; it just has a smaller design context and a clearer answer. A staff-level `recall` question exists too, and is usually a waste of a slot.
 
-As a rough guide to bank composition per level:
+Bank composition per level:
 
 | Level | recall | discrimination | judgment | diagnostic | numeric |
 |---|---:|---:|---:|---:|---:|
@@ -74,7 +74,13 @@ As a rough guide to bank composition per level:
 | mid | 25% | 30% | 25% | 10% | 10% |
 | senior+ | 10% | 25% | 35% | 15% | 15% |
 
-Targets for authoring, not enforced by code. `./study progress` shows your measured mean per type: a high `recall` with a low `judgment` means the knowledge is there and inert.
+`studykit/balance.py` holds these numbers and `./study doctor --verbose` reports any level more than 10 points off one. Change them in one place or the other and the two disagree.
+
+**The unit is the level, not the pack.** A question declares the levels it suits, so one bank holds a different drawable pool per level, each with its own row above. A pack can sit on target in aggregate while its graduate pool is 90% recall, and the graduate drawing from it never sees a question above the floor. Authoring against the aggregate is what produces that.
+
+`senior+` is one row because above mid the intended mix does not change. What separates senior from staff is the calibration brief, not the question.
+
+`./study progress` shows your measured mean per type: a high `recall` with a low `judgment` means the knowledge is there and inert.
 
 ## Stems are self-contained
 

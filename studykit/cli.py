@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import dashboard as dashboard_mod
 from . import metrics as metrics_mod
-from . import derive, report, select, sync as sync_mod, tomlwrite
+from . import balance, derive, report, select, sync as sync_mod, tomlwrite
 from .config import (
     LEVEL_TITLES,
     LEVELS,
@@ -1075,6 +1075,7 @@ def cmd_doctor(args) -> int:
             for level in topic.levels:
                 if not any(q.topic == topic.id and level in q.levels for q in pack.questions):
                     notes.append(f"{pack.name}/{topic.id}: no questions at level {level!r}")
+        notes.extend(f"{pack.name}: {line}" for line in balance.check(pack))
 
     try:
         profile = Profile.load()

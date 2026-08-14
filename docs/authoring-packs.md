@@ -113,7 +113,7 @@ a = "They are on different axes entirely. Cache-aside is a READ strategy; write-
 
 - `qtype` is one of `recall` `discrimination` `judgment` `diagnostic` `numeric`. See [question-types.md](question-types.md).
 - `subtopic` must be declared by the topic. `doctor` catches it if not.
-- `levels` defaults to the pack's levels if omitted. Be deliberate rather than relying on the default.
+- `levels` defaults to the pack's levels if omitted. Be deliberate rather than relying on the default: every level named here is a pool the question has to earn its place in, and tagging a recall question up to `staff` inflates that pool's recall share while giving a staff candidate nothing. `doctor` reports the resulting mix per level.
 - Ids are stable forever and never reused, because the ledger references them.
 - Numeric tails, `ca-001`, belong to pack authors. Questions banked during a session get `ca-u<hash>`, derived from the question text, so a session can never mint an id a pack later wants and two machines that bank the same question offline agree on one id.
 - **Exposure history is not stored here.** `shown` and `reps` are derived from the ledger.
@@ -177,7 +177,7 @@ If a candidate can start designing without asking anything, the prompt has given
 ./study doctor --verbose
 ```
 
-Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, every `derivation` evaluates and accounts for the figures quoted around it, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, questions stating figures with no derivation, derivation steps nothing quotes, and any topic with no questions at one of its declared levels, which is the usual authoring gap.
+Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, every `derivation` evaluates and accounts for the figures quoted around it, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, questions stating figures with no derivation, derivation steps nothing quotes, any topic with no questions at one of its declared levels, which is the usual authoring gap, and any level whose bank composition or depth misses the targets in [question-types.md](question-types.md#levels).
 
 Then use it:
 
