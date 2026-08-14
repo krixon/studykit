@@ -58,7 +58,7 @@ Rebuilds state and metrics on any change.
 
 | Key | Effect |
 |---|---|
-| `level` | the interviewer bar, and which questions are in scope |
+| `level` | the interviewer bar, which topics are in scope, and the question-type mix |
 | `packs` | comma-separated, what is in rotation |
 | `budget` | default session length |
 | `mode` | `coaching` or `interview` |
@@ -141,7 +141,7 @@ Budgets accept `15m`, `1h`, `90`, `half day`, `full day`, `quick`, `open`.
 
 ### `questions`
 
-Draws questions from the bank, filtered to your level, ordered by the queue, interleaved across topics.
+Draws questions from the bank across the topics in scope at your level, ordered by the queue, interleaved across topics.
 
 ```
 ./study questions --count 8
@@ -151,7 +151,9 @@ Draws questions from the bank, filtered to your level, ordered by the queue, int
 
 Anything already recorded today is excluded, and unshown or long-unseen questions are preferred over recently answered ones.
 
-The response includes `author_for`: facets with no in-level question banked.
+The type mix comes from your level and your measured means per type, described in [levels.md](levels.md#what-your-level-changes). Within a type, questions written for your level come first and the rest of the topic is the fallback.
+
+The response includes `author_for`: facets with no question left to draw.
 
 ---
 
@@ -171,7 +173,7 @@ Banks questions generated during a session. Assigns ids; never write ids yoursel
 }'
 ```
 
-Top-level `pack`, `topic` and `levels` act as defaults for every question; each question may override them. `levels` defaults to your level and everything above it.
+Top-level `pack`, `topic` and `levels` act as defaults for every question; each question may override them. `levels` defaults to your level alone, since a question asked mid-session was written for the level it was asked at. Set it explicitly if the question suits a range.
 
 Writes to `~/.studykit/bank/<pack>/<topic>.toml`, your private overlay, which merges with the pack at load time. The CLI assigns each id as `<prefix>-u<hash of the question>`. `--into-pack` writes into the pack's own directory instead, with a sequential id, for pack authors.
 

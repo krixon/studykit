@@ -11,9 +11,10 @@ import random
 import re
 from dataclasses import dataclass
 
+from . import balance
 from .config import StudykitError, today
 from .ledger import PROBLEM_PREFIX, Row, question_exposure
-from .packs import Library, Question
+from .packs import QTYPES, Library, Question
 from .schedule import Item, compute_items, live_items
 
 #: Rough minutes per quiz question, including the follow-up a weak answer earns.
@@ -32,13 +33,14 @@ PROBLEM_FLOOR = 30
 OVERRUN_FRACTION = 0.1
 MIN_OVERRUN = 2
 
-QTYPE_WEIGHT = {
-    "judgment": 3.0,
-    "discrimination": 2.5,
-    "diagnostic": 2.0,
-    "numeric": 1.5,
-    "recall": 1.0,
-}
+#: Measurements, across all types, before the ledger outweighs the level's prior.
+#: Small enough that a few sessions move the mix, large enough that three lucky
+#: answers do not.
+PRIOR_STRENGTH = 50
+#: Stands in for a type with no measurements, so an untested type is treated as
+#: neither mastered nor urgent.
+NEUTRAL_MEAN = 3.0
+MAX_SCORE = 5
 
 BUDGET_WORDS = {
     "quick": 10,
@@ -208,11 +210,67 @@ def _spread_topics(entries: list[QueueEntry]) -> list[QueueEntry]:
     return out
 
 
-def _question_rank(question: Question, exposure: dict, as_of: str) -> tuple:
+def _question_rank(question: Question, exposure: dict, as_of: str, level: str = "") -> tuple:
+    """Least-seen first, then the level it was written for, then the id.
+
+    The level term is a preference, not a filter. A question tagged elsewhere is
+    reachable once the ones written for this level have been seen, which is what
+    keeps a graduate off a staff stem while the graduate supply lasts.
+    """
     record = exposure.get(question.id)
     reps = record["reps"] if record else 0
     last = record["last"] if record else ""
-    return (reps, last, -QTYPE_WEIGHT.get(question.qtype, 1.0), question.id)
+    off_level = 0 if not level or level in question.levels else 1
+    return (reps, last, off_level, question.id)
+
+
+def qtype_weights(level: str, rows: list[Row]) -> dict[str, float]:
+    """The share of a draw each question type should take, summing to 1.
+
+    The level's target mix is the prior; measured means move it, so a type
+    answered well loses share and a weak one gains it. `PRIOR_STRENGTH` decides
+    how much evidence that takes, which is why an early session looks like the
+    level's defaults and a later one looks like the person.
+    """
+    prior = {qtype: balance.TARGETS[level][qtype] / 100 for qtype in QTYPES}
+    scores: dict[str, list[int]] = {}
+    for row in rows:
+        if row.qtype in prior:
+            scores.setdefault(row.qtype, []).append(row.measured)
+    total = sum(len(v) for v in scores.values())
+    if not total:
+        return prior
+
+    # Weighting the prior by need keeps a 5%-target type from taking over a draw
+    # on the strength of one bad answer.
+    need = {
+        qtype: max(
+            MAX_SCORE - (sum(scores[qtype]) / len(scores[qtype]) if scores.get(qtype) else NEUTRAL_MEAN),
+            0.0,
+        )
+        for qtype in QTYPES
+    }
+    weighted = {qtype: prior[qtype] * need[qtype] for qtype in QTYPES}
+    scale = sum(weighted.values())
+    if not scale:
+        return prior
+    evidence = total / (total + PRIOR_STRENGTH)
+    return {
+        qtype: (1 - evidence) * prior[qtype] + evidence * weighted[qtype] / scale
+        for qtype in QTYPES
+    }
+
+
+def _wanted_qtype(counts: dict[str, int], drawn: int, weights: dict[str, float], available: set) -> str:
+    """Whichever available type is furthest behind its share of the draw."""
+    return max(
+        available,
+        key=lambda qtype: (
+            weights[qtype] * (drawn + 1) - counts.get(qtype, 0),
+            weights[qtype],
+            qtype,
+        ),
+    )
 
 
 def draw_questions(
@@ -228,13 +286,20 @@ def draw_questions(
 ) -> tuple[list[Question], list[QueueEntry]]:
     """Pick `count` questions across the target facets, plus the facets with none.
 
-    Returns the drawn questions and the targets that had no in-level question to
+    The facet decides what is asked about, `qtype_weights` decides what kind of
+    question asks it, and exposure decides which one within that kind. Nothing
+    here excludes a question for being tagged below the level: a graduate recall
+    question is reachable at staff, it just has to win a slot on the mix rather
+    than on never having been seen.
+
+    Returns the drawn questions and the targets that had no question left to
     draw, which the caller turns into an instruction to author some.
     """
     as_of = as_of or today()
     exposure = question_exposure(rows)
     shown_today = {r.qid for r in rows if r.date == as_of and r.qid}
     used: set[str] = set(exclude or ()) | shown_today
+    weights = qtype_weights(level, rows)
 
     by_facet: dict[tuple[str, str, str], list[Question]] = {}
     for question in library.questions(level):
@@ -242,6 +307,7 @@ def draw_questions(
 
     rng = random.Random(seed if seed is not None else f"{as_of}:{len(rows)}")
     picked: list[Question] = []
+    counts: dict[str, int] = {}
     starved: list[QueueEntry] = []
     rounds = 0
     remaining = list(targets)
@@ -262,11 +328,16 @@ def draw_questions(
                 if rounds == 1:
                     starved.append(entry)
                 continue
-            pool.sort(key=lambda q: _question_rank(q, exposure, as_of))
-            best_rank = _question_rank(pool[0], exposure, as_of)[:2]
-            tied = [q for q in pool if _question_rank(q, exposure, as_of)[:2] == best_rank]
+            wanted = _wanted_qtype(counts, len(picked), weights, {q.qtype for q in pool})
+            candidates = [q for q in pool if q.qtype == wanted]
+            candidates.sort(key=lambda q: _question_rank(q, exposure, as_of, level))
+            best_rank = _question_rank(candidates[0], exposure, as_of, level)[:3]
+            tied = [
+                q for q in candidates if _question_rank(q, exposure, as_of, level)[:3] == best_rank
+            ]
             choice = rng.choice(tied)
             used.add(choice.id)
+            counts[wanted] = counts.get(wanted, 0) + 1
             picked.append(choice)
             next_round.append(entry)
         remaining = next_round

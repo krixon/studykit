@@ -28,7 +28,7 @@ The session protocols live in `.agents/skills/<name>/SKILL.md`: `study` (the def
 - **Anything shown is banked**, before the session ends. `record` rejects a row naming an unbanked question id.
 - **Compute a figure before you state it.** Run the arithmetic in a tool call, in a stem, a worked example, feedback, or a drill. A number written from a sense of what looks right is fabrication, and a stem carrying one scores the user against a question with no correct answer. Re-derive after any change to a scenario: moving 3 nodes to 5 invalidates every figure downstream. For questions, the arithmetic goes in `derivation` and `./study bank check` runs it before the question is asked; prose has no such gate, so it is on you.
 - **Never show interviewer notes before an attempt.**
-- **Apply the level's calibration brief.** `./study plan` returns it. A graduate answering correctly at graduate level scores well.
+- **Apply the level's calibration brief.** `./study plan` returns it. A graduate answering correctly at graduate level scores well. The brief is the user's, never the question's: a drawn question carries its own `levels`, which says who it was written for and is not the bar it is scored against.
 
 Full model: `docs/scoring.md`. Warrants: `docs/research.md`.
 

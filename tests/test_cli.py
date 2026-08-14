@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -186,6 +187,40 @@ class TestBank(CliTestCase):
             ),
         )
         self.assertEqual(code, 0, self.stderr)
+
+    def banked_levels(self, payload):
+        self.run_json("bank", "add", "--json-text", json.dumps(payload))
+        written = tomllib.loads(
+            (self.data / "bank" / "system-design" / "caching.toml").read_text(encoding="utf-8")
+        )
+        return [entry["levels"] for entry in written["q"]]
+
+    def test_a_banked_question_is_tagged_for_the_level_it_was_asked_at(self):
+        """`levels` weights the draw rather than gating it, so tagging a
+        session-authored question upwards enters it into draws it was not written for."""
+        levels = self.banked_levels(
+            {
+                "pack": "system-design",
+                "topic": "caching",
+                "questions": [
+                    {"subtopic": "hot-key", "qtype": "recall", "q": "What is hot?", "a": "One key."}
+                ],
+            }
+        )
+        self.assertEqual(levels, [["senior"]])
+
+    def test_an_explicit_levels_list_is_kept(self):
+        levels = self.banked_levels(
+            {
+                "pack": "system-design",
+                "topic": "caching",
+                "levels": ["mid", "senior", "lead"],
+                "questions": [
+                    {"subtopic": "eviction", "qtype": "recall", "q": "What goes?", "a": "The coldest."}
+                ],
+            }
+        )
+        self.assertEqual(levels, [["mid", "senior", "lead"]])
 
     def test_banked_ids_do_not_collide_with_the_shipped_pack(self):
         result = self.run_json(

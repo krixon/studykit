@@ -198,8 +198,8 @@ def cmd_setup(args) -> int:
             "`./study config set`."
         )
         level = _ask(
-            "What level are you working at? This sets the interviewer bar and filters "
-            "the question bank.",
+            "What level are you working at? This sets the interviewer bar, which topics "
+            "are in scope, and the mix of question types you get.",
             list(LEVELS),
             existing.level if existing else "senior",
         )
@@ -500,9 +500,7 @@ def cmd_packs(args) -> int:
                                 "levels": list(t.levels),
                                 "subtopics": list(t.subtopics),
                                 "has_card": t.card is not None,
-                                "questions": len(
-                                    [q for q in pack.questions if q.topic == t.id and profile.level in q.levels]
-                                ),
+                                "questions": len([q for q in pack.questions if q.topic == t.id]),
                             }
                             for t in pack.topics.values()
                         ],
@@ -787,7 +785,10 @@ def cmd_bank_add(args) -> int:
 
     default_pack = payload.get("pack") or (profile.packs[0] if profile.packs else None)
     default_topic = payload.get("topic")
-    default_levels = payload.get("levels") or list(LEVELS[LEVELS.index(profile.level) :])
+    # A question banked mid-session was written for the level it was asked at.
+    # Tagging it upwards would enter it into draws for levels it was not written
+    # for, since `levels` weights the draw rather than gating it.
+    default_levels = payload.get("levels") or [profile.level]
 
     grouped: dict[tuple[str, str], list[dict]] = {}
     for entry in questions:

@@ -40,6 +40,7 @@ class Question:
             "topic": self.topic,
             "subtopic": self.subtopic,
             "qtype": self.qtype,
+            "levels": list(self.levels),
             "q": self.q,
         }
         # A derivation carries the answer's figures, so it travels with the answer.
@@ -271,10 +272,17 @@ class Library:
         return out
 
     def questions(self, level: str | None = None) -> list[Question]:
+        """Every question on a topic in scope at `level`.
+
+        Scope is the topic's, not the question's. A question's own `levels` is a
+        prior on how often it is drawn, handled in `select`, so a level never
+        puts a question on an in-scope topic out of reach.
+        """
         out: list[Question] = []
         for pack in self.enabled:
             for question in pack.questions:
-                if level is None or level in question.levels:
+                topic = pack.topics.get(question.topic)
+                if level is None or (topic and level in topic.levels):
                     out.append(question)
         return out
 
