@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import dashboard as dashboard_mod
 from . import metrics as metrics_mod
-from . import report, select, sync as sync_mod, tomlwrite
+from . import derive, report, select, sync as sync_mod, tomlwrite
 from .config import (
     LEVEL_TITLES,
     LEVELS,
@@ -714,6 +714,65 @@ def _bank_ids(entries: list[dict], prefix: str) -> list[str]:
     return out
 
 
+def _check_figures(entry: dict) -> None:
+    """Refuse a new question whose figures are asserted rather than derived.
+
+    Unlike `doctor`, this is fatal: nothing is written, so the fix is to supply
+    the derivation and run it again.
+    """
+    steps = entry.get("derivation") or []
+    if isinstance(steps, str):
+        steps = [line for line in steps.splitlines() if line.strip()]
+    found = derive.figures(entry["q"]) + derive.figures(entry["a"])
+    if not steps:
+        if not found:
+            return
+        listed = ", ".join(sorted({f.raw for f in found})[:6])
+        raise StudykitError(
+            f"This question states figures ({listed}) with no `derivation`. "
+            "Add one assignment per step, for example "
+            '["req = 2_000_000 * 40", "setup_ms = 2 * 140"], and every figure in '
+            "the stem and the answer has to fall out of it."
+        )
+    env = derive.evaluate(steps)
+    unmatched = sorted(
+        {f.raw for f in found if not any(f.matches(v) for v in env.values())}
+    )
+    if unmatched:
+        computed = ", ".join(f"{name} = {value:.4g}" for name, value in env.items())
+        raise StudykitError(
+            f"These figures match no derivation result: {', '.join(unmatched)}. "
+            f"The derivation gives {computed}."
+        )
+    entry["derivation"] = steps
+
+
+def cmd_bank_check(args) -> int:
+    """Validate a batch without writing it, for use before a question is asked."""
+    payload = read_payload(args)
+    if isinstance(payload, list):
+        payload = {"questions": payload}
+    questions = payload.get("questions") or []
+    if not questions:
+        raise StudykitError('Expected {"questions": [...]}.')
+    checked = []
+    for index, entry in enumerate(questions):
+        for field in ("q", "a"):
+            if not entry.get(field):
+                raise StudykitError(f"Question {index + 1} missing {field!r}")
+        _check_figures(entry)
+        env = derive.evaluate(entry["derivation"]) if entry.get("derivation") else {}
+        checked.append(
+            {
+                "q": entry["q"][:60],
+                "figures": sorted({f.raw for f in derive.figures(entry["q"] + " " + entry["a"])}),
+                "computed": {name: round(value, 6) for name, value in env.items()},
+            }
+        )
+    emit({"ok": True, "checked": checked})
+    return 0
+
+
 def cmd_bank_add(args) -> int:
     if no_payload_offered(args):
         return needs_help(args)
@@ -748,6 +807,7 @@ def cmd_bank_add(args) -> int:
         for field in ("q", "a"):
             if not entry.get(field):
                 raise StudykitError(f"Question missing {field!r}")
+        _check_figures(entry)
         grouped.setdefault((pack_name, topic_id), []).append(entry)
 
     written = []
@@ -774,6 +834,7 @@ def cmd_bank_add(args) -> int:
                         "source": entry.get("source", "session"),
                         "q": entry["q"],
                         "a": entry["a"],
+                        "derivation": entry.get("derivation"),
                     }
                 )
             )
@@ -1004,6 +1065,9 @@ def cmd_doctor(args) -> int:
                 problems.append(
                     f"{pack.name}: question {question.id} names unknown subtopic {question.subtopic!r}"
                 )
+            figure_problems, figure_notes = derive.check(question)
+            problems.extend(f"{pack.name}: {line}" for line in figure_problems)
+            notes.extend(f"{pack.name}: {line}" for line in figure_notes)
         for level in LEVELS:
             if level in pack.levels and not pack.calibration_for(level):
                 notes.append(f"{pack.name}: no calibration brief for level {level!r}")
@@ -1178,6 +1242,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write into the pack itself rather than your private overlay. For pack authors.",
     )
     bank_add.set_defaults(func=cmd_bank_add, parser=bank_add)
+    bank_check = bank_sub.add_parser(
+        "check", help="Verify a question's figures against its derivation, without writing it."
+    )
+    bank_check.add_argument("--json-text", "--data", dest="json_text")
+    bank_check.add_argument("--file")
+    bank_check.set_defaults(func=cmd_bank_check, parser=bank_check)
 
     rebuild_cmd = subparsers.add_parser("rebuild", help="Recompute state.json and metrics.json from the ledger.")
     rebuild_cmd.set_defaults(func=cmd_rebuild)

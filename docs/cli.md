@@ -177,6 +177,24 @@ Writes to `~/.studykit/bank/<pack>/<topic>.toml`, your private overlay, which me
 
 Also accepts `--file` or piped stdin.
 
+A question stating a figure needs a `derivation`, and is refused without one, or if a figure in it matches no derivation result. Nothing is written when a batch is refused. See [authoring-packs.md](authoring-packs.md#figures-are-derived-not-asserted).
+
+### `bank check`
+
+The same figure check, writing nothing. Use it **before** a question is asked, not after.
+
+```
+./study bank check --json-text '{"questions": [
+  {"q": "Origin is 150 ms RTT away and setup is 350 ms.", "a": "Three round trips.",
+   "derivation": ["rtt_ms = 150", "setup_ms = 3 * rtt_ms"]}
+]}'
+
+error: These figures match no derivation result: 350 ms.
+       The derivation gives rtt_ms = 150, setup_ms = 450.
+```
+
+Returns the figures it found and every value it computed, so it doubles as a way to see what the scanner considers a magnitude.
+
 ### `record`
 
 Appends measurements, then rebuilds `state.json` and `metrics.json`.

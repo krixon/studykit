@@ -122,6 +122,37 @@ a = "They are on different axes entirely. Cache-aside is a READ strategy; write-
 
 Write the answer as what a **strong** answer contains, not as a minimal key. The agent scores against it and uses it to name the gap, so "Less, -2, because the floor on overshoot is one lease per node" beats "Less appropriate".
 
+### Figures are derived, not asserted
+
+A question that states a figure carries `derivation`: the arithmetic, one `name = expression` per step.
+
+```toml
+[[q]]
+id = "cd-u25bb12fb"
+qtype = "numeric"
+q = "2M daily users make 40 API calls each. Origin is 140 ms RTT, TLS 1.3, no edge termination. How much of the day is pure connection setup?"
+a = "80M requests. Each is cold: 3 x 140 = 420 ms, of which 280 ms is setup. Aggregate 22.4M seconds, about 260 human-days of waiting per day."
+derivation = [
+  "users = 2_000_000",
+  "calls_per_user = 40",
+  "requests = users * calls_per_user",
+  "rtt_ms = 140",
+  "setup_ms = 2 * rtt_ms",
+  "aggregate_s = requests * setup_ms / 1000",
+  "aggregate_days = aggregate_s / 86400",
+]
+```
+
+`doctor` evaluates it and checks that every magnitude in `q` and `a` falls out of some step; `bank add` refuses a new question that states figures without one. A wrong figure scores the candidate against something that has no correct answer, and the ledger it lands in is append-only.
+
+- Numbers, the operators `+ - * / // % **`, and `abs round min max log log2 log10 exp sqrt ceil floor`. Nothing else evaluates.
+- Put the **inputs** in as well, not just the results. `rtt_ms = 140` is what lets the 140 ms in the stem be recognised.
+- A figure may round to the precision it is written to, so `about 30x` accepts 29.33. Scientific notation with one significant figure, `1e-19`, claims an order of magnitude and nothing finer.
+- Only magnitudes are checked: a unit, a scale word, a thousands separator, an exponent, `1 in 5`, or a value of 1000 or more. `TLS 1.3` and `the next 3 nodes` are counts and are left alone, so a figure hiding in a bare count is still yours to get right.
+- Units are not converted. If the prose says both `280 ms` and `0.28 s`, derive both.
+
+Deriving a figure a second way is the cheapest review there is. `./study bank check --json-text '{"questions": [...]}'` runs the same check and writes nothing, which is what to use **before** a question is asked rather than after.
+
 ## Problems
 
 Two files, deliberately.
@@ -146,7 +177,7 @@ If a candidate can start designing without asking anything, the prompt has given
 ./study doctor --verbose
 ```
 
-Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, and any topic with no questions at one of its declared levels, which is the usual authoring gap.
+Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, every `derivation` evaluates and accounts for the figures quoted around it, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, questions stating figures with no derivation, derivation steps nothing quotes, and any topic with no questions at one of its declared levels, which is the usual authoring gap.
 
 Then use it:
 

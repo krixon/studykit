@@ -48,6 +48,11 @@ def question_block(question: dict) -> str:
         lines.append(f"source = {string(question['source'])}")
     lines.append(f"q = {string(question['q'].strip())}")
     lines.append(f"a = {string(question['a'].strip())}")
+    if question.get("derivation"):
+        lines.append("derivation = [")
+        for step in question["derivation"]:
+            lines.append(f"  {string(step)},")
+        lines.append("]")
     return "\n".join(lines) + "\n"
 
 

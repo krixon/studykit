@@ -31,6 +31,7 @@ class Question:
     q: str
     a: str
     origin: str = "pack"  # "pack" or "bank"
+    derivation: tuple[str, ...] = ()
 
     def as_dict(self, *, with_answer: bool = True) -> dict:
         out = {
@@ -41,8 +42,11 @@ class Question:
             "qtype": self.qtype,
             "q": self.q,
         }
+        # A derivation carries the answer's figures, so it travels with the answer.
         if with_answer:
             out["a"] = self.a
+            if self.derivation:
+                out["derivation"] = list(self.derivation)
         return out
 
 
@@ -227,6 +231,7 @@ def _read_bank(path: Path, pack: Pack, origin: str) -> list[Question]:
                 q=entry["q"].strip(),
                 a=entry["a"].strip(),
                 origin=origin,
+                derivation=_as_tuple(entry.get("derivation"), "q.derivation", path),
             )
         )
     return out
