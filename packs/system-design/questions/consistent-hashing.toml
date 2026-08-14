@@ -30,7 +30,7 @@ id = "ch-004"
 qtype = "recall"
 subtopic = "ring-mechanics"
 levels = ["senior", "lead", "staff"]
-q = "For replication factor 3, how do you choose the replicas, and what is the trap?"
+q = "A key hashes to a position on the ring and replication factor is 3, so three nodes must store a copy. Which three do you pick, and what is the trap?"
 a = "Keep walking clockwise and take the next 3 DISTINCT physical nodes. The trap is skipping the distinctness check once virtual nodes exist - several consecutive positions can belong to the same machine, so all three replicas land on one box and the replication factor is a fiction."
 
 [[q]]

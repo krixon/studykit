@@ -54,7 +54,7 @@ id = "cm-007"
 qtype = "discrimination"
 subtopic = "conflict-resolution"
 levels = ["senior", "lead", "staff"]
-q = "Last-write-wins and CRDTs. What class of problem does each actually handle?"
+q = "Last-write-wins and conflict-free replicated data types (CRDTs). What class of problem does each actually handle?"
 a = "LWW handles the case where losing one of two concurrent writes is acceptable - a clock picks a winner and the other is destroyed. CRDTs handle operations whose merge is commutative, associative and idempotent, so any order converges without discarding anything: counters, sets, text sequences. Anything conditional on global state, like do not overdraw, fits neither."
 
 [[q]]
