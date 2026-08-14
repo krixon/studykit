@@ -152,3 +152,19 @@ subtopic = "validation"
 levels = ["graduate", "mid"]
 q = "Usernames are compared for uniqueness with a straight equality check on the stored string. New information: the service accepts names in any language, and users are reporting that a name is rejected as taken when the one they can see is spelled differently. Does the equality check remain sufficient?"
 a = "No, -2, and the cause is that two different byte sequences can be the same text. An accented character can be a single code point or a base letter plus a combining mark, and both display identically, so equality says they differ while a human says they do not. Normalise to a canonical form before comparing and before storing, or the uniqueness constraint means something other than what anyone thinks it means. Note this cuts both ways: it also lets someone register a visually identical name."
+
+[[q]]
+id = "de-020"
+qtype = "numeric"
+subtopic = "numbers-money"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A billing run handles 1,200,000 line items a month. One in eight lands exactly on a half-penny midpoint, and the rounding rule in use always pushes those away from zero, biasing each by half a penny. What is the monthly drift in pounds, and why does the direction matter more than the size?"
+a = "150,000 midpoints biased by half a penny each is 75,000 pence, so 750 pounds a month. The direction is what makes it a defect rather than noise: a systematic bias accumulates in one direction indefinitely and appears as an unexplained shortfall in reconciliation, whereas an unbiased rule leaves an error that cancels out and stays near zero. Half-even rounding sends midpoints to the nearest even digit, which removes the bias. The figure also scales with volume, so the same rule is invisible at a thousand items and material at a million."
+derivation = [
+  "items = 1200000",
+  "midpoint_fraction = 8",
+  "midpoints = items / midpoint_fraction",
+  "bias_pence = 0.5",
+  "drift_pence = midpoints * bias_pence",
+  "drift_pounds = drift_pence / 100",
+]

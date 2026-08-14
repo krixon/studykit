@@ -144,3 +144,18 @@ subtopic = "n-plus-one"
 levels = ["graduate", "mid"]
 q = "A page renders a list and issues one extra query per item to fetch a related field. It is comfortably fast, so the team decides to leave it. New information: the list is paginated at twenty items and the pagination limit is enforced server-side and cannot be raised by the caller. Does leaving it become more or less defensible?"
 a = "More, and this is a case where 0 or +1 is the honest answer rather than a reflex fix. The pattern is only pathological because N grows; a hard server-side cap of twenty bounds the damage at twenty cheap indexed lookups. What to check before agreeing: that the cap really cannot be raised by a parameter, that the related lookup is indexed, and that nothing else reuses the same code path without the cap. Note the cost is per request, so heavy traffic on this page still multiplies it."
+
+[[q]]
+id = "sq-019"
+qtype = "numeric"
+subtopic = "n-plus-one"
+levels = ["graduate", "mid"]
+q = "A page fetches 200 rows in one query and then issues one further query per row to load a related name. Each query costs 2 ms in round trip. How much of the page's time goes on queries, and what does the same page cost if the related names are fetched in a single second query?"
+a = "402 ms against 4 ms. The list query costs 2 ms and the per-row queries add 400 ms, so essentially all of the page's database time is the pattern rather than the work. Collecting the ids and fetching the names in one further query makes it two queries, 4 ms, a hundredfold reduction with no change to what is displayed. Note the cost is entirely round trips rather than database effort, which is why it is invisible in a query-time profile and obvious in a query count."
+derivation = [
+  "rows = 200",
+  "per_query_ms = 2",
+  "extra_ms = rows * per_query_ms",
+  "total_ms = extra_ms + per_query_ms",
+  "batched_ms = 2 * per_query_ms",
+]

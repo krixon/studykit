@@ -136,3 +136,16 @@ subtopic = "atomicity"
 levels = ["graduate", "mid"]
 q = "A counter guarded by a mutex is showing up in a profile as a contention point, and someone proposes swapping the mutex for an atomic increment. New information: the code inside the lock reads the counter, and if it is below a limit, increments it. Does the swap become more or less appropriate?"
 a = "Less, -2. The lock is not protecting an increment, it is protecting a read, a decision and a write, and an atomic increment cannot express that. Replacing it lets two threads both read a value under the limit and both increment past it, which is the original race with the lock removed. A compare-and-swap loop expresses check-then-set correctly and is the atomic primitive that fits; a plain atomic increment does not."
+
+[[q]]
+id = "cc-018"
+qtype = "numeric"
+subtopic = "processes-threads"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A server is configured with one thread per connection and needs to hold 2,000 connections. Each thread is given an 8 MB stack. How much address space do the stacks reserve, and why is the resident set size likely to be a small fraction of it?"
+a = "16,000 MB reserved. The resident figure is far smaller because a stack is reserved address space that is mapped to physical memory a page at a time as it is actually used, and a typical request touches a few kilobytes of frames rather than 8 MB. So the virtual figure looks alarming and is nearly meaningless, while the resident figure is what the limit measures. The real ceiling on this design is not the stacks but context switching, whose cost grows with thread count and stops the model scaling somewhere in the low thousands - which is the pressure asynchronous I/O exists to remove."
+derivation = [
+  "threads = 2000",
+  "stack_mb = 8",
+  "reserved_mb = threads * stack_mb",
+]

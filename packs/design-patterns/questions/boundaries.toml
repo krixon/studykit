@@ -105,3 +105,17 @@ levels = ["senior", "lead", "staff"]
 q = "A request passes through five layers, each of which maps the payload into its own representation, and each mapping is hand-written both inbound and outbound. Adding one field to the payload means editing how many mapping functions? What does that number tell you about which layers are earning their place?"
 a = "Ten: five layers, two directions each. A field that carries no logic anywhere touches 10 functions, which is the concrete version of the complaint that layers cost more than they return. The test for each layer is whether it does anything with the field or merely restates it: a layer that only maps is charging you two edits per field for no decision. Collapse the ones that only translate, or share a representation across adjacent layers, and keep the boundaries where something is genuinely transformed or enforced."
 derivation = ["layers = 5", "directions = 2", "mapping_functions = layers * directions"]
+
+[[q]]
+id = "bo-014"
+qtype = "numeric"
+subtopic = "module-seams"
+levels = ["senior", "lead", "staff"]
+q = "A module exposes 30 public symbols. An audit of every call site outside the module finds 6 of them in use. What proportion of the public surface is being committed to for nothing, and what does that cost you concretely?"
+a = "24 of 30, so 80% of the surface is a commitment nobody asked for. The cost is not clutter: every public symbol is something a caller may start depending on before you notice, so each one removes a refactor you could otherwise have done locally and silently. Narrowing the surface to the 6 turns the other 24 into implementation you can change freely. This is the measurable version of a module seam being in the wrong place - the boundary is drawn around the code rather than around what anyone needs from it."
+derivation = [
+  "public_symbols = 30",
+  "used_externally = 6",
+  "unnecessary = public_symbols - used_externally",
+  "pct = round(100 * unnecessary / public_symbols)",
+]

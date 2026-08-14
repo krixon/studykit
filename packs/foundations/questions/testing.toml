@@ -136,3 +136,11 @@ subtopic = "coverage"
 levels = ["graduate", "mid"]
 q = "A team sets a rule that no change may lower the coverage percentage. New information: most of the uncovered code is error-handling paths. Does the rule become more or less likely to improve the suite?"
 a = "More likely to point somewhere useful, and still a weak instrument, so around +1. Untested error handling is the code that runs when things are already going badly, so it is worth covering and the rule will push people at it. What the rule cannot tell the difference between is a test that exercises a path and a test that asserts something about it: coverage counts lines executed, so a test calling the function and asserting nothing satisfies it. Expect the number to be met with assertions nobody would defend unless review asks what each new test claims."
+
+[[q]]
+id = "ts-018"
+qtype = "diagnostic"
+subtopic = "doubles"
+levels = ["graduate", "mid"]
+q = "A suite has thorough tests over every component and all of them pass. The feature they make up is broken in an obvious way as soon as anyone uses it. Most likely cause?"
+a = "Every component was tested against a replacement dependency that agreed with the author's belief about its neighbour, and the belief was wrong. Nothing in the suite ever put two real components together, so the mismatch - a field named differently, a null the caller does not expect, an order that is not what the consumer assumes - lives exactly where no test looks. This is what a layer of tests over a few real components catches, and why replacing dependencies you own with doubles moves risk rather than removing it."

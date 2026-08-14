@@ -144,3 +144,11 @@ subtopic = "request-response"
 levels = ["graduate", "mid"]
 q = "A mobile client opens a fresh HTTPS connection for each of the several small requests it makes on startup, and someone proposes optimising the server's handler to shave time off each one. New information: the client and the server are on different continents. Does tuning the handler become more or less appropriate?"
 a = "Less, -2 or -1. A fresh HTTPS connection spends two to three round trips on TCP and TLS before any of your data moves, and a cross-continent round trip is on the order of a hundred milliseconds. The startup cost is dominated by connection setup and distance, neither of which the handler touches. Reuse the connection with keep-alive, or multiplex over HTTP/2, and the several setups collapse to one. Handler time is worth attention once it is a visible share of the total."
+
+[[q]]
+id = "ht-019"
+qtype = "diagnostic"
+subtopic = "cookies-sessions"
+levels = ["graduate", "mid"]
+q = "Users report being logged out at random. It happens more often at busy times, never in testing, and the affected users were doing nothing unusual. The login flow itself works. Most likely cause?"
+a = "Session state held somewhere that is not shared across the servers answering requests - typically in each instance's memory. A user's cookie is fine; it arrives at an instance that has never seen that session, so the lookup misses and they appear logged out. It correlates with traffic because more instances are running and requests spread further, and it never reproduces in testing because there is one instance there. Move session state to a shared store, or make the session self-contained in a signed token, and the request no longer cares which instance answers."

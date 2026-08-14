@@ -144,3 +144,21 @@ subtopic = "memory"
 levels = ["graduate", "mid"]
 q = "A service occasionally vanishes with no log line and no stack trace, and the team is adding more logging inside the request handler to catch it. New information: the host has swap disabled and the service holds an in-memory cache with no eviction policy. Does adding handler logging become more or less likely to find it?"
 a = "Less, -1 or -2: the logging cannot run because nothing in the process gets to run. An unbounded cache grows until the limit is hit, and the OOM killer sends SIGKILL, which is not catchable and permits no cleanup or final log line - which is exactly why the disappearance is silent. Look at dmesg and the exit code, where 137 is 128 plus 9 and names SIGKILL. Then bound the cache. Swap being off is what makes it a fast kill rather than a slow collapse."
+
+[[q]]
+id = "os-019"
+qtype = "numeric"
+subtopic = "memory"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service runs under a container limit of 2,048 MB. Its resident set size is 512 MB and is climbing by 40 MB per hour with no sign of levelling off. How long before it is killed, and what does that interval tell you about how the incident will be experienced?"
+a = "38.4 hours, from 1,536 MB of headroom at 40 MB per hour. The interval is the point: a leak this size does not fail in testing and does not fail on the day it ships, it fails a day and a half later, which usually means overnight and after whatever change introduced it has stopped being the obvious suspect. It will also present as a process vanishing with no log line, because exceeding the limit brings a SIGKILL that permits no cleanup. Alert on the gradient and you get the whole 38.4 hours of warning; alert at 90% of the limit and you get 5.12 hours, most of it while nobody is awake."
+derivation = [
+  "limit_mb = 2048",
+  "current_mb = 512",
+  "growth_mb_per_hour = 40",
+  "headroom_mb = limit_mb - current_mb",
+  "hours = headroom_mb / growth_mb_per_hour",
+  "alert_pct = 90",
+  "alert_mb = limit_mb * alert_pct / 100",
+  "warning_hours = (limit_mb - alert_mb) / growth_mb_per_hour",
+]

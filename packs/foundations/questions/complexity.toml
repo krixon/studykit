@@ -136,3 +136,35 @@ subtopic = "structure-choice"
 levels = ["graduate", "mid"]
 q = "A review comment asks you to replace a linear scan inside a loop with a set lookup, on the grounds that it turns quadratic work into linear. New information: the collection being scanned holds about a dozen items and is a fixed list of currency codes that has not changed in years. Does the change become more or less appropriate, and why?"
 a = "Less, around -1. The asymptotic argument is correct and irrelevant at this size: a scan of a dozen contiguous items is a handful of cache-friendly comparisons, and building a set costs an allocation and hashing on every call. The crossover where hashing wins is usually in the hundreds. -2 overstates it, because the change is harmless rather than wrong, and a 0 misses that the fixed size is what removes the risk the comment is guarding against. Accepting it as written is how asymptotic reasoning gets applied to collections too small for it to mean anything."
+
+[[q]]
+id = "cx-018"
+qtype = "numeric"
+subtopic = "sorting-searching"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A collection holds 1,000,000 items in no particular order. Answering a membership question by scanning costs one comparison per item; sorting first costs n log n and then each answer costs log n. Roughly how many questions must you expect to ask before sorting is the cheaper plan?"
+a = "About 20, and the general result is that the break-even is roughly log n questions. Sorting costs 19,931,569 comparisons and each subsequent lookup costs about 20 against 1,000,000 for a scan, so the sort pays for itself after 20 lookups - which is why sorting to enable a single search is a loss and sorting to enable many is trivially worth it. The useful form to remember is the shape rather than the figure: the break-even barely moves as n grows, because both the sort cost and the scan cost scale with n."
+derivation = [
+  "n = 1000000",
+  "log_n = log2(n)",
+  "sort_cost = round(n * log_n)",
+  "scan_cost = n",
+  "sorted_lookup = round(log_n)",
+  "break_even = round(n * log_n / (n - log_n))",
+]
+
+[[q]]
+id = "cx-019"
+qtype = "numeric"
+subtopic = "memory-locality"
+levels = ["senior", "lead", "staff"]
+q = "A walk visits 10,000,000 elements. Laid out contiguously, essentially every access is a cache hit at about 1 ns. Following pointers, assume every access misses and costs about 100 ns. How long does each walk take, and what does the ratio say about an asymptotic argument between two O(n) options?"
+a = "10 ms against 1,000 ms, a factor of 100. Both walks are O(n) and the notation is describing growth, so it is silent on a constant factor of 100 - which here is the difference between imperceptible and a visible stall. That is why an asymptotic argument cannot settle a choice between two structures in the same class, and why the practical rule is to prefer contiguous layouts until measurement gives you a reason not to. The crossover where a pointer-based structure wins on its better asymptotics is often in the thousands of elements, not at ten."
+derivation = [
+  "elements = 10000000",
+  "hit_ns = 1",
+  "miss_ns = 100",
+  "contiguous_ms = elements * hit_ns / 1000000",
+  "pointer_ms = elements * miss_ns / 1000000",
+  "ratio = miss_ns / hit_ns",
+]
