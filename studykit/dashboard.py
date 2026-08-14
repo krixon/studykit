@@ -86,7 +86,9 @@ def chart_progress(progress: list[dict]) -> str:
     if len(points) < 2:
         return _empty("Two sessions of history and this fills in.")
 
-    width, height = 980, 300
+    # Sized to the full interior of a .wrap-width section so it renders near 1:1
+    # and the text does not scale up past the page typography.
+    width, height = 1500, 320
     x0, x1 = PAD_L, width - PAD_R - 46
     y0, y1 = PAD_T, height - PAD_B
     n = len(points)
@@ -97,7 +99,7 @@ def chart_progress(progress: list[dict]) -> str:
     def py(value: float) -> float:
         return _scale(value, 1, 5, y1, y0)
 
-    parts = [f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="Mean strength over time" preserveAspectRatio="xMidYMid meet">']
+    parts = [f'<svg class="fill" viewBox="0 0 {width} {height}" role="img" aria-label="Mean strength over time" preserveAspectRatio="xMidYMid meet">']
     for tick in (1, 2, 3, 4, 5):
         y = py(tick)
         parts.append(f'<line class="grid" x1="{x0}" y1="{y:.1f}" x2="{x1}" y2="{y:.1f}"/>')
@@ -515,9 +517,10 @@ section { background: var(--surface); border: 1px solid var(--border); border-ra
           padding: 18px 20px 20px; margin-top: 18px; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 18px; }
 .grid2 section { margin-top: 0; }
-/* Charts stop growing past their natural size; the extra width goes to the tables,
-   which is where it is actually useful. */
+/* Charts sharing a row with a table stop growing past their natural size, so the
+   extra width goes to the table. A chart alone in a section takes the full width. */
 svg { width: 100%; max-width: 980px; height: auto; display: block; overflow: visible; }
+svg.fill { max-width: none; }
 
 .grid { stroke: var(--grid); stroke-width: 1; }
 .axis { stroke: var(--axis); stroke-width: 1; }
