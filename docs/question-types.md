@@ -74,9 +74,11 @@ Bank composition per level:
 | mid | 25% | 30% | 25% | 10% | 10% |
 | senior+ | 10% | 25% | 35% | 15% | 15% |
 
-`studykit/balance.py` holds these numbers and `./study doctor --verbose` reports any level more than 10 points off one. Change them in one place or the other and the two disagree.
+`studykit/balance.py` holds these numbers, `select.qtype_weights` draws to them, and `./study doctor --verbose` reports a level that cannot supply them. Change them in one place or the other and the three disagree.
 
-**The unit is the level, not the pack.** A question declares the levels it suits, so one bank holds a different drawable pool per level, each with its own row above. A pack can sit on target in aggregate while its graduate pool is 90% recall, and the graduate drawing from it never sees a question above the floor. Authoring against the aggregate is what produces that.
+**The unit is the level, not the pack.** A question declares the levels it suits, so one bank holds a different drawable pool per level, each with its own row above. A pack can sit on target in aggregate while its graduate pool is 90% recall. Authoring against the aggregate is what produces that.
+
+**Author for coverage, not for share.** A draw walks the due facets and asks each one for a question of the type the mix wants, so what caps a type is the proportion of facets that hold one at all. Twenty judgment questions on one facet raise the pool's share and change nothing a draw can use. Nor is a surplus a defect: `qtype_weights` sets the share, so extra recall is drawn less often rather than crowding anything out. The number to move is how many facets have one of each type.
 
 `senior+` is one row because above mid the intended mix does not change. What separates senior from staff is the calibration brief, not the question.
 

@@ -290,7 +290,7 @@ Runs the repository test suite.
 
 Validates packs and data: missing cards, unknown subtopics in questions, duplicate ids, problems missing a prompt or notes, areas not declared, and every ledger row re-validated against the current taxonomy.
 
-Notes also carry bank composition per level, against the targets in [question-types.md](question-types.md#levels): any level whose mix is more than 10 points off, and any level holding fewer than two questions per in-scope subtopic. Both are notes rather than problems, since a target is an authoring guide.
+Notes also carry what each level can supply, against the targets in [question-types.md](question-types.md#levels): any level where too few facets hold a question of a type its mix will ask for, and any level holding fewer than two questions per in-scope facet. Both are notes rather than problems, since a target is an authoring guide.
 
 ```
 ./study doctor

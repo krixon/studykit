@@ -177,7 +177,7 @@ If a candidate can start designing without asking anything, the prompt has given
 ./study doctor --verbose
 ```
 
-Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, every `derivation` evaluates and accounts for the figures quoted around it, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, questions stating figures with no derivation, derivation steps nothing quotes, any topic with no questions at one of its declared levels, which is the usual authoring gap, and any level whose bank composition or depth misses the targets in [question-types.md](question-types.md#levels).
+Checks: cards exist, questions name declared sub-topics, ids are unique across the pack, problems have both files, areas are declared, every `derivation` evaluates and accounts for the figures quoted around it, and every ledger row still validates against the taxonomy. `--verbose` adds notes: topics with no card, missing calibration briefs, questions stating figures with no derivation, derivation steps nothing quotes, any topic with no questions at one of its declared levels, which is the usual authoring gap, and any level whose facet coverage or depth cannot supply the mix in [question-types.md](question-types.md#levels).
 
 Then use it:
 
