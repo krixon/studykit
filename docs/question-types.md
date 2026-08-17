@@ -32,7 +32,7 @@ A design context, then new information. Does an option become more or less appro
 
 Answered as `-2 -1 0 +1 +2` plus a clause of why. Near-zero typing for a genuinely hard question.
 
-**The stem must end with the ask.** A design context plus new information and then nothing is not a question: the candidate cannot tell whether you want the rating, the remedy, or both. End with "More or less appropriate?" or whichever variant fits.
+End with "More or less appropriate?" or whichever variant fits, so the candidate knows whether you want the rating, the remedy, or both. See [The ask](#the-ask).
 
 Adapted from script concordance testing in medical education, which assesses reasoning under uncertainty rather than knowledge. **This is the type that targets far transfer.**
 
@@ -51,6 +51,24 @@ Reverses the direction of reasoning. Forward design and backward diagnosis are d
 > 500 nodes, 10-token leases, a limit of 1,000,000. Overshoot as a percentage?
 
 One number, no prose. Targets the common habit of correct reasoning with the arithmetic left implicit. The answer should include the working, so a wrong number can be diagnosed as an arithmetic slip or a modelling error.
+
+## The ask
+
+**The stem ends with the ask, and the ask names what it wants.** The type is not visible to whoever answers it, so the wording is the only thing telling them which of several reasonable questions is being put. An answer graded against an ask the stem did not make measures nothing, and it scores the candidate for reading the question as written.
+
+The phrasings are not interchangeable:
+
+| What you want | The ask | Type |
+|---|---|---|
+| the axis between confusable things | "what separates them?" | `discrimination` |
+| the cause behind a symptom | "most likely cause?" | `diagnostic` |
+| a test that tells two candidate causes apart | "what would you check to tell which?" | `diagnostic` |
+| whether new information moves a decision | "more or less appropriate?" | `judgment` |
+| a figure, with the working | "how much, and what is that in ...?" | `numeric` |
+
+**"What separates them" belongs to `discrimination`.** A `diagnostic` that offers two candidate causes and wants a distinguishing test has to say so. Asked as "what separates them", the correct answer is the conceptual difference between the two, which is a different question with a different answer, and the one the phrasing promised.
+
+Where a stem lists candidates, say what they are candidates for. "Two candidates" on its own reads as two scenarios to consider.
 
 ## Multiple choice
 

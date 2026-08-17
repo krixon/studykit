@@ -11,7 +11,7 @@ from pathlib import Path
 
 from studykit import cli
 from studykit.config import StudykitError, data_dir, pack_roots, packs_dir, user_packs_dir
-from studykit.packs import load_library
+from studykit.packs import Question, ask_notes, load_library
 
 MINIMAL_PACK = """\
 [pack]
@@ -246,6 +246,48 @@ class TestBankIds(TestInstalledPacks):
         with self.assertRaises(StudykitError) as caught:
             load_library()
         self.assertIn("wg-uaaaaaaaa", str(caught.exception))
+
+
+class TestAskNotes(unittest.TestCase):
+    """A stem that promises one question and is graded as another measures nothing."""
+
+    def note_for(self, qtype, text):
+        question = Question(
+            id="wg-001",
+            pack="widgets-pack",
+            topic="widgets",
+            subtopic="assembly",
+            qtype=qtype,
+            levels=("staff",),
+            q=text,
+            a="An answer.",
+        )
+        return ask_notes(question)
+
+    def test_the_discrimination_ask_on_another_type_is_flagged(self):
+        notes = self.note_for(
+            "diagnostic", "Two candidates, a and b. What single observation separates them?"
+        )
+        self.assertEqual(len(notes), 1)
+        self.assertIn("discrimination ask", notes[0])
+
+    def test_a_stem_naming_the_answers_form_is_still_flagged(self):
+        """Known noise. Whether the ask is pinned is not visible to a pattern, so
+        the note asks for a look rather than asserting a defect."""
+        self.assertEqual(
+            len(self.note_for("recall", "What question separates the three imbalances?")), 1
+        )
+
+    def test_discrimination_may_ask_what_separates_them(self):
+        self.assertEqual(self.note_for("discrimination", "What axis actually separates them?"), [])
+
+    def test_a_diagnostic_asking_for_a_test_is_clean(self):
+        self.assertEqual(
+            self.note_for("diagnostic", "What would you check to tell which one you have?"), []
+        )
+
+    def test_a_diagnostic_asking_for_a_mechanism_is_clean(self):
+        self.assertEqual(self.note_for("diagnostic", "p99 tripled, errors flat. Most likely cause?"), [])
 
 
 if __name__ == "__main__":

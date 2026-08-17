@@ -6,6 +6,7 @@ land in the user's bank overlay under the data directory.
 
 from __future__ import annotations
 
+import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -338,3 +339,20 @@ def load_library(enabled: list[str] | None = None) -> Library:
 
 def check_level_arg(level: str) -> str:
     return check_level(level)
+
+
+#: The ask that belongs to `discrimination`. Prose: docs/question-types.md, The ask.
+_DISCRIMINATION_ASKS = re.compile(r"what (?:single )?(?:\w+ )?separates|what axis", re.IGNORECASE)
+
+
+def ask_notes(question: Question) -> list[str]:
+    """Stems whose ask may not be the one their type grades.
+
+    A net, not a proof. Whether the ask is really ambiguous turns on the clause
+    that follows it, which pattern matching cannot see: "what separates them, and
+    which needs a different fix" is pinned and fair, and "what separates them, and
+    does jitter fix both" is not. This flags the phrasing for a look.
+    """
+    if question.qtype != "discrimination" and _DISCRIMINATION_ASKS.search(question.q):
+        return [f"{question.id}: {question.qtype} carries the discrimination ask - check it is pinned"]
+    return []

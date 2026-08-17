@@ -44,7 +44,7 @@ from .config import (
     write_json,
 )
 from .ledger import PROBLEM_PREFIX, SESSIONS, append, read, validate
-from .packs import QTYPES, Library, load_library
+from .packs import QTYPES, Library, ask_notes, load_library
 from .schedule import build_state, compute_items
 
 VERSION = "1.0.0"
@@ -1069,6 +1069,7 @@ def cmd_doctor(args) -> int:
             figure_problems, figure_notes = derive.check(question)
             problems.extend(f"{pack.name}: {line}" for line in figure_problems)
             notes.extend(f"{pack.name}: {line}" for line in figure_notes)
+            notes.extend(f"{pack.name}: {line}" for line in ask_notes(question))
         for level in LEVELS:
             if level in pack.levels and not pack.calibration_for(level):
                 notes.append(f"{pack.name}: no calibration brief for level {level!r}")
