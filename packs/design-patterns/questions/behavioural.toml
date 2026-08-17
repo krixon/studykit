@@ -120,3 +120,43 @@ subtopic = "command"
 levels = ["graduate", "mid"]
 q = "A user action is recorded as an object and put on a queue for a worker to carry out later. After a deployment, a batch of the queued items fails to run, and the ones that fail are all older than the deployment. Most likely cause?"
 a = "The recorded objects no longer match what the code expects to read: a field was renamed, removed or given a new required value, so items serialised before the change cannot be reconstructed after it. Turning an action into a stored object means its shape becomes a persisted format with the compatibility obligations of one, and the deployment is the moment old and new meet. Handle it the way any format migration is handled - version the payload, keep readers tolerant of missing fields, and drain or migrate the backlog before removing support."
+
+[[q]]
+id = "be-016"
+qtype = "recall"
+subtopic = "command"
+levels = ["graduate", "mid"]
+q = "An application lets a user reverse any action they have taken, and each action is already stored as an object. Two ways to build the reversal are open to you. What are they, and what decides between them?"
+a = "Either each stored action knows how to reverse itself, or the system snapshots state before the action and restores the snapshot. What decides is whether actions are small and cleanly reversible, in which case an inverse per action is cheap and composes across a stack of them, or large and lossy, in which case reconstructing the inverse is guesswork and a snapshot is the honest option. Real systems often do both: inverses for the common small edits, a snapshot around the rare destructive one."
+
+[[q]]
+id = "be-017"
+qtype = "judgment"
+subtopic = "observer"
+levels = ["graduate", "mid"]
+q = "Placing an order publishes a notification, and several parts of the application subscribe to it and do their own work. New information: a rule now says the customer's confirmation email must be sent before stock is reserved. Does publishing to subscribers remain the right shape for those two?"
+a = "Less appropriate, around -2. The subject calls its subscribers in an order that is usually unspecified and never part of the contract, so a requirement about which runs first cannot be expressed in the pattern at all. A team that relies on registration order has written down a dependency the code does not enforce, and the next refactor breaks it silently. If the order is genuinely required, those two steps are one sequence and belong in code that states the sequence; keep the notification for the parts that genuinely do not care when they run."
+
+[[q]]
+id = "be-018"
+qtype = "diagnostic"
+subtopic = "state"
+levels = ["graduate", "mid"]
+q = "An order's status gained a sixth value last week. Three bugs followed, all the same shape: some part of the system did not recognise the new value and fell through to its default behaviour. Most likely cause?"
+a = "The status is a field tested by a conditional in many methods, so adding a value means finding every one of those conditionals by hand, and the ones that were missed keep compiling and keep taking the default branch. Nothing forced the author to consider the new case. Making each status an object implementing a shared interface moves the omission to compile time, because a new type has to implement every operation, and it puts the legal transitions in one enumerable place rather than leaving them implied by whichever branches happen to exist."
+
+[[q]]
+id = "be-019"
+qtype = "discrimination"
+subtopic = "strategy"
+levels = ["graduate", "mid"]
+q = "Two designs let the pricing step of a checkout vary. The first passes an object holding the pricing rule into the checkout. The second makes the checkout a base class with an abstract pricing method each subclass fills in. Both work. What does the first let you do that the second does not?"
+a = "Vary it at runtime, and vary more than one thing independently. The passed-in rule is chosen per call or per configuration, swapped without creating a type, and combined freely with another varying step chosen separately. The subclass fixes the choice at the moment the type is chosen and spends the single inheritance slot, so a second axis of variation needs a subclass per combination. The subclass is also coupled to the base class's internals and can only be tested through it, whereas the rule object is testable on its own with no checkout at all."
+
+[[q]]
+id = "be-020"
+qtype = "recall"
+subtopic = "template-method"
+levels = ["graduate", "mid"]
+q = "A base class runs the same steps in the same order and calls methods that subclasses provide. What must a subclass author know that the signatures they are implementing do not tell them?"
+a = "When each hook is called, how often, and what has already happened by the time it runs. The sequence is the base class's private business and appears nowhere in the interface the subclass sees, so a hook that assumes an earlier step has run is correct only by inspection of the parent, and it stays correct only until someone reorders the parent. That is the coupling meant by saying inheritance is tight here: the subclass depends on the base class's sequence rather than on its signatures, and the sequence can change without a compile error anywhere."

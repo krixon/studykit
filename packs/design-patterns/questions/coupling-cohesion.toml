@@ -106,3 +106,27 @@ levels = ["senior", "lead", "staff"]
 q = "A repository interface is meant to hide the store behind it. Of its fourteen methods, four take a parameter that only means anything to the current engine, and two more return that engine's own error type. A replacement engine is being evaluated. How many of the fourteen methods have to change, and what does that fraction tell you about the abstraction?"
 a = "Six of fourteen, which is 43%, so nearly half the surface is engine-specific and the interface is not an abstraction over storage but a thin renaming of one engine. The number is the useful part: an abstraction's value is exactly the share of its surface that survives swapping the thing behind it, and a leak is measurable rather than a matter of taste. Below some threshold you are better off admitting the dependency and writing the second implementation as a separate adapter, because a leaky interface costs indirection and delivers no substitutability."
 derivation = ["methods = 14", "engine_params = 4", "engine_errors = 2", "leaking = engine_params + engine_errors", "pct = round(100 * leaking / methods)"]
+
+[[q]]
+id = "co-014"
+qtype = "discrimination"
+subtopic = "cohesion"
+levels = ["mid", "senior"]
+q = "A startup routine opens the database pool, warms a cache, registers metrics and seeds feature flags. The four have nothing in common except the moment they run. Which kind of cohesion is that, and is it a defect?"
+a = "Temporal cohesion, near the weak end of the ladder, and at an entry point it is usually fine. Something has to sequence what happens at boot, and a routine whose whole job is to call four well-named functions in order is honest about being that. It becomes a defect when the logic moves in: once the routine knows how to warm the cache, boot is where cache behaviour lives, changing the cache means editing startup, and the cache cannot be exercised without booting. The test is whether the routine calls or contains."
+
+[[q]]
+id = "co-015"
+qtype = "judgment"
+subtopic = "demeter"
+levels = ["mid", "senior"]
+q = "A handler computes shipping by reaching through an order to its customer, then that customer's address, then the postcode. You are adding a method on the order that returns the postcode directly, so the chain disappears from the handler. More or less of a fix?"
+a = "Around -1 as a stopping point, though it is an improvement on the chain. Hiding the traversal removes the handler's knowledge of the intermediate classes, which is worth something, but the coupling that matters survives: the handler still knows shipping is computed from a postcode, and the order has grown a method that exists only to serve someone else's traversal. The chain was asking why the handler needs a postcode at all, and if the answer is to compute shipping, the behaviour belongs where the data is and the order should be asked for the shipping cost. A delegating method per chain is how a class ends up as a facade over its own object graph."
+
+[[q]]
+id = "co-016"
+qtype = "diagnostic"
+subtopic = "leaky-abstractions"
+levels = ["mid", "senior"]
+q = "A lookup method on a storage interface is documented as a simple fetch. In production it occasionally blocks for a noticeable fraction of a second, and only in the service where one particular implementation is wired in. Callers do not handle it, because the interface gave them nothing to handle. What is the underlying problem, and what should the interface have said?"
+a = "The abstraction is leaking a property it declined to declare: that implementation falls through to a remote call on a miss, so latency and failure are part of the contract whether or not the interface admits it. Every non-trivial abstraction leaks like this, and the fix is not a better name but a deliberate leak - the interface should carry a timeout, a failure the caller has to handle, and a stated latency class, so that correct calling code can be written against the interface alone. An abstraction you cannot reason about without reading the implementation is indirection, not abstraction."

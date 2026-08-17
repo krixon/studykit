@@ -119,3 +119,19 @@ derivation = [
   "unnecessary = public_symbols - used_externally",
   "pct = round(100 * unnecessary / public_symbols)",
 ]
+
+[[q]]
+id = "bo-015"
+qtype = "discrimination"
+subtopic = "domain-purity"
+levels = ["mid", "senior"]
+q = "Two teams both describe their architecture as hexagonal. One maps rows to domain objects inside the repository. The other returns the ORM's entity classes from repositories, because the mapping was boilerplate. What does the second lose?"
+a = "The independence the shape was for, quietly. ORM entities arrive with a required no-argument constructor, mutable fields the mapper needs, lazy-loading proxies that turn a field read into a query, and cascade and identity rules that begin to decide what an aggregate may contain. Domain tests now need the ORM configured, and a schema change becomes a change to domain types. The boilerplate is a real cost and the trade is sometimes worth making, but it should be made as a trade rather than described as hexagonal, because the property being traded away is the one the arrangement exists to provide."
+
+[[q]]
+id = "bo-016"
+qtype = "judgment"
+subtopic = "domain-purity"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Domain types in a service carry the web framework's validation annotations, because a separate set of request types would roughly double the number of classes. More or less defensible?"
+a = "Around -1, and defensible if it is a decision rather than a drift. The annotation is inert once inside the domain and the mapping cost avoided is genuine, which is why this is where most teams compromise. What it costs is that the domain's shape is now partly decided by what the framework can express, and the two kinds of validation are not the same rules: one guards against a hostile or malformed payload, the other against a state the business forbids. They diverge the first time an internal caller constructs a valid object the request format cannot express, and at that point the shared type serves neither and the split you avoided is a refactor rather than a choice."

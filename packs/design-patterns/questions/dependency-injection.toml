@@ -88,3 +88,51 @@ subtopic = "test-seams"
 levels = ["senior", "lead", "staff"]
 q = "What is the signal that DI has been over-applied?"
 a = "An interface with exactly one implementation, that will only ever have one, existing solely so a test can mock it. If you would never swap it in production, ask whether the test should just use the real thing - the interface is buying nothing and costing a file and a level of indirection."
+
+[[q]]
+id = "di-012"
+qtype = "discrimination"
+subtopic = "inversion"
+levels = ["graduate", "mid"]
+q = "Two classes need the same collaborator. The first takes it as a constructor parameter. The second is constructed with no arguments and has a field assigned afterwards by whoever built it. What can go wrong with the second that cannot go wrong with the first?"
+a = "The object can exist half configured. Between construction and assignment it is a perfectly valid reference that fails when used, so a caller who forgets the assignment gets a null failure at the first call rather than an error at the point of the mistake, and no single place guarantees the object is complete. The constructor version cannot be built wrong: the signature is the declaration of what the class needs, and the type system enforces it. Setter assignment also makes the dependency read as optional, which is rarely what was meant."
+
+[[q]]
+id = "di-013"
+qtype = "judgment"
+subtopic = "lifetimes"
+levels = ["graduate", "mid"]
+q = "A currency formatter holds no fields and no state, and is currently constructed wherever it is used. Someone proposes registering one instance for the whole process instead. New information: profiling shows constructing it is negligible. More or less worth doing?"
+a = "About 0, and the reasoning matters more than the number. It is safe, because an object with no mutable state has nothing to race on when threads share it, so nothing argues against it. But the case for it was cost, and the profile has removed that, so what is left is taste. Where the answer changes is the day someone adds a field: anything registered once per process is used concurrently whether or not that was planned, and nobody revisits the registration when adding a cache to the formatter."
+
+[[q]]
+id = "di-014"
+qtype = "discrimination"
+subtopic = "lifetimes"
+levels = ["graduate", "mid"]
+q = "A service depends on two things: a cache of reference data, and a database session that must see one request's work as a single unit. One belongs to the process and the other to the request. Which is which, and what breaks if each is given the other's lifetime?"
+a = "The cache belongs to the process, the session to the request. A cache rebuilt per request caches nothing: every entry dies with the caller that filled it, and the load it was meant to remove comes straight back. A session shared by the process is worse, because the unit of work now spans requests: one caller sees another's uncommitted changes, a rollback discards work that was not theirs, and the connection it holds is never returned. The general rule underneath both is that a longer-lived object must never hold a shorter-lived one."
+
+[[q]]
+id = "di-015"
+qtype = "discrimination"
+subtopic = "test-seams"
+levels = ["graduate", "mid"]
+q = "A test needs the current date to be a fixed value. One approach replaces the global date function for the duration of the test. The other passes a clock object into the class and hands the test a fixed one. What does the second give you that the first does not?"
+a = "A dependency that is declared rather than ambient. Replacing a global mutates state every test in the process shares, so tests cannot run in parallel, a replacement that escapes its scope corrupts unrelated tests, and nothing in the class under test says it reads the clock at all. Injecting it puts the dependency in the signature and makes the class deterministic by construction, with no test machinery involved. Time, randomness and I/O are the three that most often need this, because they are the sources of behaviour a test cannot otherwise pin down, and all three are trivially injectable."
+
+[[q]]
+id = "di-016"
+qtype = "diagnostic"
+subtopic = "wiring"
+levels = ["graduate", "mid"]
+q = "Every class in a service takes its collaborators as constructor parameters. Substituting a fake email provider for one test still required edits in eleven files. What has gone wrong?"
+a = "There is no composition root. Constructor injection is being used everywhere, but the concrete types are still chosen all over the codebase, so eleven places construct the provider and eleven places have to change. The technique is present and the thing it is for is missing: one location near the entry point where the graph is assembled, with nothing else naming a concrete implementation. With that in place the swap is a single edit and the eleven classes never mention the provider at all."
+
+[[q]]
+id = "di-017"
+qtype = "discrimination"
+subtopic = "wiring"
+levels = ["graduate"]
+q = "Two classes obtain a database connection differently. One takes it as a constructor parameter. The other calls a module-level function at the top of each method to fetch it. Both work in production. What is materially different about them?"
+a = "What the class declares, and who controls what it gets. The first states the dependency in its signature, so it can be handed a different connection - a fake, a read replica, one already inside a transaction - without being edited. The second hides the dependency behind a global lookup, so reading the constructor tells you nothing about what the class needs, and changing what it receives means changing state every other class shares. Fetching your dependencies from a registry is not injection: it is the same global with an interface in front of it."

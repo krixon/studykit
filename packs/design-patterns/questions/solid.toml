@@ -129,3 +129,43 @@ levels = ["graduate", "mid"]
 q = "A payment type is identified by a branch that appears in the pricing module, the receipt renderer, the refund path and the reconciliation report. Two new payment types are being added this quarter. How many of those branch sites must be edited, and how many edits is that in total?"
 a = "All four sites, twice each, so eight edits, and every one is a chance to miss a site - which is the failure this principle names. Adding behaviour requires modifying existing code in four places, so the module is open for neither extension nor safety. Replacing the branches with polymorphism or a registry makes each new type one new class and zero edits to the four call sites. Note the four is the cost that matters, not the two: the edits scale with the number of places that switch on the type."
 derivation = ["sites = 4", "new_types = 2", "edits = sites * new_types"]
+
+[[q]]
+id = "so-017"
+qtype = "recall"
+subtopic = "dip"
+levels = ["graduate", "mid"]
+q = "A use case needs to save an order and must not know whether the store is Postgres or a file. Where does the interface it calls live, and who implements it?"
+a = "The interface belongs with the use case, in the domain, and is expressed in the domain's language: save an order, not execute an update. The Postgres class lives in the infrastructure and implements it, so the infrastructure depends on the domain and not the other way round. That reversed arrow is the inversion, and it is the whole content of the principle: without it you have an interface, but the dependency still runs from policy to detail. The consequence noticed first is that the use case can be exercised against an in-memory implementation with no database at all."
+
+[[q]]
+id = "so-018"
+qtype = "judgment"
+subtopic = "dip"
+levels = ["graduate", "mid"]
+q = "Domain code imports the ORM's session type and calls it directly to save. New information: the team wants the domain's tests to run without a database. Does declaring an interface that the domain owns become more or less worth doing?"
+a = "More, +2, and the test requirement is the cheapest justification available. With the session type inside the domain, every domain test needs either a database or a mock of a third-party type nobody controls, which is slow and brittle in equal measure. An interface the domain declares and the persistence layer implements turns those tests into plain calls against an in-memory implementation. Note which detail does the work: the interface has to be defined by the domain in the domain's terms. Extracting one from the ORM class and putting it in a package beside the domain leaves the dependency pointing outwards and buys nothing."
+
+[[q]]
+id = "so-019"
+qtype = "judgment"
+subtopic = "lsp"
+levels = ["graduate", "mid"]
+q = "A read-only collection is being written as a subclass of the mutable one, with the mutating methods overridden to throw. New information: every caller today is in your own codebase and none of them mutates. More or less appropriate?"
+a = "Less, around -1 to -2. It compiles and it works today, which is why this keeps getting built. The defect is that the subtype no longer honours what its supertype promised, so any code taking the mutable type is conditionally wrong, and the failure surfaces at runtime in the caller, a long way from the decision. That today's callers happen not to mutate is a property of today, and nothing marks the type as unsafe to pass. Composition instead: hold the collection, expose the operations that are actually supported, and a caller that needs to mutate cannot be handed one by accident."
+
+[[q]]
+id = "so-020"
+qtype = "judgment"
+subtopic = "isp"
+levels = ["lead", "staff"]
+q = "An interface in a shared module has reached twelve methods, each added by whichever team needed it. Every implementer stubs the ones it does not use, and each addition recompiles every consumer. The proposal is to split it into per-caller interfaces. More or less appropriate, and what makes the split hold?"
+a = "More, +2 on the split; the harder half is stopping it regrowing. Segregate by client need rather than by symmetry: each caller depends on the methods it calls, one class may implement several of the resulting interfaces, and the stubbing disappears because nothing declares what it cannot do. What makes it hold is a mechanism rather than a rule. Put each interface with its consumer, so adding a method to someone else's interface is a change to their code and a conversation. Without that, the next team under a deadline adds a thirteenth method, because a fat interface is never anybody's fault and will not become anybody's responsibility on its own."
+
+[[q]]
+id = "so-021"
+qtype = "diagnostic"
+subtopic = "srp"
+levels = ["lead", "staff"]
+q = "One file appears in most pull requests. Finance's changes and reporting's changes keep colliding in it, and about once a month a release waits while two teams reconcile edits made in the same window. The class reads coherently and is not especially large. What is the diagnosis?"
+a = "It serves two actors, which is what a reason to change actually means: not a topic, but a group of people who ask for changes. Size and readability are the wrong instruments here, which is why the class looks fine; the evidence is in the commit history, not the code. Split it along the actors so each team owns its own file, even where the two halves share data and the seam looks arbitrary from inside the code. The test of the diagnosis is that the monthly collision stops, and if it does not, the actors were not the ones you named."

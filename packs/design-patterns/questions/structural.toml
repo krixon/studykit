@@ -121,3 +121,51 @@ levels = ["graduate", "mid"]
 q = "A repository needs caching, retrying and logging, and any combination of the three may be wanted. Using a subclass per combination, how many subclasses cover every combination? Using wrappers of the same interface instead, how many classes, and what happens to each count when a fourth concern is added?"
 a = "Eight subclasses, because every one of the three concerns is independently present or absent, and adding a fourth doubles it to sixteen. Three wrappers, one per concern, and a fourth concern makes four. The subclass count grows exponentially with the number of concerns and the wrapper count grows by one each time, which is the argument for composing behaviour at runtime rather than fixing it at compile time. The combination is then chosen by wiring rather than by picking a class name."
 derivation = ["concerns = 3", "subclasses = 2 ** concerns", "wrappers = concerns", "with_fourth_sub = 2 ** 4", "with_fourth_wrap = 4"]
+
+[[q]]
+id = "st-016"
+qtype = "recall"
+subtopic = "adapter"
+levels = ["graduate", "mid"]
+q = "There is a class you cannot edit because it comes from a library, and your code already talks to everything of its kind through an interface it does not implement. What do you write, and what property names it?"
+a = "A small class that implements your interface, holds an instance of theirs, and translates each call. The property that names it is that the interface changes: it exists precisely because the two shapes do not match, which is what separates it from a wrapper keeping the same interface in order to add behaviour. The same class is where the library's types, exceptions and vocabulary stop, so nothing beyond it mentions them, and replacing the library is one class of work instead of a search across the codebase."
+
+[[q]]
+id = "st-017"
+qtype = "discrimination"
+subtopic = "composite"
+levels = ["graduate", "mid"]
+q = "A drawing is made of shapes, some of which are groups containing more shapes. One design gives single shapes and groups a shared interface. Another keeps them as separate types and lets callers branch on which they hold. What does the first remove, and what does it cost?"
+a = "It removes every conditional about whether you are holding one thing or many: a group implements each operation by delegating to its children, so the recursion falls out of the structure and no client code asks whether this is a leaf. The cost is the operations that only make sense for a group, adding a child being the usual one. Putting those on the shared interface forces single shapes to refuse them at runtime; leaving them off means a caller who wants to add must know which kind it has. There is no clean resolution, only a choice about where the awkwardness sits."
+
+[[q]]
+id = "st-018"
+qtype = "recall"
+subtopic = "facade"
+levels = ["graduate", "mid"]
+q = "Sending a notification currently means constructing three collaborating objects in a fixed order and calling five methods across them. You give callers one class with a single send method. What have you built, and what have you deliberately not done to the subsystem?"
+a = "A facade: one entry point over several collaborating classes, offering a narrower interface than the thing behind it. What you have not done is hide or forbid the subsystem. The three classes are still there and a caller with an unusual need can still use them directly, which is the deal: the facade serves the common path and does not claim to be the only way in. It stops earning its place when it grows a method per subsystem method, at which point it is the subsystem plus a layer, and every change below it changes the facade too."
+
+[[q]]
+id = "st-019"
+qtype = "discrimination"
+subtopic = "proxy"
+levels = ["graduate"]
+q = "Two wrappers implement the same interface as the object they hold. The first writes a log line and then calls through, every time. The second checks the caller's permissions and calls through only if they pass. They are identical in a diagram. What separates them, and what can the second do that the first cannot?"
+a = "Intent, with a practical consequence: the first adds to what happens, the second controls whether it happens. A wrapper that adds behaviour always delegates, so the object behind it is called exactly as often as it would have been. A wrapper that controls access may never call it at all - it can refuse, answer from something it stored earlier, or not have created the real object yet. That is why access control, lazy loading, caching and a remote call stub are all the same shape, and why the second kind can change what the system does rather than only what it records."
+
+[[q]]
+id = "st-020"
+qtype = "judgment"
+subtopic = "composite"
+levels = ["senior", "lead", "staff"]
+q = "A team-wide rule says every tree-shaped model implements one interface, add-child included, with leaves throwing not-supported. New information: two leaf types were added last quarter and both shipped a bug where a caller added children to a leaf. Keep the rule?"
+a = "Less, around -2 as a blanket rule, and the evidence has already been gathered for you. This is the composite trade-off resolved in the direction that pushes the cost to runtime, which is a defensible local choice and a poor standard: every future leaf author has to remember an obligation nothing enforces, and the team has now paid for that twice. Keep the shared interface for the operations that genuinely apply to both, and put child management on the container type, so a caller who wants to add has to hold a container and the compiler says so. Where the uniform interface is genuinely right, such as an editor walking a heterogeneous tree, it should be a decision with a reason attached rather than the default."
+
+[[q]]
+id = "st-021"
+qtype = "diagnostic"
+subtopic = "decorator"
+levels = ["senior", "lead", "staff"]
+q = "Two services wrap their client in the same two wrappers, one that retries and one that caches, both taken from the same internal library. In one service a failed call is never cached; in the other, failures are served from the cache until they expire. Nobody has changed the wrappers. Most likely cause?"
+a = "The two stacks are assembled in opposite orders. With the cache outside the retry, the cache sees only the retry's final result, so a value is stored after the attempts succeed or the failure is returned to the caller unstored. With the cache inside, it sees each individual attempt, so the first failure is written and then handed back to the retry, which is also why retrying stops helping. The general point is that stackable wrappers compose freely only when the concerns are orthogonal, and these two are not: one changes what the other observes. The order is part of the design, so it belongs in one shared assembly function with the reasoning recorded, not in each service's wiring."

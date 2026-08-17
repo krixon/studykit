@@ -113,3 +113,51 @@ levels = ["mid", "senior", "lead", "staff"]
 q = "A block of logic appears in two places. Extracting it into a shared abstraction takes an afternoon. Six months later the two callers have diverged, and the shared thing carries three boolean flags and two special cases to serve both; unwinding it means understanding every caller. Counting the flags and special cases as the ongoing cost, what does the rule of three say the second occurrence should have bought, and why does the arithmetic favour waiting?"
 a = "Nothing but a note. Two occurrences give two data points, which cannot show you the axis of variation, so abstracting at two is a guess - and here it was wrong five times over, since 3 flags plus 2 special cases is 5 accommodations bolted onto a shared thing to keep two callers working. The afternoon saved is dwarfed by that, because duplication is visible and mechanical to remove whereas a wrong abstraction has to be understood before it can be unwound. Wait for the third occurrence, which is the first one that shows what actually varies."
 derivation = ["occurrences = 2", "flags = 3", "special_cases = 2", "accommodations = flags + special_cases"]
+
+[[q]]
+id = "rf-015"
+qtype = "recall"
+subtopic = "duplication"
+levels = ["graduate"]
+q = "The same block of code appears in two places. What question decides whether removing the duplication is the right move?"
+a = "Whether a change to the rule would have to be made in both places. If the two blocks encode one piece of knowledge, they are duplication, and leaving them is how one gets fixed and the other does not. If they encode two rules that happen to compute the same thing today, they are coincidence, and merging them couples two things that will diverge, which is discovered later as a shared function with a flag in it. Identical text is not the test. A shared reason to change is."
+
+[[q]]
+id = "rf-016"
+qtype = "judgment"
+subtopic = "duplication"
+levels = ["graduate", "mid"]
+q = "The same short validation block appears in two request handlers, so you are extracting it into a shared function. New information: a third handler needs the same block except that one field is optional there. More or less appropriate?"
+a = "Around 0, and what matters is what you do with the third case. Three occurrences is where the rule of three says go ahead, and the third is the one that finally shows which part varies, so this is the first moment there is enough information to abstract well rather than guess. But the shared thing has to express that variation honestly, as a property of the rule being applied, rather than take a boolean that switches behaviour. A flag parameter is the first special case, and the special cases that follow it are what turn a shared function into something nobody can change safely."
+
+[[q]]
+id = "rf-017"
+qtype = "discrimination"
+subtopic = "naming"
+levels = ["graduate", "mid"]
+q = "One name in a codebase is a single letter, another is the word data. One of them is defensible. Which, and what is the rule that separates them?"
+a = "The single letter, if its scope is a three-line loop: name length should scale with how far the reader is from the declaration, and an index whose whole life is visible needs nothing more. The word data is indefensible at any scope, because it is a noise word - it would still fit after the thing it names changed completely, which is precisely what it means to say nothing. Same family: info, manager, helper, process, handle. A name is judged by what it rules out, and one that rules out nothing has only the appearance of a name."
+
+[[q]]
+id = "rf-018"
+qtype = "diagnostic"
+subtopic = "safe-steps"
+levels = ["graduate", "mid"]
+q = "A restructuring that has been running for two days is finally finished, and the suite fails in three places nobody can explain. The branch has one commit. What did the process get wrong?"
+a = "It gave up the small steps and the commits, which are the things that turn a failure into information. With one transformation per commit and the tests run after each, a failure names the step that caused it. With two days in one commit, the failure could be any of a hundred changes, there is nothing to bisect, and reverting means losing all of it. The second cost is that abandoning has become expensive, so the work already sunk starts arguing for pushing on when starting again in small steps would be quicker."
+
+[[q]]
+id = "rf-019"
+qtype = "discrimination"
+subtopic = "smells"
+levels = ["graduate", "mid"]
+q = "Two comments in a file. One explains what the next twenty lines do. The other explains why a retry limit is three rather than ten. One of them is usually a smell. Which, and what is the fix?"
+a = "The one explaining what. It is almost always a name that was not chosen: those twenty lines are a step with a purpose, and the comment is the name of the method they should be. Extract it and the comment becomes redundant, which is the test that the diagnosis was right. The why comment is the valuable kind and should be left alone: the reasoning behind a choice is not recoverable from the code at all, since the code shows three and cannot show why ten was rejected, and that is exactly what the next person needs before changing it."
+
+[[q]]
+id = "rf-020"
+qtype = "judgment"
+subtopic = "naming"
+levels = ["lead", "staff"]
+q = "The business says policy. The code says contract in three modules and agreement in a fourth. A rename would touch several hundred call sites across two services. Worth doing?"
+a = "More, around +1 to +2, though it is a sequencing problem rather than a decision. Every translation between the business's word and the code's is a place a misunderstanding lives, and here there are two translations plus an internal inconsistency, so anyone reading the fourth module has to re-map twice. The cost is mechanical: an editor rename per module, one per commit, no behaviour change in any of them, and the cross-service part staged behind whichever names appear in a published contract, since those are the only ones that cannot be renamed unilaterally. What makes it a lead's job rather than a tidy-up is that it will not happen on its own and will not survive unless the new word is the one the team says out loud."

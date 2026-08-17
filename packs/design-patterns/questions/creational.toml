@@ -112,3 +112,27 @@ subtopic = "singleton"
 levels = ["graduate", "mid"]
 q = "A suite of tests passes when each test file is run on its own and fails when the whole suite runs together, with failures that move around as tests are reordered. Most likely cause?"
 a = "Shared mutable state living for the lifetime of the process, typically a single global instance holding a cache, a registry or a configuration that one test mutates and the next inherits. It passes in isolation because each file gets a fresh process. The moving failures are the giveaway: order decides who writes before whom. The reason a global instance is treated as a design problem rather than a convenience is exactly this - it is a dependency nothing declares, so nothing resets it."
+
+[[q]]
+id = "cr-015"
+qtype = "discrimination"
+subtopic = "factory"
+levels = ["graduate", "mid"]
+q = "Two ways to make a duration of thirty seconds: call the constructor with the number, or call a class-level method named for what it produces. The second is longer to write. What does it buy?"
+a = "A name, and freedom in what comes back. The name says which reading of the argument you meant, which a bare number in a constructor cannot: seconds or milliseconds is a comment at best. And because the method is not obliged to return a fresh instance of exactly that class, it can hand back a cached value for a common case, or an instance of a subtype, with no caller changing. A constructor can do neither. Its name is fixed to the class and it must return a new instance of it."
+
+[[q]]
+id = "cr-016"
+qtype = "recall"
+subtopic = "object-lifetime"
+levels = ["graduate", "mid"]
+q = "A dependency can be created fresh every time something asks for it. What does that choice cost, and why is it the wrong one for a pool of database connections?"
+a = "It costs allocation churn where construction is expensive, and it destroys anything whose value comes from being shared. A pool exists to hold connections and hand them back out, so creating one per request for it gives every caller a private pool with its own connections: the reuse never happens, and the total connection count grows with callers instead of being capped by the pool size. Anything whose purpose is to be shared - a pool, a cache, a set of rate-limit counters - has to live at least as long as the sharing is meant to span."
+
+[[q]]
+id = "cr-017"
+qtype = "judgment"
+subtopic = "builder"
+levels = ["lead", "staff"]
+q = "A team convention says any type with more than three constructor parameters gets a builder. New information: the language gained named arguments with defaults two releases ago, and half the team has quietly started using those instead. Keep the convention?"
+a = "Less appropriate to keep as written, around -1 to -2, and the split in the team is the more urgent half. The convention encoded a language limitation that no longer exists, so it now costs a class per type to express what a call site can say directly, and it reintroduces a window in which a half-built object exists. The lead's move is not to declare the better technique and move on, it is to retire the convention explicitly and say what replaces it, including what survives: a builder still earns its place where construction genuinely happens in steps, or where cross-field validation needs somewhere to run before the object exists. A convention half the team has stopped following is worse than either option on its own, because the codebase now teaches two things and neither reads as deliberate."
