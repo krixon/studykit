@@ -122,3 +122,136 @@ derivation = [
   "affected_hosts = 1",
   "dilution = affected_hosts / hosts",
 ]
+
+[[q]]
+id = "ta-011"
+qtype = "discrimination"
+subtopic = "measuring-tails"
+levels = ["graduate", "mid"]
+q = "The same endpoint has two latency figures: one recorded inside the request handler, one recorded by the client that called it. The second is consistently worse. Which is the user's, and what lives in the gap?"
+a = "The client's, always: it is the only one measuring the thing anyone experiences. The gap holds everything the handler is not running for - time queued in the accept backlog before any of your code sees the request, connection and TLS setup on a fresh connection, the network in both directions, and any time spent serialising a large response. Under load the queueing part grows fastest, which is the cruel property: the server-side figure looks best exactly when the system is worst, because a request that waited a second to be picked up still reports a fast handler. Use the server-side number to attribute a problem, and the client-side one to decide whether there is one."
+
+[[q]]
+id = "ta-012"
+qtype = "judgment"
+subtopic = "measuring-tails"
+levels = ["senior", "lead", "staff"]
+q = "An endpoint takes about 5 per second. Its objective is written as a 99.9th-percentile latency evaluated every minute. More or less meaningful as an objective?"
+a = "Less, -2. A 60 seconds window at that rate holds a few hundred requests, and a 99.9th percentile needs on the order of 10,000 samples before it means anything, so the figure being alerted on is one unlucky request per window: it is the maximum wearing a percentile's name. Collecting enough for that percentile at this rate takes about 33 minutes, so either widen the window to something that holds the samples, drop to a percentile the traffic can support, or state the objective as a count of requests over a threshold, which is well defined at any volume. The general check before quoting a tail percentile is whether the window contains enough requests for the digit you are quoting."
+derivation = [
+  "per_second = 5",
+  "window_seconds = 60",
+  "needed_samples = 10000",
+  "minutes_to_reach = round(needed_samples / (per_second * window_seconds))",
+]
+
+[[q]]
+id = "ta-013"
+qtype = "discrimination"
+subtopic = "percentile-arithmetic"
+levels = ["graduate", "mid"]
+q = "Two ways to produce a weekly tail latency figure: take the seven daily figures and average them, or compute it from the week's requests directly. They disagree. Which is right, and why is the disagreement not a rounding error?"
+a = "The one computed from the week's requests. A percentile is an order statistic: it is defined by where a request sits in the sorted distribution, so producing one requires the distribution, and the seven daily figures are summaries from which the distribution cannot be recovered. Averaging them gives every day equal weight regardless of how many requests it carried, and a quiet Sunday whose tail was set by a handful of requests counts as much as a busy Tuesday. The general rule covers three tempting operations: you cannot average percentiles, you cannot add them, and you cannot take a percentile of percentiles. Keep histogram buckets or a sketch, which do aggregate, and compute the figure from those."
+
+[[q]]
+id = "ta-014"
+qtype = "numeric"
+subtopic = "percentile-arithmetic"
+levels = ["senior", "lead", "staff"]
+q = "A request makes two sequential calls. Each exceeds 100 ms on 1% of attempts, independently of the other. How often does the pair exceed 200 ms, and how often does at least one call exceed 100 ms?"
+a = "The pair exceeds 200 ms on 0.01% of requests, one in 10,000, because that needs both calls to be slow at once. At least one call exceeds 100 ms on 1.99% of requests. So adding the two per-call figures produces a threshold the pair crosses a hundred times less often than the 1% the addition implies: the sum's tail percentile is well below the sum of the tail percentiles, because two rare events rarely coincide. Means are what add. If the calls are not independent - a shared dependency, a shared pool, one caused by the other - the coincidence is much more common and the sum gets closer to being right, which is worth checking before relying on either figure."
+derivation = [
+  "slow_pct = 1",
+  "call_ms = 100",
+  "pair_ms = 200",
+  "both_slow_pct = slow_pct * slow_pct / 100",
+  "one_in = 100 / both_slow_pct",
+  "either_slow_pct = round(100 * (1 - (1 - slow_pct / 100) ** 2), 2)",
+]
+
+[[q]]
+id = "ta-015"
+qtype = "recall"
+subtopic = "retries-and-tails"
+levels = ["graduate", "mid"]
+q = "A client retries any request that times out. When does that help, and when does it make things worse?"
+a = "It helps when the cause is transient and local to the attempt - a dropped packet, one unlucky slow instance, a brief hiccup - because the second attempt meets a different situation. It makes things worse when the cause is saturation, because the retry adds load exactly where load is the problem, and each new failure produces another retry: a positive feedback loop, and the mechanism behind most retry storms. The distinction is not visible from the client, which is why retries need a bound that holds under both readings: a retry budget expressed as a fraction of overall traffic, so the system degrades instead of amplifying, plus backoff with jitter so the attempts do not arrive together."
+
+[[q]]
+id = "ta-016"
+qtype = "discrimination"
+subtopic = "retries-and-tails"
+levels = ["graduate", "mid"]
+q = "Two remedies for a dependency with a bad tail. One resends the request after a timeout. The other sends a second request to a different replica once the first has taken longer than usual, and takes whichever answers first. What is each betting on?"
+a = "The first bets that the problem will have cleared by the time the second attempt arrives, which is a bet on time and a bet that the cause was transient. The second bets on independence: that whatever made this replica slow is specific to it, so another replica asked now will answer sooner. That is why hedging works on tails and retrying often does not - a tail is usually one unlucky instance, a garbage collection pause or a queue, rather than a condition the whole dependency is in. Hedging also costs a bounded, known amount, a few per cent extra requests, because the second request only goes out for the slow minority, whereas a retry on timeout costs most when the dependency is least able to pay."
+
+[[q]]
+id = "ta-017"
+qtype = "numeric"
+subtopic = "retries-and-tails"
+levels = ["senior", "lead", "staff"]
+q = "A service calls a dependency 10,000 per second and retries a failed call up to three times. An incident makes a fifth of calls fail. What does the dependency receive, and what would a retry budget of 3% of traffic have made it?"
+a = "16,000 per second, arriving exactly when the dependency is already failing. A fifth of 10,000 is 2,000 failures per second, each retried three times, which adds 6,000 per second on top of the original load: a 60% increase in offered load caused entirely by the failure, which is what turns a partial outage into a total one. A budget capped at 3% of traffic would have allowed 300 per second of retries, so the dependency sees a small constant overhead however bad things get, and the caller degrades instead of amplifying. Bound the total, not the attempt: a per-request limit of three is not a bound on anything the dependency can feel."
+derivation = [
+  "base_rps = 10000",
+  "failures_rps = base_rps / 5",
+  "extra_rps = failures_rps * 3",
+  "total_rps = base_rps + extra_rps",
+  "increase_pct = round(100 * extra_rps / base_rps)",
+  "budget_pct = 3",
+  "budget_rps = base_rps * budget_pct / 100",
+]
+
+[[q]]
+id = "ta-018"
+qtype = "judgment"
+subtopic = "tail-amplification"
+levels = ["graduate", "mid"]
+q = "A page waits on 20 backends before it can render, and its tail is bad, so the team is tuning the slowest backend. New information: each backend independently answers quickly 99% of the time, and the page could be restructured to need only 10 of them before first render. Which lever is the bigger one?"
+a = "The restructuring, by a long way, so tuning alone is around -1. With 20 backends the chance that at least one is slow is 18.2%; with 10 it is 9.6%, and the share of slow page loads has roughly halved without a single backend getting faster. Tuning one backend improves one factor in a product of twenty and cannot do much: even making it perfect leaves the other nineteen producing 17.4%. The effect is exponential in the number of calls on the critical path, so the width of the fan-out is itself a latency decision. Where the fan-out cannot shrink, the other levers are hedging to a second replica and rendering a partial answer on a deadline."
+derivation = [
+  "backends = 20",
+  "fast_pct = 99",
+  "p_fast = fast_pct / 100",
+  "any_slow_pct = round(100 * (1 - p_fast ** backends), 1)",
+  "halved = 10",
+  "halved_any_slow_pct = round(100 * (1 - p_fast ** halved), 1)",
+  "nineteen_slow_pct = round(100 * (1 - p_fast ** 19), 1)",
+]
+
+[[q]]
+id = "ta-019"
+qtype = "judgment"
+subtopic = "tail-amplification"
+levels = ["senior", "lead", "staff"]
+q = "A query scattered over 100 shards has a bad tail. The proposal is to hedge every query to a second replica and take the first answer. New information: the cluster runs at 70% utilisation. More or less appropriate?"
+a = "The diagnosis is right and this version of the remedy is wrong, so about -1. With each shard quick 99% of the time, 63.4% of queries wait on a slow shard, so the tail is a fan-out problem and hedging is the correct family of answer. Hedging unconditionally doubles the read load, and a cluster at 70% would be asked to run at 140%, which converts a latency problem into an outage. Hedge on a delay instead: send the second request only when the first has passed roughly its 95th percentile, which costs about 5% extra requests because only the slow minority triggers it, and cuts the tail sharply. Cap the hedge rate as well, so a general slowdown cannot turn every request into two."
+derivation = [
+  "shards = 100",
+  "fast_pct = 99",
+  "any_slow_pct = round(100 * (1 - (fast_pct / 100) ** shards), 1)",
+  "utilisation_pct = 70",
+  "doubled_pct = utilisation_pct * 2",
+  "hedge_extra_pct = 5",
+]
+
+[[q]]
+id = "ta-020"
+qtype = "judgment"
+subtopic = "mean-vs-percentile"
+levels = ["senior", "lead", "staff"]
+q = "A dashboard shows p50 and p99 for every service. The objective is written on p99 only, so the proposal is to drop p50 from the dashboard and reduce the clutter. More or less appropriate?"
+a = "Less, around -1 to -2, because the pair carries information neither number carries alone. The p50 describes the system working and the p99 describes it failing, and the ratio between them describes how consistent it is. A rising ratio while both are still inside target is the earliest warning that headroom is going, and it is invisible if you only watch the objective. The two also separate causes: p50 and p99 rising together is the whole system getting slower, typically load or a dependency, while p99 rising alone is queueing, contention or one unlucky instance. Drop the clutter somewhere else. If the dashboard is crowded, the honest reduction is fewer services on one screen, not fewer statistics per service."
+
+[[q]]
+id = "ta-021"
+qtype = "discrimination"
+subtopic = "mean-vs-percentile"
+levels = ["senior", "lead", "staff"]
+q = "Two services both report a mean latency of 20 ms. One has a 99th percentile of 25 ms, the other of 2 s. What has the mean failed to say, and where does a mean sit in a latency distribution anyway?"
+a = "It has failed to say anything about the shape, which is the only thing separating a service nobody complains about from one that is unusable for a hundredth of its requests: 2 s is the second service's tail, a hundred times its own mean, and the mean barely moves when that tail doubles because the slow requests are a small fraction of the count. The second half of the answer is that the mean is not a percentile of anything. Latency distributions are right-skewed, so the mean typically lands somewhere around p60 to p80, which means quoting it answers 'what does a typical request get' badly and 'what do my worst users get' not at all. Quote p50 and p99 together instead."
+derivation = [
+  "mean_ms = 20",
+  "tight_p99_ms = 25",
+  "wide_p99_s = 2",
+]

@@ -136,3 +136,34 @@ subtopic = "storage-growth"
 levels = ["mid", "senior", "lead", "staff"]
 q = "What determines the steady-state size of a store that retains data for a fixed window, and what multipliers are routinely left out of the estimate?"
 a = "Ingest rate times retention window: once the oldest data being deleted matches the newest arriving, the total stops growing, which is what makes retention the only lever with unbounded return. The multipliers people forget are replication factor, backups and snapshot chains, secondary indexes, and write amplification from the storage engine, which for a log-structured one can be ten to thirty times the logical bytes. Compression cuts text by 70 to 80% and does nothing for data already compressed."
+
+[[q]]
+id = "cp-011"
+qtype = "recall"
+subtopic = "amdahl"
+levels = ["mid", "senior", "lead", "staff"]
+q = "What caps the speedup you get from adding workers, and what does that imply about where to spend effort?"
+a = "The fraction of the work that cannot be done in parallel. With 10% of the work serial, 16 workers give 6.4x the throughput and no number of workers ever gives more than 10x, because the serial part is still there being done once at a time. The implication is that hardware approaches the ceiling and only removing serial work raises it: past a certain point another machine buys almost nothing while deleting the shared step buys everything. So find the serial thing before buying anything, and in real systems it is usually a shared resource rather than an algorithm - a lock, a leader, a single database, a sequence generator. The related warning is that coordination between workers has its own cost, so beyond some concurrency throughput does not flatten, it falls."
+derivation = [
+  "serial_pct = 10",
+  "serial = serial_pct / 100",
+  "workers = 16",
+  "speedup = round(1 / (serial + (1 - serial) / workers), 1)",
+  "max_speedup = 1 / serial",
+]
+
+[[q]]
+id = "cp-012"
+qtype = "recall"
+subtopic = "cost-per-unit"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Why reduce infrastructure cost to a unit rate before comparing anything, and which unit rate is the one that carries a signal?"
+a = "Because totals are incomparable: a service costing twice another may be serving ten times the traffic, and no argument about the two totals can be settled. Cost per request, per user per month, per gigabyte stored or per gigabyte egressed puts two services, or one service in two quarters, on the same axis. The rate that carries the signal is cost per unit tracked over time. Total cost rising as the product grows is expected and says nothing; cost per request rising says something is scaling worse than linearly, which is a design fact rather than a finance one, and it is usually the first quantitative evidence of it. Note which costs are fixed and which are marginal before reading the trend, since a fixed reservation gets cheaper per unit as you grow whether or not anything improved."
+
+[[q]]
+id = "cp-013"
+qtype = "discrimination"
+subtopic = "cost-per-unit"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Two services' bills are both growing. On the first, cost per request is flat. On the second, cost per request is climbing. Both teams are asked to cut spend. Which conversation is the different one, and why?"
+a = "The second. Flat cost per request with a growing bill is a product succeeding: the spend is tracking the work, and reducing it is an efficiency project with a known shape - cheaper instances, better packing, a caching layer, a retention change - with the savings bounded by how much fat there is. Climbing cost per request means each additional unit of work costs more than the last, which is a scaling defect rather than a spending one: an N+1 that grows with data, a cache whose hit rate is falling as the working set outgrows it, a query whose plan changed, cross-region egress on a path that used to be local. Cutting spend there means fixing the mechanism, and it usually pays back more than the efficiency project, because it is compounding against you."

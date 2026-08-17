@@ -123,3 +123,23 @@ derivation = [
   "expected = 1",
   "p_none_pct = round(100 * exp(-expected))",
 ]
+
+[[q]]
+id = "co-011"
+qtype = "judgment"
+subtopic = "correlated-retries"
+levels = ["mid", "senior", "lead", "staff"]
+q = "After a dependency was knocked over repeatedly by its clients' retries, the proposal is to halve the number of retry attempts each client makes. More or less likely to fix it?"
+a = "Less than it looks, around -1: it reduces the size of the spike and leaves the spike. The problem is that the clients all failed at the same instant and all back off on the same schedule, so their attempts arrive together, and a coordinated half is still a coordinated wave landing on a dependency that is trying to recover. Break the correlation rather than the volume: full jitter on the backoff, so attempts spread across the interval instead of stacking at the end of it. Then bound the total with a retry budget expressed as a fraction of traffic, which is the part that holds when the failure is saturation rather than transient. Halving the attempts also costs you the recoveries the retries were legitimately getting, which is a real loss for no structural gain."
+
+[[q]]
+id = "co-012"
+qtype = "recall"
+subtopic = "id-collisions"
+levels = ["mid", "senior", "lead", "staff"]
+q = "For a scheme handing out random identifiers, which probability is the one to compute, and what buys more safety than adding bits?"
+a = "The probability of any collision over the whole lifetime of the system, against the total number of identifiers it will ever mint, not the probability per insert. Collisions arrive near the square root of the space, so the count is what matters and it is usually much larger than people picture. What buys more than bits is shrinking the space each identifier has to be unique within: scope it to a tenant, a day or a shard and the count in each namespace collapses, which moves the exponent far more cheaply than widening the identifier. Two things to hold alongside it. A unique constraint in the store converts a silent collision into a retryable error, which is the difference between a bug and a corruption. And an identifier of 64 bits gives 32 bits of collision resistance rather than 64, so the resistance is always half the width."
+derivation = [
+  "bits = 64",
+  "resistance_bits = bits / 2",
+]

@@ -144,3 +144,110 @@ subtopic = "dominant-term"
 levels = ["graduate", "mid"]
 q = "Two ways of reporting an estimate: one gives the total, the other names which input the total moves with. Why is the second usually the more useful output?"
 a = "Because it tells you what to do. A total answers whether the design fits and nothing else, and it is only as good as its weakest assumption. Naming the sensitivity says which assumption to go and check, which lever would change the outcome, and what kind of problem you have - 'dominated by the image payload, so this is a bandwidth question rather than a request-rate one' redirects the work. It also makes the estimate reviewable, because a reader can attack the input that matters instead of the arithmetic."
+
+[[q]]
+id = "es-012"
+qtype = "recall"
+subtopic = "dominant-term"
+levels = ["graduate", "mid"]
+q = "You have an estimate with several contributing terms. How do you find the one that decides the answer, and what do you do with the rest?"
+a = "Compute each term to one significant figure, compare them, and drop anything an order of magnitude below the largest. A term contributing a few per cent does not need to be right, and spending time on it is the commonest way an estimate takes twenty minutes instead of two. If two terms come out within a factor of two of each other you have not failed, you have found a genuine trade-off, and the estimate has done its job by locating it. The output worth quoting is the term plus its sensitivity: which input the answer moves with, so that everyone knows which number to argue about."
+
+[[q]]
+id = "es-013"
+qtype = "recall"
+subtopic = "rate-conversion"
+levels = ["graduate", "mid"]
+q = "A daily total is divided by the number of seconds in a day to get a rate, and the fleet is sized for it. What has that assumed, and how wrong is it usually?"
+a = "It has assumed the traffic is spread evenly, which no real workload is. A consumer web workload with a daily rhythm peaks at roughly two to three times its daily mean, so a fleet sized at the mean is short by that factor for the hours that matter; a batch-driven workload triggered on a schedule can peak a hundredfold, because the whole day's work arrives in one window. Size for peak and cost for mean, and say which one any figure is: a rate quoted without saying whether it is mean or peak is not usable in either calculation."
+
+[[q]]
+id = "es-014"
+qtype = "judgment"
+subtopic = "rate-conversion"
+levels = ["senior", "lead", "staff"]
+q = "A capacity plan takes the month's request total, divides by the seconds in a month, and provisions for that rate plus a margin. New information: the service is a consumer app used mostly in one country, in the evening. More or less sound?"
+a = "Less, -2, and the margin is doing work it cannot do. A month is about 2.6 million seconds, so 260 million requests a month reads as 100 per second, and a single-country consumer app concentrates its day into a few evening hours: the evening peak is around 300 per second, and the plan is short by a factor the margin was never sized for. The other half of the error is that a monthly mean also hides the weekly shape and any campaign or release spike. Provision against a measured peak, over a window short enough to contain one, and keep the monthly mean for the invoice, which is the question it does answer."
+derivation = [
+  "requests_per_month = 260000000",
+  "seconds_per_month = 2600000",
+  "mean_rps = requests_per_month / seconds_per_month",
+  "peak_rps = mean_rps * 3",
+]
+
+[[q]]
+id = "es-015"
+qtype = "recall"
+subtopic = "unit-discipline"
+levels = ["graduate", "mid"]
+q = "Which single habit catches most estimation errors, and why does it work?"
+a = "Write the unit on every intermediate value and carry it through the multiplication: requests per second times bytes per request gives bytes per second. It works because a wrong step almost always produces the wrong unit before it produces the wrong number, and the wrong unit is visible where a wrong number is not. The corollary is the useful half: if the units of your answer are not the units of the question, the model is wrong, and re-checking the arithmetic will never find it. The same habit forces you to say whether a figure is per second, per day or peak, and to keep a stock apart from a flow, which are the two ways an estimate quietly answers a different question."
+
+[[q]]
+id = "es-016"
+qtype = "judgment"
+subtopic = "unit-discipline"
+levels = ["senior", "lead", "staff"]
+q = "A requirements document says the system must handle 100,000 requests, and engineering has signed up to it. More or less usable as a requirement?"
+a = "Less, -2: it is not a rate, so it does not constrain anything. Spread over a day, 86,400 seconds, it is 1.2 per second, which one machine handles while idle. Concentrated in a busy hour it is 28 per second, and if it is a burst behind a batch trigger it could be the whole lot in a minute, which is a different system again. Those readings are a factor of twenty-four apart at the least and no margin covers that spread. Send it back with the question that fixes it: over what interval, and is that figure the mean or the peak. Sizing is done against a peak rate, and a total with no interval on it is a stock being used as a flow."
+derivation = [
+  "requests = 100000",
+  "seconds_per_day = 86400",
+  "per_second_day = requests / seconds_per_day",
+  "per_second_hour = requests / 3600",
+]
+
+[[q]]
+id = "es-017"
+qtype = "numeric"
+subtopic = "powers-of-two"
+levels = ["senior", "lead", "staff"]
+q = "A cache is being sized for 20 million entries of about 200 bytes each. How much memory is that, and how much does the answer depend on which kind of gigabyte you mean?"
+a = "4,000,000,000 bytes, which is 4.0 GB in decimal units and 3.7 GiB in binary ones, a difference of 7.4%. Twenty million times two hundred is a four with nine zeros after it, and the fastest route in your head is that a million of anything is 2^20, so twenty million entries of two hundred bytes is about four billion bytes without ever writing a zero. The 7.4% matters in exactly one place: an instance with 4 GiB of memory does not hold this cache, and the plan that said 4 GB thought it did. Add the per-entry overhead of whatever structure holds it before believing either figure."
+derivation = [
+  "entries = 20000000",
+  "bytes_each = 200",
+  "total_bytes = entries * bytes_each",
+  "decimal_gb = total_bytes / 1000 / 1000 / 1000",
+  "binary_gib = round(total_bytes / 1024 / 1024 / 1024, 1)",
+  "drift_pct = round(100 * (1024 ** 3 / 1000 ** 3 - 1), 1)",
+]
+
+[[q]]
+id = "es-018"
+qtype = "discrimination"
+subtopic = "powers-of-two"
+levels = ["senior", "lead", "staff"]
+q = "Two people size the same volume of data. One divides by 1000 at each step, the other by 1024. Where does the difference between them stop being a rounding detail?"
+a = "At the point the number stops being an estimate and becomes a threshold. The gap compounds with each step: 2.4% at kilo, 7.4% at giga, 10% at tera. Inside an estimate that is noise, because the inputs are worth one significant figure and the answer is being used to rule out an order of magnitude. It matters when two systems have to agree on the same number: a disk-full alert set at 1 TB by a tool that means 1 TiB fires 10% later than whoever wrote the threshold intended, and a quota, a billing line and a capacity plan that mix the two disagree in a way nobody can reproduce. Estimate in whichever is easier, and state the unit where the figure crosses a boundary."
+derivation = [
+  "decimal_kilo = 1000",
+  "binary_kilo = 1024",
+  "kilo_pct = round(100 * (binary_kilo / decimal_kilo - 1), 1)",
+  "giga_pct = round(100 * (binary_kilo ** 3 / decimal_kilo ** 3 - 1), 1)",
+  "tera_pct = round(100 * (binary_kilo ** 4 / decimal_kilo ** 4 - 1), 1)",
+  "threshold_tb = 1",
+]
+
+[[q]]
+id = "es-019"
+qtype = "judgment"
+subtopic = "sanity-checks"
+levels = ["senior", "lead", "staff"]
+q = "An estimate is reviewed by a second engineer redoing the multiplication and getting the same answer. The team treats it as verified. More or less adequate as a review?"
+a = "Less, around -1 to -2, because it checks the only part that was probably right. Arithmetic errors are real and rare; model errors are the ones that survive review, and re-running the same multiplication cannot see a missing factor, a stock used as a flow, a mean used as a peak, or a term left out entirely. The checks that catch those are different in kind: bound the answer and ask whether it is larger than the internet or smaller than one request, compare it to a scale you already know, test that it moves the right way when an input doubles, and re-derive one figure by a second route. That last one is the whole review in a sentence, because two routes to the same magnitude is evidence and two runs of one route is not."
+
+[[q]]
+id = "es-020"
+qtype = "numeric"
+subtopic = "sanity-checks"
+levels = ["senior", "lead", "staff"]
+q = "A design document says the service will need 8 Gbps of egress at launch for a product with 50,000 daily users. Check the figure before the meeting."
+a = "It is wrong unless the product is video. Eight gigabits per second is 1 GB per second of bytes, and over a day, 86,400 seconds, that is 86.4 TB. Split across 50,000 users it is 1.7 GB per user per day, which is a couple of hours of streamed video each, every day, from a product nobody has described that way. The useful part is not the correction, it is what the check tells you to ask: which term produced it. Almost always it is an unthrottled poll, a payload measured in the wrong unit, or a per-user figure multiplied by a per-day figure that already included the users."
+derivation = [
+  "gigabytes_per_second = 8 / 8",
+  "seconds_per_day = 86400",
+  "terabytes_per_day = gigabytes_per_second * seconds_per_day / 1000",
+  "users = 50000",
+  "gigabytes_per_user_per_day = round(terabytes_per_day * 1000 / users, 1)",
+]

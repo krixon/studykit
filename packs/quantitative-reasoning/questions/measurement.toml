@@ -94,3 +94,11 @@ derivation = [
   "quadruple = 4",
   "interval_change = 1 / sqrt(quadruple)",
 ]
+
+[[q]]
+id = "me-010"
+qtype = "discrimination"
+subtopic = "before-after"
+levels = ["senior", "lead", "staff"]
+q = "Two ways to judge whether a change helped: compare the week after against the week before, or run it on a share of live traffic beside the unchanged version. Both produce a difference. What separates them?"
+a = "What else differs between the two arms. The historical comparison differs in everything that makes one week unlike another: the day mix, other releases, a campaign, a seasonal shift, an incident, a dependency's own change. The concurrent control differs only in the change, because both arms see the same traffic at the same moment, which is what lets a difference be attributed. Two riders make the second honest. Run the two arms identically first, with no change between them, to see your noise floor, and treat no result smaller than it as a result. And fix the metric and the threshold before looking, since choosing them afterwards turns noise into a finding. The historical comparison also has a specific trap: a change made because last week was unusually bad will look effective, because an unusually bad week is followed by a better one whatever you do."

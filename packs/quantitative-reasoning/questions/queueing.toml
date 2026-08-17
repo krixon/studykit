@@ -124,3 +124,42 @@ derivation = [
   "rho_99 = 0.99",
   "factor_99 = 1 / (1 - rho_99)",
 ]
+
+[[q]]
+id = "qu-011"
+qtype = "judgment"
+subtopic = "concurrency-limits"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service protects itself with one concurrency limit covering all in-flight work. New information: it calls four dependencies, and one of them is a reporting service that is occasionally slow. More or less adequate?"
+a = "Less, -2. A single pool means the slow dependency's requests accumulate against the shared limit, and once they fill it every path is refused, including the three that are perfectly healthy. That is the failure a bulkhead exists to prevent: the limit should be per dependency, so a slow downstream can only consume the share allocated to it and the other paths keep serving. Two additions worth making at the same time: set each limit from measurement rather than intuition, by finding the concurrency at which throughput stops rising and capping below it, and prefer an adaptive limit that shrinks when latency rises, since a fixed number is a guess about a capacity that moves."
+
+[[q]]
+id = "qu-012"
+qtype = "numeric"
+subtopic = "queue-depth"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A work queue is 12,000 items deep and consumers drain it at 800 per second. How long is an item waiting, and what would the bound have to be to keep that wait under 2 seconds?"
+a = "15 seconds, and the bound would have to be 1,600 items. Depth divided by drain rate is waiting time, which is Little's law read backwards, and it means a queue's bound is a latency decision rather than a memory one: whoever set the depth chose how stale the answers may be. Two consequences. A queue bounded in items has an implicit time bound that moves with the drain rate, so bounding in time is often the honest version. And once the wait exceeds what the caller will accept, accepting more work is worse than refusing it: shedding fast returns a usable answer, while queueing returns an answer nobody is waiting for any more."
+derivation = [
+  "depth = 12000",
+  "drain_per_second = 800",
+  "wait_seconds = depth / drain_per_second",
+  "target_wait_seconds = 2",
+  "bound_items = drain_per_second * target_wait_seconds",
+]
+
+[[q]]
+id = "qu-013"
+qtype = "recall"
+subtopic = "variability"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Utilisation is half of what decides queueing delay. What is the other half, and name the ways it gets worse without the average load changing at all."
+a = "Variability, in both the arrival times and the service times. The same mean load arriving in bursts queues far longer than the same load arriving evenly, and a queue holding a mix of cheap and expensive work makes the cheap work wait behind the expensive. The ways it gets worse for free are all coordination: cron jobs on the hour, cache entries written together with the same lifetime and expiring together, retries without jitter arriving as one spike, and a deploy that restarts everything at once. Two remedies follow. Smooth arrivals with a token bucket, which converts a burst into a rate and moves you left along the utilisation curve, and separate pools by expected cost, so one slow class of work cannot lengthen the queue for everything else."
+
+[[q]]
+id = "qu-014"
+qtype = "diagnostic"
+subtopic = "variability"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A service's latency spikes for a couple of minutes at the top of every hour. Average utilisation over the hour is comfortably below half, CPU never saturates for long, and nothing is deployed on that schedule. Most likely cause?"
+a = "Coordinated arrivals. Something is scheduled on the hour - a batch job, a report, a cache refresh, a fleet of clients with the same timer - so a mass of work that the hourly average happily absorbs turns up in one window. Utilisation averaged over an hour cannot see a two-minute saturation, which is why the dashboard looks fine and the users do not. Look for the schedule rather than for capacity: the fix is to spread the trigger, jitter the client timers, or admit the burst through a token bucket so it is served as a rate. Adding machines works too and is the expensive answer, because it sizes the fleet for a minute an hour."
