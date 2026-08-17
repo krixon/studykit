@@ -152,3 +152,32 @@ subtopic = "failure-modes"
 levels = ["graduate", "mid"]
 q = "The shared store holding the limiter counters becomes unreachable. Every request to the service now returns a rate-limit rejection, including the first request of the day from a caller who has used nothing. What decision produced this, and what is the alternative and its risk?"
 a = "The limiter fails closed: unable to read a count, it treats the request as over the limit, so a dependency outage becomes a total outage even though capacity is fine. Failing open admits traffic while the store is down, which keeps the service usable and gives up the protection for the duration - the right default for a protection limiter, and the wrong one for a commercial limiter where unmetered use is revenue lost. The middle course is falling back to a local per-node limit, which is approximate and bounded rather than absent."
+
+[[q]]
+id = "rl-020"
+qtype = "judgment"
+subtopic = "distributed-state"
+levels = ["graduate", "mid"]
+q = "A service runs on eight nodes, each enforcing the tenant limit with its own in-memory counter and no coordination, because it is simple and adds no dependency. The published contract is 5,000 per minute per tenant. More or less adequate?"
+a = "Less, -2, because the contract is not being enforced: a tenant spread across all eight nodes gets 40,000 per minute, and what they actually receive depends on how the balancer happened to route them, which is neither the published figure nor a stable one. Whether that matters depends on which job the limiter is doing. For protection it may be tolerable if the limit that matters is total load. For a commercial limit or for fairness between tenants it is not, because the number is on an invoice or in a promise. The options are a shared counter, which costs a round trip and a dependency on the hot path; sticky routing so one node owns each tenant's counter; or local leasing, where each node takes a block of allowance and spends it locally, trading exactness for one round trip per block."
+derivation = [
+  "nodes = 8",
+  "limit_per_minute = 5000",
+  "effective_per_minute = nodes * limit_per_minute",
+]
+
+[[q]]
+id = "rl-021"
+qtype = "discrimination"
+subtopic = "distributed-state"
+levels = ["graduate"]
+q = "Two ways of keeping one limit per tenant across a fleet. Every node asks a shared store on each request; or each node takes a block of allowance from that store and spends it locally. What does each cost, and which figure decides whether the second is acceptable?"
+a = "Asking on every request costs a network round trip on the hot path and makes the store a dependency of every call and a failure domain of its own, plus a capacity limit that arrives before yours does. Taking a block costs exactness: allowance handed out and not yet spent can all be spent at once, so the total can exceed the limit by roughly one block per node in the worst case. The deciding figure is that overshoot as a fraction of the limit, never in absolute terms. A few thousand tokens over a limit of a million is noise; the same overshoot against a limit of ten is a different service. Small limits want a shared counter or sticky routing, large ones can lease."
+
+[[q]]
+id = "rl-022"
+qtype = "judgment"
+subtopic = "failure-modes"
+levels = ["graduate", "mid"]
+q = "The limiter runs inside the service, after authentication and a tenant lookup. Moving it to the edge is proposed so rejected traffic costs less. New information: limits are per tenant, and the tenant is only known once the request has been authenticated. More or less appropriate?"
+a = "More as a direction, +1, and it cannot be a straight move. The objection to limiting after authentication is real: by then you have paid for a token check and a database read, which is most of the cost of the request, so the limiter protects the parts of the system downstream of itself and nothing else. But the edge cannot apply a per-tenant limit it cannot attribute, so the answer is two layers rather than one. At the edge, a coarse limit on something visible - the API key or credential presented, or the address for genuinely anonymous traffic - sized to stop floods rather than to be exact. Inside, the precise per-tenant limit that the contract names. Each layer is doing a different job, which is the same distinction as protection against commercial fairness."

@@ -128,3 +128,34 @@ subtopic = "cardinality"
 levels = ["mid", "senior"]
 q = "Latency is tracked as a metric, and to investigate a complaint the team proposes adding the customer identifier as a label so they can slice by tenant. New information: the service has a large and growing number of customers. Does adding the label become more or less advisable?"
 a = "Much less, -2, and the cost lands on the monitoring system rather than the service. A metric's cost is the number of distinct label combinations, so a label with one value per customer multiplies every series by the customer count and keeps growing - which is how a metrics backend gets taken down by a well-intentioned label. Metrics are for bounded dimensions. The per-tenant question belongs to a signal that carries arbitrary context: a trace to localise it, or structured logs to aggregate over, both of which hold the identifier without multiplying anything pre-aggregated."
+
+[[q]]
+id = "ob-017"
+qtype = "judgment"
+subtopic = "alerting"
+levels = ["mid", "senior"]
+q = "A page fires whenever any host's disk usage passes 80%. It goes off most nights and is acknowledged without action. The proposal is to raise the threshold to 90%. More or less appropriate?"
+a = "Less, around -1: it treats a noise problem as a calibration problem and buys a few weeks. The test for an alert is whether there is an action, and if the response is to acknowledge and go back to sleep then this is a dashboard that wakes people up. Two things are wrong with it beyond the threshold. It alerts on a cause rather than a symptom, so it fires when a healthy batch job fills a disk and stays silent when the service is failing for another reason. And it pages on a condition that is not yet urgent, when a ticket would do. Replace it with an objective the users would recognise, page on a fast burn of the error budget, and let a slow burn open a ticket. If disk genuinely predicts an outage, alert on projected time to full, which is actionable in a way a level is not."
+derivation = [
+  "current_pct = 80",
+  "proposed_pct = 90",
+]
+
+[[q]]
+id = "ob-018"
+qtype = "recall"
+subtopic = "tracing"
+levels = ["mid", "senior"]
+q = "What is a trace id, how does it reach every service that handles a request, and why does one uninstrumented service in the middle matter so much?"
+a = "It is an identifier created at the entry point and carried on every outbound call, conventionally in a standard header, so that each unit of work can record a span naming its parent. The result is a tree showing where the time went across service boundaries, which no metric can tell you. Propagation is the whole mechanism, and it is why one service that does not pass the header on breaks the tree: everything downstream of it starts a new trace, so the hop you are investigating is exactly the one that is now invisible, and the parent trace appears to end at a service that looks slow because it contains all its children's time. The same applies at a queue boundary, where the context has to travel with the message or the asynchronous half of the system disappears from every trace."
+
+[[q]]
+id = "ob-019"
+qtype = "judgment"
+subtopic = "tracing"
+levels = ["mid", "senior"]
+q = "Trace volume is expensive, so sampling is set to keep 1% of requests, decided at the entry point. More or less appropriate?"
+a = "Around -1 as the only strategy, because deciding at the start keeps 1% of everything, which means it keeps 1% of the errors and 1% of the slow requests: the traces you would actually open are discarded at the same rate as the boring ones, and the ones you keep are almost all uneventful. The cost control is genuine, so the answer is not to raise the rate. Decide after the outcome is known where you can: buffer the spans and keep the trace if it errored or exceeded a latency threshold, plus a small random sample of the rest for baseline comparison. That costs buffering and a component to run. Where that is too much, the cheap approximation is to keep the head-based sample and force-sample requests already known to be interesting at the entry point, such as those from an internal debugging header or a failing tenant."
+derivation = [
+  "sample_pct = 1",
+]

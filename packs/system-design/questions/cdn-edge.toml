@@ -128,3 +128,58 @@ subtopic = "what-it-caches"
 levels = ["graduate", "mid"]
 q = "A page is served through a shared edge cache and a header is added declaring that the response depends on the request's cookie, so that the cache keys on it. New information: every visitor to the site carries a distinct session cookie from their first request onwards. Does adding that header achieve what was intended?"
 a = "It makes the cache correct and useless, so around -1: correctness was necessary and this is the wrong way to pay for it. Keying on a value unique per visitor means every request is a distinct key and a guaranteed miss, so the hit rate is effectively zero and you are paying for a cache that only forwards. The shape that works is splitting the response: cache a shared shell at the edge with no dependence on the cookie, and fetch the personal fragment separately. Declaring the dependence is right; doing it on a value that never repeats is what makes it futile."
+
+[[q]]
+id = "cd-017"
+qtype = "recall"
+subtopic = "edge-compute"
+levels = ["graduate", "mid"]
+q = "Code running in a CDN's locations sits under constraints that code in your own region does not. Name them, and say what they rule out."
+a = "A tight CPU budget per request, no durable local state, a small memory footprint, and cold starts that are cheap but not free, in the low single-digit milliseconds. Between them they rule out anything with a large working set, anything that needs to write something and be sure it stays written, anything requiring agreement across locations, and anything whose data lives in your primary region: reaching back for that data adds a hop and gives up the latency the move was for. What is left is decisions rather than work - token checks, redirects, routing, header rewriting, experiment assignment, bot filtering - which is exactly the shape that turns an uncacheable response into a cacheable one plus a cheap decision at the edge."
+
+[[q]]
+id = "cd-018"
+qtype = "judgment"
+subtopic = "edge-compute"
+levels = ["graduate", "mid"]
+q = "A team proposes moving the whole API to edge functions to cut latency for a global audience. New information: every endpoint reads and writes the primary database, which lives in one region. More or less appropriate?"
+a = "Less, -2, and it usually makes latency worse. Moving the compute to the user without moving the data means each request travels from the user to a nearby location, then across the world to the database and back, then back to the user, so a request that used to make one long trip now makes one long trip plus an extra hop, with the database round trips no shorter than before. Writes make it worse still, because they cannot be served from a copy. This is data gravity: edge compute pays when the data is at the edge too, or when the function needs no data at all. Keep the write path where the data is and move the cheap decisions outwards."
+
+[[q]]
+id = "cd-019"
+qtype = "diagnostic"
+subtopic = "invalidation"
+levels = ["graduate", "mid"]
+q = "A deploy ships new scripts and stylesheets. Most users see the new page correctly, a minority see a broken layout for hours, and a hard refresh fixes it for anyone who tries. The CDN was purged as part of the deploy. Most likely cause?"
+a = "Those users are holding old copies in their own browsers, mixing an old stylesheet with new markup, and a purge does not reach a browser cache: it drops the object at the edge and nothing else. Anything already downloaded with a long lifetime stays until it expires or the user forces a reload, which is why the minority is exactly the set of people who visited recently. The fix is not a longer purge but a different naming scheme: put a content hash in the asset filename so a change produces a new URL, cache those for a year, and let the HTML that references them carry a short lifetime. Then there is nothing to invalidate, because the old and new files are different objects."
+
+[[q]]
+id = "cd-020"
+qtype = "diagnostic"
+subtopic = "origin-shield"
+levels = ["graduate", "mid"]
+q = "One popular object is purged. The origin immediately sees a burst of identical requests for it, far more than the object's own request rate would explain, and they arrive within a second or two of each other. Most likely cause?"
+a = "Every populated edge location missed independently and went to the origin on its own, so the burst is roughly one request per location that had the object, all triggered by the same purge. The edges do not know about each other, and there is nothing between them and you to collapse the misses. That is what an origin shield is for: a designated mid-tier cache that all edges miss through, so the origin sees one request and the shield fans the answer back out. The same reasoning applies to a cold start after a deploy, and the general shape is request coalescing applied to a geography: each layer only passes on what it missed, so hit rates compound and the origin sees the true tail."
+
+[[q]]
+id = "cd-021"
+qtype = "judgment"
+subtopic = "origin-shield"
+levels = ["graduate", "mid"]
+q = "The origin is being scaled up so it can absorb the bursts that follow a purge. More or less appropriate as the response?"
+a = "Less, around -1 to -2: it pays continuously for a peak that is an artefact of the topology rather than of demand. The bursts exist because every edge location misses independently, so their size is set by how many locations hold the object, not by how many users want it, and the origin is being sized for a number that grows as the CDN's footprint grows. A shield collapses those misses into one and costs a cache tier rather than a permanently larger origin. Scale the origin for the traffic it genuinely has to serve, and remove the artificial part with the shield, longer lifetimes on the objects that allow them, and content-addressed URLs that never need purging at all."
+
+[[q]]
+id = "cd-022"
+qtype = "discrimination"
+subtopic = "tls-latency"
+levels = ["graduate", "mid"]
+q = "Two users fetch the same uncacheable API response over a fresh HTTPS connection using TLS 1.3. One connects straight to the origin, 150 ms away. The other reaches an edge 20 ms away that holds a warm connection back to the same origin. If nothing is cached, where does the difference come from?"
+a = "From the handshakes, which happen close by instead of far away. A new connection costs one round trip for TCP and one for TLS before any request goes out, then one more for the request itself: three round trips, so 450 ms direct. Terminating at the edge makes those setup round trips cost 20 ms each, and the request then travels the 150 ms to origin over a connection that is already established, for about 210 ms. The saving is not in the response, which still has to come from the origin: it is in never paying the distance for the setup. That is why a CDN helps an API with no cacheable content at all, and why the answer changes for an established connection where the setup has already been paid."
+derivation = [
+  "edge_rtt_ms = 20",
+  "origin_rtt_ms = 150",
+  "setup_round_trips = 2",
+  "direct_ms = origin_rtt_ms * (setup_round_trips + 1)",
+  "via_edge_ms = edge_rtt_ms * (setup_round_trips + 1) + origin_rtt_ms",
+]

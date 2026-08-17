@@ -194,3 +194,43 @@ subtopic = "hot-key"
 levels = ["graduate", "mid"]
 q = "A cache cluster shows a healthy overall hit rate and plenty of spare memory, and one of its nodes is at its network limit while the others are idle. Requests routed to that node are slow. Most likely cause?"
 a = "A hot key. Keys are distributed across nodes by hash, so a single key taking a large share of all reads lands its entire traffic on whichever node owns it, and that node saturates while the cluster average looks fine. Aggregate hit rate hides it because the hot key is being hit successfully. Adding nodes does not help, since the key still lives on exactly one. Replicate that key under several suffixed names and pick one at random, or hold it in-process in front of the shared tier."
+
+[[q]]
+id = "ca-025"
+qtype = "judgment"
+subtopic = "cache-economics"
+levels = ["graduate", "mid"]
+q = "A cache is proposed in front of a service to cut database load. New information: the workload writes each record once and reads it about once afterwards, shortly after the write. More or less appropriate?"
+a = "Less, -2. Caching pays when a value is read many times before it goes stale, and here every cached entry is read once at most, so the cache adds a write and a lookup to save nothing: it is a copy of the database made just in time to be discarded. Note that skew is not the missing ingredient either, and a bigger cache does not help. If the read reliably follows the write closely, the interesting option is the opposite one, write-around plus letting the first read populate nothing, or moving the read into the write path so it does not happen at all. A cache is worth its memory, its staleness and its extra failure domain only when reads dominate writes and access is skewed."
+
+[[q]]
+id = "ca-026"
+qtype = "recall"
+subtopic = "hot-key"
+levels = ["graduate", "mid"]
+q = "One key takes a large share of a cache cluster's reads. Why does adding nodes or rehashing not fix it, and what does?"
+a = "Because every placement scheme maps a given key to exactly one owner: that is what makes lookups work. More nodes divide the keyspace more finely and the hot key still lands on one of them, so the owner stays hot and the rest of the cluster stays idle. What fixes it is replicating the value rather than moving it: keep several suffixed copies of the key and read one at random, which turns one owner into several, or keep a small in-process copy on every application node so the hottest reads never cross the network at all. The second is usually the better answer for something genuinely popular, at the cost of a short window in which nodes disagree, bounded by whatever lifetime you give the local copy."
+
+[[q]]
+id = "ca-027"
+qtype = "judgment"
+subtopic = "stampede-penetration"
+levels = ["graduate", "mid"]
+q = "After a burst of origin load, the team is adding a bloom filter in front of the cache. New information: the burst came from many callers missing the same popular key at the moment it expired. More or less appropriate?"
+a = "Less, -2: right tool, wrong failure. A bloom filter answers whether a key could exist, which stops repeated misses for keys that do not exist, and here the key does exist and was merely absent for an instant. The filter will say the key is present and every caller will proceed to the origin exactly as before. What this needs is one of the herd remedies: coalesce the concurrent misses so one caller populates and the rest wait, serve the stale value while a single refresh runs behind it, or jitter the lifetimes so keys populated together do not expire together. Naming which failure you have is most of the fix, because the two look the same on a dashboard and share no remedies."
+
+[[q]]
+id = "ca-028"
+qtype = "diagnostic"
+subtopic = "write-strategies"
+levels = ["graduate", "mid"]
+q = "A cache node was restarted during routine maintenance. Afterwards, a handful of updates that the application had already confirmed to users are missing from the database entirely. Most likely cause?"
+a = "The write path acknowledged the user once the value was in the cache and left the database write to happen asynchronously, so the updates that had not yet been flushed died with the node's memory. That is write-back, and it is the risk the strategy carries by design: the fastest writes, and acknowledged data that exists in exactly one place until the flush. It is usable, but only with the cache tier replicated or backed by a durable log, and never for anything you would not accept losing. If the writes must be durable when acknowledged, write through to the database synchronously and pay its latency, or acknowledge only after the flush."
+
+[[q]]
+id = "ca-029"
+qtype = "judgment"
+subtopic = "read-strategies"
+levels = ["senior", "lead", "staff"]
+q = "Six services each implement the same cache miss path, and the proposal is to move to read-through so the logic lives in one place. New information: the cache tier has no replication and lost a node last quarter. More or less appropriate?"
+a = "Around -1 as stated, and the duplication is still worth removing. The change being proposed is not only about where the code lives: with cache-aside the application reads the source itself on a miss, so a cache outage is a latency and load event, while with read-through the cache is the only path to the data and its outage is your outage. Adopting that dependency on an unreplicated tier that has already failed once is buying a single point of failure to remove some duplication. Either replicate the tier first and then adopt read-through with a clear view of the new failure domain, or get the same consolidation without the coupling by putting the miss path in a shared client library that still falls back to the source."

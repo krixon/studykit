@@ -136,3 +136,35 @@ subtopic = "queue-vs-log"
 levels = ["mid", "senior"]
 q = "Work is distributed to a pool of workers through a broker that deletes each message once acknowledged, which suits the job perfectly. New information: a second team now wants to react to the same events, and a third wants to reprocess last month's to backfill a new field. Does the existing choice remain adequate?"
 a = "No, -2, and both new requirements fail for the same reason. Deletion on acknowledgement means a message goes to exactly one consumer and is then gone, so a second independent consumer is not a configuration change and reprocessing history is impossible because the history does not exist. A log retains messages for a window and has each consumer group track its own offset, which makes the second consumer trivial and the backfill a matter of rewinding. This is the everyday case where 'add another consumer' is either a line of config or a re-architecture, decided by what you picked before anyone asked."
+
+[[q]]
+id = "mq-018"
+qtype = "recall"
+subtopic = "consumer-lag"
+levels = ["mid", "senior"]
+q = "Two figures both describe how far behind a consumer is. What are they, and what is each one good for?"
+a = "The count of messages not yet processed, and the age of the oldest one. The count is what the system produces naturally and what capacity planning uses: compared with the drain rate it gives the time to catch up, and its derivative says whether the gap is opening or closing. The age is the figure the business understands and the one that belongs in an objective, because notifications being twenty minutes late is a statement anyone can act on while a backlog of two hundred thousand messages is not. Track both, because they move independently: a large count draining quickly is healthy, and a small count that never drains is a stuck partition or a poison message."
+
+[[q]]
+id = "mq-019"
+qtype = "judgment"
+subtopic = "dlq-poison"
+levels = ["mid", "senior"]
+q = "Messages that fail repeatedly are moved to a dead letter queue after a redelivery cap, and the team considers poison messages handled. More or less complete?"
+a = "Less, around -1: the cap stops one bad message burning capacity or blocking its partition forever, which is the urgent half, and what remains is a queue nobody looks at. A dead letter queue without an alert on its depth is a data loss mechanism with extra steps, and the loss is silent because the main queue looks healthy. Three things finish the job. Alert on any depth above zero, since a single message there means something needs a person. Keep enough context on the message to diagnose it: the original destination, the failure count, the last error and the correlation id. And build the replay path back into the main flow before you need it, because designing the dead letter queue without designing the replay is the common half-solution."
+
+[[q]]
+id = "mq-020"
+qtype = "diagnostic"
+subtopic = "ordering"
+levels = ["mid", "senior"]
+q = "Updates for a single customer are occasionally applied out of order, leaving a stale value in place. The topic is partitioned by customer id and exactly one consumer reads each partition. Most likely cause?"
+a = "Something is taking a message out of its partition's sequence and putting it back later, and the usual culprit is the retry path: a message that fails is re-queued at the tail, so it is reprocessed after the messages that were behind it. That is the trap in per-key ordering, because retry and ordering pull in opposite directions and the retry silently wins. Other routes to the same symptom are a separate retry topic feeding back in, a consumer that processes a batch concurrently within one partition, and a producer that sent two updates for the same customer with different keys. Whichever it is, the durable fix is at the write: carry a version or timestamp and reject an update older than the stored one, so ordering is enforced where the data is rather than hoped for in transit."
+
+[[q]]
+id = "mq-021"
+qtype = "judgment"
+subtopic = "partitions"
+levels = ["mid", "senior"]
+q = "Lag is growing on a log-based topic, so the team is adding consumers to the group. New information: the topic has twelve partitions and the group already runs twelve consumers. More or less likely to help?"
+a = "Less, -2: it will do nothing at all. Parallelism in a log is bounded by the partition count, because a partition is read by one consumer in a group, so the thirteenth consumer sits idle while the lag keeps growing. Worse, adding it triggers a rebalance, which pauses the whole group and briefly makes the lag worse. The real options are to make each consumer faster, which is where the profiling should go first; to raise the partition count, which is painful after the fact because it changes the key-to-partition mapping and breaks per-key ordering across the change; or to move the slow part of the work off the consumer's critical path. Over-provisioning partitions early is the cheap insurance against being here."

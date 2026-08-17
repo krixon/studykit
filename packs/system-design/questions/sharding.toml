@@ -136,3 +136,51 @@ subtopic = "shard-key"
 levels = ["mid", "senior"]
 q = "A shard key is chosen for its even spread across the fleet, which the team has confirmed with a distribution test. New information: the key is not present in the predicate of the query that serves the main product page. Does the key remain a good choice?"
 a = "No, -2, and the distribution test measured the wrong half of the requirement. A key needs three things: high cardinality, an even spread of writes, and presence on the read path. Missing the third turns every read of that page into a scatter-gather across every shard, so latency becomes the slowest shard's and total load multiplies by the shard count - the fleet is perfectly balanced and uniformly busy doing work one shard could have done. Balance without locality is the classic version of this mistake."
+
+[[q]]
+id = "sh-018"
+qtype = "recall"
+subtopic = "cross-shard-tx"
+levels = ["mid", "senior"]
+q = "What is the design constraint that removes the need for distributed transactions, and what does honouring it look like in a schema?"
+a = "Choose the shard key so that everything a single transaction must change lives on one shard: one shard per transaction boundary. In a schema that means the key is the entity that owns the invariant, and the things governed by that invariant hang off it. An order and its line items are keyed by order, so creating both is a local transaction. An account and its ledger entries are keyed by account, so a balance and the entries explaining it cannot disagree. What breaks it is an invariant that spans two owners, transferring between accounts being the standard example, and that is the case worth identifying early because the alternatives are all expensive: an atomic commit across shards that holds locks and blocks if the coordinator dies, or a sequence of local steps with compensating actions and visible intermediate states."
+
+[[q]]
+id = "sh-019"
+qtype = "judgment"
+subtopic = "cross-shard-tx"
+levels = ["mid", "senior"]
+q = "A read path fans out to every shard and merges the results. The team is relaxed because each shard responds quickly and the fan-out is only a few dozen. More or less of a concern?"
+a = "More of a concern than it looks, so around -1 to -2 for anything latency-sensitive. A scatter-gather waits for its slowest participant, so the query's tail is not the tail of a shard, it is the maximum over all of them: with each shard slow one time in a hundred and a few dozen shards, a large minority of queries meet a slow one, and the effect grows as the fleet does. The uncomfortable part is that this happens while every shard is meeting its own target, so the dashboards look healthy. The remedies are to make the read hit one shard by putting the shard key in the query, to keep a separate index or materialised view keyed for this access pattern, or where neither is possible to return a partial answer on a deadline rather than waiting for everyone."
+
+[[q]]
+id = "sh-020"
+qtype = "diagnostic"
+subtopic = "hot-shard"
+levels = ["mid", "senior"]
+q = "One shard takes nearly all the writes while the others are idle. Which shard it is changes every day, and the keys are spread evenly across the whole space. Most likely cause?"
+a = "The key is monotonic, most likely a timestamp or a sequential id, and partitioning is by range. Every new record sorts after the last one, so all writes land in the newest range, and the hot shard moves on as the range fills or the day rolls over: perfectly ordered and perfectly imbalanced. Even key distribution across the space is not the same as even write distribution over time, which is why the distribution test looked fine. This is a key-design problem rather than a placement one, so virtual nodes and more shards will not touch it. Fix the key: hash it, or prefix it with something that spreads, or make it composite with the entity first and time second so a given entity's history stays together while writes spread across entities."
+
+[[q]]
+id = "sh-021"
+qtype = "judgment"
+subtopic = "hot-shard"
+levels = ["mid", "senior"]
+q = "One shard is hot, so the plan is to add shards and rebalance. More or less likely to help?"
+a = "It depends entirely on which of three imbalances this is, so as stated it is around -1: adding capacity is the reflex and it only addresses one of them. If the space was simply divided badly, so one node owns more of it than its peers with the traffic itself uniform, more shards and virtual nodes genuinely fix it. If one key is popular, no scheme helps, because every scheme maps that key to one owner, and the answer is to replicate the value or cache it in each client. If the key correlates with time or sequence, the hot region simply moves to whichever shard now holds the newest range, and you have paid for a rebalance that buys a day. Diagnose first: is the key hot, the range hot, or the slot hot."
+
+[[q]]
+id = "sh-022"
+qtype = "judgment"
+subtopic = "partition-schemes"
+levels = ["mid", "senior"]
+q = "Range partitioning is chosen because the main reports scan a date window and the team wants those scans to touch few shards. New information: the write workload is an append-only event stream keyed by time. More or less appropriate?"
+a = "Less as it stands, around -1 to -2, though the reporting argument is real. Ranges over time serve the scan beautifully and put every write on the shard holding the newest range, so the write path has the capacity of one machine no matter how many you buy, and the rest of the fleet is idle. Both requirements can be met by making the key composite with a spreading component first, such as a tenant or a hashed bucket, and time second: writes spread across buckets, and a date-window scan touches one range per bucket rather than the whole fleet. If the reports can tolerate it, the other honest answer is to hash-partition the live table for writes and maintain a separate time-ordered store for reporting."
+
+[[q]]
+id = "sh-023"
+qtype = "judgment"
+subtopic = "resharding"
+levels = ["mid", "senior"]
+q = "The plan for splitting shards is a maintenance window: stop writes, copy the data to its new placement, restart. More or less appropriate?"
+a = "It depends on the size, and for anything substantial it is around -2, because the window is the copy time and the copy time grows with the data while the tolerance for downtime does not. It is also all-or-nothing: if the copy fails at the end, there is no partial progress and no rollback except starting again. A live reshard is a project with steps that each have a rollback: write to both the old and new placement, backfill the history in the background, run a verification pass comparing the two, cut reads over gradually and watch, then stop writing to the old placement and remove it. The cheaper alternative is to have avoided rehashing at all, by pre-splitting into far more logical shards than nodes so that rebalancing is moving whole shards rather than recomputing where every key belongs."

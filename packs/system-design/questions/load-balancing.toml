@@ -144,3 +144,41 @@ subtopic = "failure-modes"
 levels = ["graduate", "mid"]
 q = "One backend was restarted for maintenance and never came back up. Traffic to the pool is still being distributed evenly across every member including that one, and roughly a third of requests fail immediately. Most likely cause?"
 a = "Health checking is absent or not wired into the routing decision. Spreading load and avoiding dead hosts are two different jobs, and a pool configured only for the first will happily send its share to a host that is not listening. The immediate failure rather than a timeout points at connection refused, which is what a stopped process gives you. Check that a health check exists, that its failure threshold is low enough to act, and that the balancer is actually removing members on it rather than only reporting them."
+
+[[q]]
+id = "lb-019"
+qtype = "judgment"
+subtopic = "failure-modes"
+levels = ["graduate", "mid"]
+q = "During an incident a share of requests fail, and the proposal is to raise the gateway's retry count from two attempts to three. New information: the client SDK already retries three times on its own. More or less appropriate?"
+a = "Less, -2, and the existing arrangement is already the problem. Retries at two layers multiply rather than add: three client attempts each producing two gateway attempts is 6x the original load, all of it arriving while the service is least able to take it, and raising the gateway to three makes it 9x. That is the shape of a retry storm, and it is why an incident that would have cleared keeps the service saturated. Retry at one layer only, ideally the one closest to the failure and best able to judge it; bound the total as a fraction of traffic rather than per request; add jitter so the attempts do not arrive together; and do not retry anything that is not idempotent."
+derivation = [
+  "client_attempts = 3",
+  "gateway_attempts = 2",
+  "current_multiple = client_attempts * gateway_attempts",
+  "proposed_multiple = client_attempts * 3",
+]
+
+[[q]]
+id = "lb-020"
+qtype = "judgment"
+subtopic = "health-checks"
+levels = ["graduate", "mid"]
+q = "Dead backends are taking traffic for too long, so the proposal is to check every second and remove a backend after a single failed probe. More or less appropriate?"
+a = "Around -1: the direction is right and this version buys detection speed with stability. One missed probe is an ordinary event - a garbage collection pause, a dropped packet, a moment of scheduling - so a threshold of one converts noise into an eviction, and a fleet under load can then shed healthy backends exactly when it needs them, which shrinks the pool and produces more missed probes. Shorten the interval by all means, and keep a threshold of two or three consecutive failures so the detection budget is a few seconds rather than tens of seconds. Two more things go with it: a probe cheap enough to run every second on every backend, and a floor below which the balancer ignores health entirely and spreads traffic across everything, since a degraded backend beats an empty pool."
+
+[[q]]
+id = "lb-021"
+qtype = "diagnostic"
+subtopic = "l4-l7"
+levels = ["graduate", "mid"]
+q = "After a service moves from HTTP/1.1 to gRPC, one backend in a pool of six sits at twice the CPU of the others. The imbalance persists for hours and never corrects itself. The balancer is configured to spread work evenly. Most likely cause?"
+a = "The balancer is spreading connections, not requests, and the clients now hold one long-lived connection each and multiplex every request over it. So a client that lands on that backend keeps sending it work for as long as the connection lives, and an even spread of connections is an arbitrary spread of load. It never corrects because nothing re-decides: the assignment was made once, at connect time. Three ways out, usually combined: balance at layer 7 so each request is routed independently, move the balancing into the client or a sidecar which sees the requests, and set a maximum connection age so assignments are periodically reshuffled even when nothing fails."
+
+[[q]]
+id = "lb-022"
+qtype = "recall"
+subtopic = "topology"
+levels = ["graduate", "mid"]
+q = "Trace the layers a request passes through from a user on the internet to one instance of a service inside a datacentre, and say what each layer is deciding."
+a = "An anycast address takes the user to a nearby site, decided by internet routing rather than by you. A layer 4 balancer at that site spreads connections across a proxy tier at close to hardware speed, deciding nothing about the request itself. A layer 7 proxy terminates TLS and routes on the path, header or cookie, which is where canaries, per-tenant rules and request-level retries live. Inside the datacentre a client-side balancer or mesh sidecar picks the instance per request, with no extra network hop. Each layer answers a different question, which is why real systems stack them, and each is also a failure domain that needs its own redundancy and its own headroom for the case where a peer fails."

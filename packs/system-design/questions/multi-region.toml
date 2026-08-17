@@ -112,3 +112,11 @@ subtopic = "latency-tradeoffs"
 levels = ["mid", "senior", "lead", "staff"]
 q = "Roughly what does multi-region cost relative to single-region, and where does the money go?"
 a = "Typically 2-3x. Duplicated compute and storage, idle standby capacity that must be sized for full load, inter-region data transfer which is billed and is not negligible at volume, and the engineering time for the failover machinery and the exercises that keep it real."
+
+[[q]]
+id = "mr-015"
+qtype = "judgment"
+subtopic = "data-residency"
+levels = ["senior", "lead", "staff"]
+q = "A global search feature is proposed, which needs one index covering every user's records. New information: some of those users' records may not leave their jurisdiction. More or less workable as designed?"
+a = "Not workable as designed, so -2, and it is a design constraint rather than an obstacle to negotiate. A single global index is a copy of the data in one place, and an index is data: excerpts, identifiers and often the field values themselves. Two shapes usually work instead. Keep an index per region and make the search a fan-out that queries each region and merges, accepting the tail latency of the slowest region and the fact that a user with no access to a jurisdiction gets nothing from it. Or index only the fields that are genuinely not restricted, keyed by an identifier, and fetch the restricted detail from the owning region at display time. Whichever is chosen, remember that the accidental copies are where these requirements are actually broken: backups, logs, traces, metrics with identifiers in them, and analytics exports."

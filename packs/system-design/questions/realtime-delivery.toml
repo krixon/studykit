@@ -120,3 +120,35 @@ subtopic = "transports"
 levels = ["mid", "senior"]
 q = "A live status feed is being built on a full-duplex persistent connection, on the grounds that it is the modern way to push. New information: the client only ever receives from this feed and never sends on it, and a share of users sit behind corporate proxies. Does the choice become more or less appropriate?"
 a = "Less, around -1 to -2. Full duplex buys the ability for the client to send, which is being paid for and not used, and it does so with its own protocol that proxies frequently mishandle. A server-to-client stream over ordinary HTTP goes through that infrastructure, and brings automatic reconnection with a last-seen event id, which is work you would otherwise write yourself. Keep the full-duplex transport when the client genuinely needs to send at low latency; for a feed it is the under-used simpler option that wins."
+
+[[q]]
+id = "rt-016"
+qtype = "recall"
+subtopic = "backpressure"
+levels = ["mid", "senior"]
+q = "A push server holds many connections and one client stops reading its socket while events keep being produced for it. What grows, and what are the options once it does?"
+a = "The per-connection send buffer grows, because the events have nowhere to go and the server is still accepting them, and enough slow clients turn that into the server's memory. There are four responses and each is a product decision rather than a technical default. Drop, which is right for telemetry or presence and wrong for chat. Coalesce, keeping only the latest value per key, which is ideal for prices and dashboards where old values have no worth. Disconnect the client and let it reconnect and resynchronise, which is honest and needs a catch-up path. Or block the producer, pushing the problem upstream where it may be handled better. What must not happen is an unbounded buffer, which converts one slow client into the loss of every connection on the server."
+
+[[q]]
+id = "rt-017"
+qtype = "judgment"
+subtopic = "backpressure"
+levels = ["mid", "senior"]
+q = "A price dashboard pushes every tick to every connected client. Some clients on poor networks fall behind, and the proposal is to buffer their updates so they see the full sequence when they catch up. More or less appropriate?"
+a = "Less, -2, and the data model already tells you why. A price is state rather than an event: the client wants the current value, and every buffered tick except the last is work being kept to display something that was already wrong when it was buffered. Buffering also grows memory in proportion to how far behind the slowest client is, which is exactly the unbounded case. Coalesce instead: keep one slot per key per connection and overwrite it, so a slow client receives fewer, newer updates and a fast one receives everything. That is a bounded buffer whose size is the number of keys, and the slow client converges on the truth rather than replaying history."
+
+[[q]]
+id = "rt-018"
+qtype = "diagnostic"
+subtopic = "connection-scaling"
+levels = ["mid", "senior"]
+q = "Long-lived client connections are being closed after about a minute whenever the user is not doing anything. Both the client and the server believe the connection was fine, and the disconnects stop when the user is active. Most likely cause?"
+a = "Something in the middle is enforcing an idle timeout: a load balancer, a proxy or a NAT device closing connections with no traffic on them, which is why activity prevents it and quiet triggers it. Neither end knows, because a closed connection is only discovered when something is sent. That is what heartbeats are for on a connection that is working correctly: a periodic frame in each direction keeps the intermediaries convinced and gives both ends a way to notice a dead peer. Set the heartbeat interval below the shortest idle timeout on the path, raise those timeouts where you control them, and make sure reconnect uses jittered backoff, because whatever closes these connections will one day close a lot of them at once."
+
+[[q]]
+id = "rt-019"
+qtype = "judgment"
+subtopic = "presence"
+levels = ["mid", "senior"]
+q = "The design shows every contact's exact last-seen time, updated to every watcher whenever it changes. More or less appropriate?"
+a = "Less, around -2, and the cost is in the notifications rather than the storage. Presence is high-cardinality and high-churn, and an exact timestamp means every heartbeat is a change, so the work is the number of users multiplied by how many people are watching each of them, continuously, for information nobody reads that precisely. Coarsen the state to something like online, away and offline, so most heartbeats change nothing and produce no notification. Only track and publish presence for people someone is actively watching, such as an open conversation. Batch and debounce the changes that remain. And keep it soft state with a heartbeat and an expiry, so a client that vanishes without a clean disconnect ages out instead of appearing online forever."

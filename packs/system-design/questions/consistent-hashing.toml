@@ -120,3 +120,51 @@ subtopic = "virtual-nodes"
 levels = ["mid", "senior"]
 q = "A ring places one point per node, and the team is content because the hash function is uniform. New information: the cluster has a handful of nodes rather than hundreds. Does one point per node remain acceptable?"
 a = "No, -2. Uniformity of the hash is not the issue; variance is. A few random points divide a circle badly, so some nodes own several times the arc of others, and the load imbalance follows the arc. With hundreds of points the variance averages out, which is exactly why virtual nodes exist: give each physical node many positions and its share converges on its intended fraction. It also lets you weight a bigger machine by giving it more points, and it makes a departing node's keys spread over many successors rather than landing entirely on one."
+
+[[q]]
+id = "ch-016"
+qtype = "recall"
+subtopic = "alternatives"
+levels = ["mid", "senior"]
+q = "Name a placement scheme with the same minimal-movement property as a ring but no ring to maintain, and say where it stops being suitable."
+a = "Rendezvous hashing, also called highest random weight. For a key, compute a hash of the key combined with each node's identifier and take the node with the highest value. Adding or removing a node only changes the winner for keys where it was the winner or would have become one, which is the same minimal-disruption property, and weighting a node is a matter of scaling its score. There is no ring, no virtual nodes and no structure to keep in sync, so it is trivially correct and easy to reason about. It stops being suitable on size: every lookup evaluates a hash per node, so tens of nodes is fine and thousands is not, where a ring's binary search still is."
+
+[[q]]
+id = "ch-017"
+qtype = "discrimination"
+subtopic = "alternatives"
+levels = ["mid", "senior"]
+q = "Two ways to decide which node owns a key. One computes it from the key. The other looks it up in a table of fixed logical shards that someone maintains. What changes operationally?"
+a = "Who decides, and whether you can override it. With a computed owner, placement is uniform, needs no storage and cannot be argued with: if one shard becomes a problem, the only levers are the hash and the node count. With an explicit table, placement is deliberate: you can move one hot shard to its own machine, drain a rack before maintenance, keep a large tenant apart from the rest, and see at a glance where anything lives. The costs are that the table is state which has to be distributed, versioned and agreed, and that someone must own rebalancing rather than getting it for free. Pre-splitting into far more shards than nodes is what makes it work, because then rebalancing is moving whole shards rather than splitting them."
+
+[[q]]
+id = "ch-018"
+qtype = "recall"
+subtopic = "hot-key"
+levels = ["mid", "senior"]
+q = "Consistent hashing balances what, exactly? Name the thing it does not balance and what to do about that."
+a = "It balances the keyspace: each node ends up owning a roughly equal share of the ring, and with virtual nodes that share is even to within a few per cent. What it does not balance is traffic. A single key that takes a large share of reads maps to one position and therefore one node, whatever the ring looks like, and adding nodes or virtual nodes divides the space more finely without touching that. The remedies live at another layer: replicate the value under several suffixed keys read at random, or keep an in-process copy on each client so the hot key never crosses the network. Keep the three imbalances apart, because only the last is a placement problem: a hot key, a hot range, and a node that owns too much of the ring."
+
+[[q]]
+id = "ch-019"
+qtype = "recall"
+subtopic = "rebalancing"
+levels = ["mid", "senior"]
+q = "A node in the ring crashes without warning. What happens to the keys it owned, and what decides whether they are simply gone?"
+a = "Its successor becomes the owner of those arcs immediately, because ownership is defined by position rather than by a handover, and clients that refresh their view of the membership start routing there. Whether the data is still there depends entirely on the replication factor: with copies on the next distinct nodes clockwise, the successor already holds one and serves from it; with a replication factor of one, the keys existed only on the dead node and are gone. For a cache that is a cold range and a burst of origin load. For a store it is data loss. The other consequence to plan for is that the successor now carries its own share plus the departed node's, unless virtual nodes were used, in which case the arcs spread across many successors instead of landing on one neighbour."
+
+[[q]]
+id = "ch-020"
+qtype = "judgment"
+subtopic = "rebalancing"
+levels = ["mid", "senior"]
+q = "A node is being removed from the cluster by terminating the instance and letting the ring heal by itself, since the mechanism handles departures anyway. More or less appropriate?"
+a = "Less, around -1 to -2, and how much depends on the replication factor. The mechanism does handle a crash, which is why it looks like nothing is being given up, but a planned departure can hand its keys over first, and a crash cannot. Without the handoff the successors take ownership of ranges they must now serve from a replica, or cannot serve at all if there is only one copy, and every miss in those ranges goes to the origin at once. Treat the crash path as the thing that saves you from an accident, not as the deployment procedure: drain, stream the ranges to their new owners, confirm they are serving, then terminate. The same argument applies to a rolling restart, where doing this to every node in turn is a self-inflicted cache flush."
+
+[[q]]
+id = "ch-021"
+qtype = "judgment"
+subtopic = "ring-mechanics"
+levels = ["mid", "senior"]
+q = "Each client holds its own copy of the ring, updated by gossip, so a client with a stale view occasionally routes a key to the node that no longer owns it. The proposal is to route through a coordinator that always has the current membership. More or less appropriate?"
+a = "Around -1: it removes a real inconsistency by adding a hop and a dependency to every request, and the inconsistency is usually the cheaper problem. A stale ring view is bounded in time and in blast radius: it costs a miss, a misroute or a read of a slightly stale replica during a membership change, and it heals on its own. A coordinator on the request path is a new failure domain, an extra network round trip on every lookup, and a capacity ceiling. The middle option is what most systems do: keep the client-side ring for routing, and take a consistent view of membership from a coordination service that is consulted on change rather than per request, so the agreement cost is paid when nodes join and leave."

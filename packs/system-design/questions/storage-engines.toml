@@ -128,3 +128,27 @@ subtopic = "btree-vs-lsm"
 levels = ["mid", "senior"]
 q = "A write-heavy workload is moving to an engine whose advantage is turning random writes into sequential ones. New information: the service publishes a tail-latency target and the storage sits on NVMe. Does the move become more or less compelling?"
 a = "Less, around -1, and worth separating into two effects. NVMe narrows the gain: the advantage came from avoiding random seeks, which was decisive on spinning disks and is measurable rather than dramatic on flash. The tail-latency target is the sharper problem, because compaction runs in the background and collides with traffic, giving a good median with periodic spikes - a profile that reads fine on averages and breaches a p99 target. Write-heavy still favours the newer engine on throughput and space; if the tail is contractual, the predictable latency of in-place updates is worth paying write amplification for."
+
+[[q]]
+id = "se-017"
+qtype = "judgment"
+subtopic = "durability"
+levels = ["mid", "senior"]
+q = "Throughput is raised by acknowledging writes as soon as the log entry is in the operating system's buffers rather than waiting for it to reach the disk. New information: this is a single node with no replication. More or less appropriate?"
+a = "Less, -2 with no replication. Acknowledging before the flush means a write is durable against the process dying and not against the machine dying, so a power loss or a kernel panic silently discards writes that clients were told had succeeded, and nothing in the system knows which ones. The throughput gain is genuine, which is why the option exists: flushing per write serialises on the device. The middle path is group commit, batching the flushes so many writes share one, which costs a millisecond of latency and keeps the promise. Replication changes the calculation, because acknowledging once a quorum of replicas holds the log entry is stronger than one machine's flush and does not depend on that machine's disk at all."
+
+[[q]]
+id = "se-018"
+qtype = "judgment"
+subtopic = "oltp-vs-olap"
+levels = ["mid", "senior"]
+q = "The analytics team is given read access to the production database, on the grounds that reads cannot hurt anything. More or less appropriate?"
+a = "Less, -2, and the reasoning is the common misconception. A large scan is not passive: it pulls pages through the buffer pool and evicts the working set the transactional workload depends on, so the ordinary queries start going to disk and get slower for a reason that appears nowhere in their own metrics. Long-running queries also hold read snapshots, which in a multi-version engine prevents cleanup of old row versions and grows the table. The layout is wrong for them too, because a row-oriented store reads whole rows to aggregate one column. Give them a replica so the eviction is on a machine nobody depends on, or export to a columnar store where a scan reads only the columns it needs and compresses far better."
+
+[[q]]
+id = "se-019"
+qtype = "diagnostic"
+subtopic = "write-amplification"
+levels = ["mid", "senior"]
+q = "An application writes a modest volume of small records per second, and the device is close to saturated on write bandwidth. Read latency is fine most of the time and spikes in waves. Most likely cause?"
+a = "The engine is writing far more bytes than the application is, and the waves are compaction colliding with traffic. In a log-structured engine each record is rewritten every time it passes through a compaction level, so the bytes reaching the device are commonly ten to thirty times the logical bytes, and the background work arrives in bursts that contend with reads. In a page-oriented engine the same shape comes from small updates rewriting a whole page each, plus the log entry. Either way the number to measure is bytes written to the device per logical byte, which explains a disk that looks idle in application terms. Levers: batch small writes, avoid updating many pages at random, tune compaction to trade space for amplification, and treat device endurance as a capacity input rather than an afterthought."

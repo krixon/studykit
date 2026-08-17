@@ -112,3 +112,47 @@ subtopic = "quorum"
 levels = ["mid", "senior"]
 q = "A leaderless store is configured so that the number of nodes written plus the number read exceeds the total, and the team treats reads as guaranteed to see the latest write. New information: writes are considered successful once the required number of nodes have acknowledged, and a failed node is later brought back with stale data. Is the guarantee sound?"
 a = "No, -1 to -2: the condition is necessary and not sufficient. Overlap guarantees a read set intersects a write set, so at least one node holds the newest value, but it does not guarantee the reader can tell which value that is, nor that a partial write is resolved rather than left divergent. Making it hold needs the machinery around it: versioning so the newest is identifiable, read repair to fix what the read exposed, and anti-entropy to reconcile a node that returns with old state. Treating the inequality alone as linearizability is the common overreach."
+
+[[q]]
+id = "cp-015"
+qtype = "diagnostic"
+subtopic = "cap"
+levels = ["mid", "senior"]
+q = "A network fault splits two datacentres for several minutes. The store kept accepting reads and writes on both sides throughout. Afterwards, one key has two different values and one of them is silently gone. What happened, and what was the choice that produced it?"
+a = "Both sides answered from their own state, because they had to: with the link down, a node can either answer from what it knows or refuse, and this store was configured to answer. That is the available side of the trade, and the divergence is not a bug in it. The loss came afterwards, at reconciliation: with no conflict handling of your own, the store applied its default, typically last write wins by timestamp, which discards one of two updates that were both accepted. The decision to revisit is not whether to be available during a partition but what happens on the way back: application-level merge, version vectors that surface a conflict to be resolved, or a data model where concurrent updates commute."
+
+[[q]]
+id = "cp-016"
+qtype = "discrimination"
+subtopic = "examples"
+levels = ["mid", "senior"]
+q = "During a partition, a name resolution service keeps answering from whatever it last heard, and a coordination service stops serving writes on the minority side. Both are working as designed. What does each have decided, and what does that predict about using them?"
+a = "The first has decided availability: it answers, and the answer may be stale, which is its normal condition rather than a degradation. The second has decided consistency: the minority side would rather return an error than a value it cannot vouch for, so a partition costs write availability for the smaller side. The prediction is about how each fails and what you must build around it. Against the first you need code that tolerates a stale answer and a bounded window in which reality and the answer differ. Against the second you need to handle unavailability, including at deploy and failover time, and you pay a round trip for agreement on the ordinary path where there is no partition at all."
+
+[[q]]
+id = "cp-017"
+qtype = "judgment"
+subtopic = "pacelc"
+levels = ["mid", "senior", "lead", "staff"]
+q = "A team chooses a strongly consistent configuration for the store holding user display preferences, on the grounds that correctness matters. More or less appropriate?"
+a = "Less, around -1 to -2, because the cost is being paid on every read forever and the benefit is a guarantee this data does not need. The half of the trade people forget is the one that applies when nothing is wrong: with no partition at all, a consistent read still waits for a quorum or the leader, so every page load carries that round trip, and if the quorum spans regions it is not a small one. A stale display preference for a moment is invisible; a slower page is not. The move is to choose per operation rather than per system: strong for the operations whose incorrectness is expensive, relaxed for the rest, in the same store."
+
+[[q]]
+id = "cp-018"
+qtype = "recall"
+subtopic = "tunability"
+levels = ["mid", "senior", "lead", "staff"]
+q = "Many stores let the consistency level be chosen per operation. At what granularity should that choice be made, and give two operations in one product that should choose differently."
+a = "Per operation, not per system, and ideally at the point in the code where someone can say what a stale answer would cost. In a shop, authorising a payment or decrementing the last unit of stock reads at a quorum, because a stale read there means money or a promise you cannot keep. Rendering an avatar, a display name or a product description reads at the cheapest level available, because the worst case is a few seconds of an old picture. Applying the strictest requirement globally is how a system ends up slow everywhere to protect a handful of operations, and the reverse mistake is a default of eventual with no list of the operations that were supposed to be exceptions."
+
+[[q]]
+id = "cp-019"
+qtype = "diagnostic"
+subtopic = "tunability"
+levels = ["mid", "senior"]
+q = "Reads served from one region take far longer than the same reads in another, and the difference is a stable tax rather than a spike. The store is deployed across three regions and reads are configured to require a quorum of all replicas. Most likely cause?"
+a = "The quorum is being formed across regions, so every read waits for a reply from a replica on another continent. A same-region round trip is around 2 ms and a cross-region one is around 100 ms, so a read that has to hear from a distant replica cannot be quicker than that, whatever the database is doing. It is stable rather than spiky because it is physics rather than load. The fix is to ask for a quorum within the local region for the operations that tolerate it, which keeps latency regional and gives up the cross-region guarantee, and to keep the global quorum for the specific operations that need it."
+derivation = [
+  "same_region_ms = 2",
+  "cross_region_ms = 100",
+]

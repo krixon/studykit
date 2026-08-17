@@ -136,3 +136,35 @@ subtopic = "pagination"
 levels = ["graduate", "mid"]
 q = "A listing endpoint pages by offset, which the team keeps because the interface shows numbered pages. New information: the list is ordered newest first and new items arrive continuously while a user is reading. Does offset paging remain acceptable?"
 a = "No, -2 for correctness, and the numbered pages are a weaker requirement than they look. An insert ahead of the reader shifts every subsequent position by one, so the next page repeats an item already seen or skips one entirely, and nobody notices because the response looks valid. Cost also grows with the offset, because the database still walks the rows it discards. Keyset paging on the sort key plus a tiebreaker is stable under writes and constant cost per page; what it gives up is jumping to page forty, which is almost never a real requirement."
+
+[[q]]
+id = "ap-018"
+qtype = "judgment"
+subtopic = "compatibility"
+levels = ["graduate", "mid"]
+q = "An id is being changed from a number to a string in the response, because JavaScript clients lose precision on large values. The change is planned for one release. More or less appropriate?"
+a = "The reason is right and the plan is wrong, so around -2 as scheduled. Changing a field's type is a breaking change even when the new type is strictly better: every client that parses the value as a number now sees a string, and a client comparing ids, using them as map keys or sending them back gets a different result or an error. You do not control when callers deploy. Do it as expand, migrate, contract: add a new string field alongside the numeric one, populate both, move consumers with telemetry showing who still reads the old field, then remove it after a deprecation window. The middle step is the whole job and there is no shortcut for it."
+
+[[q]]
+id = "ap-019"
+qtype = "diagnostic"
+subtopic = "compatibility"
+levels = ["graduate", "mid"]
+q = "During a deploy, a fraction of requests fail validation for a few minutes and then the errors stop by themselves. The release added a required field to a request body and updated the client that sends it. Most likely cause?"
+a = "Old and new were live at the same time, which is what a rolling deploy means, and the change was not compatible in both directions. For a window, updated clients were talking to servers that had not yet been replaced, or unchanged clients were reaching servers that now demand the new field; either way one side was speaking a dialect the other had not learned. Making a field required is a breaking change, not an addition. The safe sequence is to accept the field as optional first, deploy that everywhere, then start sending it, and only make it required once telemetry shows no request arrives without it."
+
+[[q]]
+id = "ap-020"
+qtype = "discrimination"
+subtopic = "errors-status"
+levels = ["graduate", "mid"]
+q = "Three rejected requests: one has a malformed body the parser cannot read; one parses cleanly but sets a delivery date in the past; one asks to cancel an order that has already shipped. Which status does each get, and what does the caller do differently in each case?"
+a = "Malformed body is 400: the request could not be understood, and the caller must fix how it is built. A well-formed body that breaks a rule is 422: the syntax was fine and the meaning was not, so the caller must change the values, and the response should name the field and the rule. Cancelling a shipped order is 409: the request is valid and conflicts with the current state of the resource, so the caller must re-read the state and decide, and retrying the same request unchanged will keep failing. The distinction matters because each implies a different next action, and collapsing them into 400 leaves every caller guessing. Whichever it is, put a machine-readable code in the body and let the message be for humans."
+
+[[q]]
+id = "ap-021"
+qtype = "recall"
+subtopic = "versioning"
+levels = ["graduate", "mid"]
+q = "Name the three common ways to version an HTTP API and what each one costs."
+a = "A version in the URL, such as a leading path segment: obvious and easy to grep for, and it encourages copying the entire surface for a change to one field, so consumers get migrated for changes that do not affect them. A version in a header or media type: keeps URLs stable, and is easy for a client to omit, which means you need a default and the default is a trap. No version at all with additive-only changes: never remove or repurpose a field, only add optional ones, which is the discipline most large APIs converge on because it puts the cost on the producer rather than on every consumer. Version at the granularity of the thing that changes, whichever mechanism you pick."

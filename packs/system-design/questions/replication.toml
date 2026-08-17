@@ -120,3 +120,43 @@ subtopic = "sync-vs-async"
 levels = ["mid", "senior"]
 q = "Followers replicate asynchronously, and reads are spread across them to add capacity. New information: the flow that matters most writes a record and then immediately reads it back to render a confirmation page. Does asynchronous replication remain suitable for this flow?"
 a = "Not for this flow, -2, though it may stay right for everything else. The write is acknowledged by the leader before the follower has it, so a read routed to a follower can legitimately return the previous state or nothing at all, and the user sees their own change missing. This is the read-your-writes case, and the remedies are local rather than architectural: route reads to the leader for a short window after a write, or pin that session to the leader, or have the client pass the version it wrote and let a lagging follower wait or redirect. Switching everything to synchronous replication buys correctness here by putting a remote round trip on every write."
+
+[[q]]
+id = "rp-016"
+qtype = "judgment"
+subtopic = "conflict-handling"
+levels = ["mid", "senior"]
+q = "Two regions both accept writes for the same records, and conflicts are resolved by last write wins. The team is comfortable because the clocks are synchronised. More or less appropriate?"
+a = "Less, -2 unless losing a concurrent update is genuinely acceptable, and clock synchronisation does not rescue it. Two writes that are concurrent in the causal sense have no true order to recover, so the timestamp comparison is not resolving a conflict, it is picking a winner and discarding the other write silently, with no error anywhere and nothing in the data saying it happened. Skew of a few milliseconds is enough to decide it the wrong way round. The options in increasing order of work: avoid the conflict by routing all writes for a key to one region, which is almost always cheaper than resolving them; detect concurrency with version vectors and surface it; use data types whose merge is order-independent, where the operations allow; or keep both versions and resolve in the application."
+
+[[q]]
+id = "rp-017"
+qtype = "recall"
+subtopic = "failover"
+levels = ["mid", "senior"]
+q = "A follower is promoted after the leader is lost. What decides whether writes the old leader had already acknowledged are gone?"
+a = "Whether those writes had reached a follower before the leader died, which is what the replication mode decides. With asynchronous replication the leader acknowledges first and ships afterwards, so anything in the gap exists only on a machine that is now unavailable, and promoting even the most up-to-date follower discards it. The size of that loss is the replication lag at the moment of failure, which is your recovery point objective and is a number you should know rather than a property you hope about. With synchronous or semi-synchronous replication the acknowledgement waits for at least one follower, so a promotion loses nothing at the cost of adding that follower's round trip to every write. There is no third option: the loss window and the write latency are the same dial."
+
+[[q]]
+id = "rp-018"
+qtype = "diagnostic"
+subtopic = "failover"
+levels = ["mid", "senior"]
+q = "After a brief network fault, two nodes each report having been the leader for an overlapping period. Both accepted writes. Afterwards some acknowledged writes are missing and no error was logged anywhere. Most likely cause?"
+a = "Split brain: the old leader was unreachable rather than dead, a new one was promoted, and the old one kept accepting writes from clients that could still reach it. When the fault cleared, one side's history was discarded to reconcile, and the writes it had acknowledged went with it. Nothing logged an error because both nodes believed they were correct. Detection cannot prevent this, because a slow leader and a dead one are indistinguishable across a network. What prevents it is fencing: a monotonically increasing term or lease that the storage layer checks, so writes from a node whose term is stale are rejected at the point of the write rather than reconciled afterwards. Anything holding external state, such as a shared volume or a lock service, has to honour the same token."
+
+[[q]]
+id = "rp-019"
+qtype = "judgment"
+subtopic = "lag-effects"
+levels = ["mid", "senior"]
+q = "Users occasionally see their own edit missing when the page reloads, because the read went to a lagging follower. The proposal is a short delay in the client before it reloads. More or less appropriate?"
+a = "Less, -2: it converts a correctness problem into a race that is usually won, and slows everyone down to do it. Lag is not a fixed quantity, so any delay that is long enough during an incident is far too long the rest of the time, and the failure it leaves is the confusing one, where a user's own change appears to have been lost. The standard fixes are cheap. Route a user's reads to the leader for a bounded window after they write, which is a session flag and covers the common case. Or record the position of their write and require the follower serving them to be at least that current, falling back to the leader when it is not. Pinning a user to one replica separately prevents the related anomaly where successive reads go backwards in time."
+
+[[q]]
+id = "rp-020"
+qtype = "judgment"
+subtopic = "topologies"
+levels = ["mid", "senior"]
+q = "A team proposes multi-leader replication so users in both regions get local write latency. New information: the same records are routinely edited by users in both regions. More or less appropriate?"
+a = "Less, -2 as stated. Multi-leader is a permanent commitment to conflict resolution, and the new information says conflicts will be routine rather than rare: two writes to one record in two regions have no true order, so something must decide, and every automatic answer either loses data or constrains what the operations may be. The question to answer first is whether the write can be partitioned. If each record has a natural home region, route its writes there and replicate elsewhere read-only, which keeps single-leader semantics and gives local reads. If the records are genuinely shared and concurrently edited, the work is designing the merge, and it belongs in the plan explicitly rather than being discovered after the topology is live."
