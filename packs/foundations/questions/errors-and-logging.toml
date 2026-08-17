@@ -144,3 +144,27 @@ subtopic = "error-handling"
 levels = ["graduate", "mid"]
 q = "A catch-all handler wraps the body of a request handler, converting anything thrown into a 500 and logging it. A reviewer objects that catching everything is a known anti-pattern. New information: this is the outermost frame of the request, and without it an exception reaches the web server and returns a blank response with no log line. Does the catch-all become more or less defensible?"
 a = "More, +2. The anti-pattern is catching broadly in the middle of a call chain, where it swallows failures a caller could have handled and turns a bug into a wrong answer. At the top of a request or job there has to be a boundary that catches everything, because the alternative is an unlogged failure and an empty response. That boundary is the one place a bare catch-all belongs, and what makes it correct rather than lazy is that it logs with the cause chained and does not continue as though the work succeeded."
+
+[[q]]
+id = "er-019"
+qtype = "judgment"
+subtopic = "exceptions-vs-results"
+levels = ["graduate", "mid"]
+q = "A lookup throws an exception when the record is absent, and the caller catches it and substitutes a default. New information: the record is absent on most calls. More or less appropriate?"
+a = "Less, -2. Absence is now the ordinary case, and an exception is a claim that something went wrong, so the code is using an error mechanism for a normal branch. Three costs follow: throwing and unwinding is far more expensive than returning on the common path, the logs and any error metric now count a routine outcome as a failure, and the reader is misled about which path is normal. Model the absence in the return type instead - an optional or a result - so the caller has to consider the miss and the code says which case is expected. Keep the exception for the case the caller cannot do anything sensible about."
+
+[[q]]
+id = "er-020"
+qtype = "diagnostic"
+subtopic = "structured-logs"
+levels = ["graduate", "mid"]
+q = "An incident review needs to know how many payments failed with a timeout last week. The logs contain that information as English sentences, and three people asking the same question get three different counts. Why?"
+a = "Because a sentence can only be counted by matching text, and the text is not stable: the wording changed with a release, so a search for one phrase misses the other, and any word that appears in more than one message over-counts. On top of that, an exception logged at each level as it propagates writes several lines for one failure, so the count depends on which line the search happened to match. Log key-value pairs instead - an event name, an outcome, an error kind, an identifier and a trace id - and the answer becomes a filter and a count rather than an argument. Log once, at the point where the decision about the failure is made."
+
+[[q]]
+id = "er-021"
+qtype = "judgment"
+subtopic = "log-levels"
+levels = ["lead", "staff"]
+q = "A team wants an alert on the rate of ERROR lines from their services. New information: a review of a day's errors finds that most are retries that subsequently succeeded. More or less useful an alert, and what would you change first?"
+a = "Less as it stands, around -1: the alert would fire on a healthy service and be tuned until it fires on nothing, which is how a team ends up with an alert that has never caught anything. What the review has actually found is level inflation, and that is what to fix first. The test for the level is whether someone would act: a retry that succeeded is at most a signal worth counting, so it belongs at WARN or, better, as a metric with a name rather than a log line. Then an ERROR means something failed that nobody recovered, and its rate is worth waking someone for. As a lead the durable part is the convention and its enforcement - the test stated in the logging guidance, applied in review, and a periodic look at what the error log actually contains, because inflation returns one well-intentioned line at a time."

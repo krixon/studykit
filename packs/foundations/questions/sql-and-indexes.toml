@@ -159,3 +159,35 @@ derivation = [
   "total_ms = extra_ms + per_query_ms",
   "batched_ms = 2 * per_query_ms",
 ]
+
+[[q]]
+id = "sq-020"
+qtype = "diagnostic"
+subtopic = "transactions"
+levels = ["graduate", "mid"]
+q = "A nightly job wraps its entire run in one transaction so that a failure rolls everything back. While it runs, unrelated writes elsewhere in the application slow down, and the database's disk usage climbs and does not fall back until the job finishes. Most likely cause?"
+a = "The transaction is the problem, not the work inside it. An open transaction holds its locks until it ends, so every other writer touching those rows waits for the job rather than for the database; and in a database using multi-version concurrency control, old row versions cannot be cleaned up while a transaction that might still need to see them is open, which is the disk growth. Both effects scale with how long the transaction is open, not with how much it changes. Keep transactions short: batch the job into many small transactions with a way to resume, and accept that a partial run needs to be idempotent rather than buying atomicity with hours of held locks."
+
+[[q]]
+id = "sq-021"
+qtype = "judgment"
+subtopic = "joins"
+levels = ["senior", "lead", "staff"]
+q = "A query joining orders to customers takes seconds. The proposal is to drop the join, fetch the orders, collect the customer ids and fetch those in a second query, then match them in application code. More or less appropriate?"
+a = "Less, -1 to -2, until the plan has been read. Joins are not slow; joins without an index on the join column are, because the database falls back to scanning, and the same missing index makes the second query in the proposed version slow too unless the ids are looked up by primary key. Moving the match into the application does the same matching with less information and adds a round trip, and it loses the database's ability to choose a strategy by row counts. Run EXPLAIN first and look at whether the join column is indexed and how estimated rows compare with actual. The version worth considering after that is a covering index or, for a genuinely large fan-out, fetching in two queries to avoid multiplying wide rows across the join, which is a different argument from the one being made here."
+
+[[q]]
+id = "sq-022"
+qtype = "judgment"
+subtopic = "n-plus-one"
+levels = ["lead", "staff"]
+q = "A team keeps shipping N+1 queries. The proposal is to disable the ORM's lazy loading globally, so touching an unfetched relation raises rather than quietly issuing a query. More or less appropriate?"
+a = "More, +2. The defect is that the failure is silent and proportional to data volume, so it passes review, passes tests on small fixtures, and appears when a customer's list grows. Turning it into an exception moves the discovery to the first developer who writes it, which is exactly where it is cheapest, and makes the fetch explicit at the point that knows what the page needs. The cost is honest: a noisy migration, and some verbosity forever. Pair it with something that catches the general shape, since the setting only covers one source of it - assert a query count per endpoint in tests, and log queries per request so a regression is visible without being an outage."
+
+[[q]]
+id = "sq-023"
+qtype = "judgment"
+subtopic = "normalisation"
+levels = ["lead", "staff"]
+q = "A team rule says every table stays in third normal form. A report now joins seven tables and misses its deadline, and the proposal is a denormalised table refreshed nightly. More or less appropriate, and what makes it safe?"
+a = "More, +1, and the rule was never meant to survive contact with a reporting workload: normalisation optimises for each fact being changed in one place, which is a write-time property, and a report is a read. What makes the copy safe is that it is derived rather than maintained. Rebuild it from the normalised tables by a job that can be run again at any time, never let application code write to it, and make its staleness part of its contract, named in the table and shown on the report. What goes wrong otherwise is that someone patches a wrong row directly, the copy and the source disagree, and there is no longer an authority. The rule to write down is not third normal form everywhere, it is one authority per fact and every copy derivable from it."

@@ -168,3 +168,11 @@ derivation = [
   "drift_pence = midpoints * bias_pence",
   "drift_pounds = drift_pence / 100",
 ]
+
+[[q]]
+id = "de-021"
+qtype = "judgment"
+subtopic = "serialisation"
+levels = ["lead", "staff"]
+q = "Services in a team publish JSON events to each other. The proposed convention is that consumers must ignore fields they do not recognise and producers may only add optional fields. More or less sufficient, and how would you make it hold?"
+a = "The convention is right and by itself insufficient, so around 0. It is right because those two rules are what make a rolling deploy survivable: during one, both versions are live, so a change has to be readable by the old consumer and the new one at the same time. What it misses is everything except adding. Removing a field, renaming one, changing a type, tightening a value range and making an optional field required are all breaking, and the convention says nothing about them, nor about who is allowed to decide a field is now unused. Making it hold means taking it out of people's memory: publish the schema as an artefact, run a compatibility check in the pipeline that fails the build on an incompatible change, and keep consumer-driven contract tests so the producer's pipeline knows who reads what. The rule people follow is the one their build enforces."

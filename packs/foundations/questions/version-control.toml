@@ -144,3 +144,43 @@ subtopic = "conflicts"
 levels = ["graduate", "mid"]
 q = "A conflict is resolved by keeping your side, because the other side's change looked like a formatting difference. The merge is clean and the branch compiles. New information: the other side's commit message says it guards against a missing profile for users created before a migration. Does the resolution become more or less trustworthy?"
 a = "Much less, -2, and the compile proving nothing is the point. Resolving a conflict means understanding both intentions, and keeping your side here silently discarded someone else's bug fix; the code is syntactically fine and the bug is back. A clean merge is not evidence of a correct merge, which is why the tests get run after resolving and not before. Read the other side's commit message during the resolution, not after."
+
+[[q]]
+id = "vc-019"
+qtype = "recall"
+subtopic = "finding-bugs"
+levels = ["graduate"]
+q = "A bug is present today and was absent at a release some hundreds of commits ago. What is the fastest way to find the commit that introduced it, and what must be true of the history for it to work?"
+a = "Binary search over the history: mark a known-good commit and a known-bad one, and the tool checks out the midpoint for you to test, halving the range each answer, so hundreds of commits take single-figure tests. With a script that exits non-zero when the bug is present, it runs unattended to the exact commit. What has to be true is that each commit builds and runs on its own, which is the practical argument for one logical change per commit: history that is a series of working states can be searched, and history where half the commits do not build cannot. Knowing which commit introduced it usually also tells you why, because the commit message and the diff arrive together."
+
+[[q]]
+id = "vc-020"
+qtype = "judgment"
+subtopic = "finding-bugs"
+levels = ["graduate", "mid"]
+q = "You are hunting a regression by reading the diff of each commit in turn, newest first. New information: there are several hundred commits since the last known-good release, and you have a one-line script that exits non-zero when the bug is present. More or less reasonable to keep reading?"
+a = "Less, -2. Reading in order is a linear search where a binary one is available, and the script is exactly what makes the binary search automatic: mark the good and bad ends, hand over the script, and the tool converges in about as many steps as there are doublings in the range, which for several hundred commits is single figures. Reading diffs also biases you towards commits that look relevant, and regressions are frequently introduced by ones that do not. Keep the reading for after the search has named the commit, when there is one diff to understand rather than hundreds to skim."
+
+[[q]]
+id = "vc-021"
+qtype = "diagnostic"
+subtopic = "merge-vs-rebase"
+levels = ["graduate", "mid"]
+q = "You rebased your branch onto main and force-pushed. A colleague who had already pulled that branch and built on it now reports duplicate commits and conflicts in files neither of you edited. What happened?"
+a = "The rebase replayed your commits onto a new base, which gave them new ids, because a commit's id is a hash of its content including its parent. Your colleague's local branch still holds the originals, so when they pull, the two sets of commits look like unrelated work that made the same changes: the duplicates are the same change under two ids, and the conflicts are those changes being applied twice. The rule this is the demonstration of is not to rebase commits others have pulled. Rebase your own unpushed work, merge shared branches, and if it has already happened, the cheap path is for them to reset their branch to the rewritten one rather than merge the two."
+
+[[q]]
+id = "vc-022"
+qtype = "judgment"
+subtopic = "branching"
+levels = ["senior", "lead", "staff"]
+q = "A team deploys to production several times a day from main and also keeps release branches for the last three versions, cherry-picking every fix onto each. More or less appropriate?"
+a = "Less, around -1 to -2, unless somebody is genuinely running those old versions and cannot be moved. Release branches exist to stabilise a version you must support after main has moved on, and their cost is that every fix is applied three more times, each application a fresh chance to differ, plus three more pipelines and three more sets of tests that gradually diverge from the ones that matter. A team deploying continuously has no version to support: there is one live thing, and it is main. So the question to answer first is who is on those branches. If it is nobody, delete them and keep the tags. If it is customers on self-hosted installs, the branches are the price of that promise, and the thing to automate is the cherry-pick and its verification rather than the decision."
+
+[[q]]
+id = "vc-023"
+qtype = "judgment"
+subtopic = "conflicts"
+levels = ["lead", "staff"]
+q = "A team conflicts constantly on whole files because editors disagree about formatting. The proposal is a one-off repository-wide reformat followed by a formatter enforced in the pipeline. More or less appropriate, and what would you do alongside it?"
+a = "More, +2. Formatting conflicts are pure cost: they carry no intent, they hide the real change in a review, and they arrive on every branch. Enforcing one format removes the class of conflict rather than managing it. Two things go with it. Do the reformat as its own commit that changes nothing else, and record that commit in the file the tools read for ignoring revisions in blame, or you have made the history harder to read for the next several years in exchange for tidier diffs. And run the formatter locally as well as in the pipeline, so the feedback arrives before the push; a check that only fails in the pipeline teaches people to push and wait. The convention to state is that a change never mixes reformatting with behaviour, which is the same rule as never mixing a refactor with a behaviour change."

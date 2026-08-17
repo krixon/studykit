@@ -144,3 +144,43 @@ subtopic = "doubles"
 levels = ["graduate", "mid"]
 q = "A suite has thorough tests over every component and all of them pass. The feature they make up is broken in an obvious way as soon as anyone uses it. Most likely cause?"
 a = "Every component was tested against a replacement dependency that agreed with the author's belief about its neighbour, and the belief was wrong. Nothing in the suite ever put two real components together, so the mismatch - a field named differently, a null the caller does not expect, an order that is not what the consumer assumes - lives exactly where no test looks. This is what a layer of tests over a few real components catches, and why replacing dependencies you own with doubles moves risk rather than removing it."
+
+[[q]]
+id = "ts-019"
+qtype = "recall"
+subtopic = "coverage"
+levels = ["graduate", "mid"]
+q = "What does a coverage report actually measure, and name two things it cannot tell you."
+a = "Which lines executed while the tests ran. That is the whole measurement. It cannot tell you whether the assertions are right, so a test that runs a function and asserts nothing raises coverage exactly as much as one that checks the answer; and it cannot tell you whether what is untested matters, so a file at ninety-something percent may have the payment path in the gap. It also does not mean a covered line is tested for its behaviour: a line with a condition can be fully covered with only one side of that condition ever taken, which is why branch coverage is the more informative number. Its honest use is finding untested areas, not being a target."
+
+[[q]]
+id = "ts-020"
+qtype = "recall"
+subtopic = "flakiness"
+levels = ["graduate", "mid"]
+q = "Why is a test that fails intermittently worse than not having that test at all?"
+a = "Because it teaches the team to re-run rather than investigate, and that habit does not distinguish between failures. Once a red build is something you click through, the real failure gets clicked through too, and the suite has stopped being a signal while still costing time on every run. A missing test at least leaves everyone honest about what is not covered. The policy that works is to quarantine the flaky test as soon as it is identified, so the suite goes back to meaning something, and then fix it or delete it within a bounded time rather than letting the quarantine become a graveyard."
+
+[[q]]
+id = "ts-021"
+qtype = "diagnostic"
+subtopic = "test-levels"
+levels = ["senior", "lead", "staff"]
+q = "Every service has a thorough, fast, green unit suite. A release breaks in production because two services disagree about the name of a field. Which level was missing, and why did the tests that exist not catch it?"
+a = "The middle one: something that exercises the real boundary, whether that is an integration test against the real dependency or a contract test that both sides run. The unit suites could not catch it because each side replaced the other with a double it wrote itself, so both were tested against the same mistaken belief and both passed. That is the standing weakness of a suite that is only unit tests: components mocked into agreement can be individually correct and collectively broken, and the mocks encode the assumption rather than checking it. Mock at the boundaries you do not own, and put a real or shared-contract check on the ones you do."
+
+[[q]]
+id = "ts-022"
+qtype = "judgment"
+subtopic = "what-to-assert"
+levels = ["lead", "staff"]
+q = "A review checklist is proposed: every test must contain exactly one assert statement. More or less useful as a team standard?"
+a = "Less, around -1, because it takes a good rule and enforces the wrong version of it. The rule worth having is one logical claim per test, so a failure names what broke without anyone reading the body. Some single claims need several assert lines to state - a returned object checked field by field - and forcing those apart duplicates the setup, multiplies runtime, and produces names that no longer say anything. Enforcing the literal count also creates a metric that is trivially satisfied by combining conditions into one assertion, which is strictly worse to diagnose. Standardise on what the failure message has to tell you, which is checkable in review by reading a failure, and leave the count alone."
+
+[[q]]
+id = "ts-023"
+qtype = "diagnostic"
+subtopic = "what-to-assert"
+levels = ["lead", "staff"]
+q = "Two teams have green suites. When one team refactors internals with no change a caller can observe, dozens of their tests fail and are then rewritten. The other team's suite stays green through the same kind of change. What is different about what the first team's tests assert?"
+a = "They assert on internal steps rather than on observable behaviour: which collaborators were called, in what order, with what arguments. Those claims are true only of the current implementation, so a refactor that keeps behaviour identical falsifies them, and rewriting them afterwards means the suite confirmed nothing about the change. The effect on a team is the part that matters: a suite like that is a tax on improvement rather than the licence for it, and people stop refactoring rather than stop writing those tests. The convention that fixes it is to assert what a caller could see - the return value, the persisted state, the message sent - and to use real implementations or fakes inside your own code, keeping mocks for the boundaries you do not own."

@@ -144,3 +144,27 @@ subtopic = "password-storage"
 levels = ["graduate", "mid"]
 q = "A team plans to force every user to change their password every ninety days. New information: they already check new passwords against a list of known-breached credentials and allow long passphrases with paste. Does the rotation policy become more or less worth adding?"
 a = "Less, -2, and it undercuts what they already have right. Forced periodic rotation produces predictable variations on one password and pushes people towards shorter, more memorable choices, which is the opposite of what breach-checking and long passphrases are buying. Current guidance is explicit that rotation on a schedule has no measured benefit. Rotate on evidence of compromise, which is a different trigger and a genuinely useful one."
+
+[[q]]
+id = "sc-019"
+qtype = "discrimination"
+subtopic = "secrets"
+levels = ["graduate", "mid"]
+q = "Two services get their database password differently. One receives it as an environment variable. The other reads it from a file mounted by a secret manager. Both keep it out of source control. What is materially different?"
+a = "Where the value can be read from once the process is running. An environment variable is inherited by every child process, is visible in the process table on many systems, and is routinely captured in crash dumps and error reports, so a value that leaks does so through paths nobody chose. A mounted file is readable only by what opens it, can be permissioned, and can be replaced while the process runs, which is what makes rotation something other than a redeploy. Keeping the value out of source control is the floor: it is the one mistake with no clean remediation, because a committed secret is in the history of every clone and must be rotated rather than removed."
+
+[[q]]
+id = "sc-020"
+qtype = "judgment"
+subtopic = "transport"
+levels = ["graduate", "mid"]
+q = "An integration test fails because the certificate on a test endpoint does not validate. The quickest way past it is a flag on the client that turns verification off. More or less appropriate?"
+a = "Less, -2, and the reason is not purity. Certificate verification is the entire mechanism by which the client knows it is talking to the server it named, so a client with it disabled will connect to anything that answers, and TLS without it protects the traffic from everyone except whoever intercepted it. The practical objection is that the flag does not stay in the test: it is copied into a helper, the helper is used by production code, and nothing fails to reveal it. Fix the certificate instead - trust the test certificate authority in the test environment, or use a properly issued one - so the failing check goes away because it now passes."
+
+[[q]]
+id = "sc-021"
+qtype = "discrimination"
+subtopic = "transport"
+levels = ["graduate", "mid"]
+q = "One site is served over HTTPS. Another is served over HTTPS and also sends a header telling browsers to refuse plain HTTP to that domain in future. What does the second stop that the first does not?"
+a = "The downgrade. On the first site a user who types the bare domain, or follows an old link, makes a plain HTTP request before any redirect happens, and whoever is on the network at that moment can answer it or rewrite the redirect. The header removes that request for every visit after the first: the browser rewrites the scheme itself before anything goes on the wire. What it does not do is protect the very first visit to a domain the browser has never seen, which is what the preload list addresses. Both sites are still equally exposed to everything TLS says nothing about, because it protects data in transit and nothing about storage, logs, backups, or what the other end does with it."

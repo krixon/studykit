@@ -149,3 +149,27 @@ derivation = [
   "stack_mb = 8",
   "reserved_mb = threads * stack_mb",
 ]
+
+[[q]]
+id = "cc-019"
+qtype = "discrimination"
+subtopic = "async-io"
+levels = ["graduate", "mid"]
+q = "Two servers each hold many simultaneous connections. One gives every connection its own thread. The other runs a single thread with an event loop. What differs in how many connections each can hold, and what does not differ at all?"
+a = "What differs is the cost of holding an idle connection. A thread has a stack and a scheduler slot whether or not it is doing anything, and switching between thousands of them costs real time, so the thread-per-connection model runs out somewhere in the low thousands. An event loop registers interest and is notified when data is ready, so an idle connection costs little more than a table entry and tens of thousands are ordinary. What does not differ is compute: neither makes any single request faster, and the event loop is worse under CPU-bound work, because one slow synchronous function stalls every other connection on that loop while the threaded server merely shares the cores."
+
+[[q]]
+id = "cc-020"
+qtype = "discrimination"
+subtopic = "atomicity"
+levels = ["graduate", "mid"]
+q = "Two ways to create a record only if it is not already there: check whether it exists and then create it, or call a single operation that creates it only if absent. Both are correct in a single-threaded test. What separates them?"
+a = "Whether there is a moment between the check and the act. The first is two operations, and another thread or process can create the record in the gap, so both callers see 'not there' and both create: the classic check-then-act race, and it is why a unique constraint or a create-if-absent primitive exists. The second is indivisible, so no observer sees a partial state and there is no gap to lose. The general rule this is an instance of: two atomic operations in sequence are not atomic, so atomicity has to cover the whole decision, not each half of it."
+
+[[q]]
+id = "cc-021"
+qtype = "judgment"
+subtopic = "deadlock"
+levels = ["graduate", "mid"]
+q = "A service hangs occasionally under load and a restart clears it. The proposal is to put a timeout on every lock acquisition so that a hang becomes an error the caller can retry. More or less appropriate?"
+a = "More as a mitigation, around +1, and not a fix. A timeout converts an indefinite hang into a detectable, loggable, retryable failure, which is a genuine improvement in operability and gives you the evidence the hang was never going to produce. What it does not do is remove the cycle: two threads still take the same two locks in opposite orders, so the failure keeps happening and retries can keep colliding. The fix is a global order in which locks are acquired, because a cycle cannot form if everyone acquires in the same order. Do the timeout for the operability and treat every fired timeout as the bug report it is."

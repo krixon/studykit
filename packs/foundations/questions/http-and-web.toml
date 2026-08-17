@@ -152,3 +152,19 @@ subtopic = "cookies-sessions"
 levels = ["graduate", "mid"]
 q = "Users report being logged out at random. It happens more often at busy times, never in testing, and the affected users were doing nothing unusual. The login flow itself works. Most likely cause?"
 a = "Session state held somewhere that is not shared across the servers answering requests - typically in each instance's memory. A user's cookie is fine; it arrives at an instance that has never seen that session, so the lookup misses and they appear logged out. It correlates with traffic because more instances are running and requests spread further, and it never reproduces in testing because there is one instance there. Move session state to a shared store, or make the session self-contained in a signed token, and the request no longer cares which instance answers."
+
+[[q]]
+id = "ht-020"
+qtype = "discrimination"
+subtopic = "request-response"
+levels = ["senior", "lead", "staff"]
+q = "Keep-alive on HTTP/1.1, multiplexing on HTTP/2, and QUIC under HTTP/3. What does each remove, and what does none of them remove?"
+a = "Keep-alive removes the connection setup from every request after the first, which is the largest single win because a fresh secure connection costs several round trips before any application data moves. Multiplexing removes the queue at the application layer: many requests share one connection instead of waiting for a free one, so a slow response no longer blocks the ones behind it in the client's own pipeline. QUIC removes the queue at the transport layer, where a single lost packet on a shared TCP connection stalls every stream on it until the retransmission arrives, and it folds the transport and cryptographic handshakes together. What none of them touches is the propagation delay: a request to another continent takes what the distance takes, however few round trips are left, which is why the remaining wins are about moving the endpoint closer rather than about the protocol."
+
+[[q]]
+id = "ht-021"
+qtype = "judgment"
+subtopic = "cookies-sessions"
+levels = ["lead", "staff"]
+q = "A team is standardising every service on a signed token carried in a cookie, so no service needs a session lookup. More or less appropriate, and what has to be decided at the same time?"
+a = "Around 0: the property being bought is real and the thing being given up is revocation, which is not a detail. A signed token is valid until it expires, so logout, a password change, a disabled account and a compromised token are all questions the design has no answer to yet. Decide these together with the standard, or each service invents its own: a short expiry with a refresh mechanism, so the window is bounded; a deny-list for the cases that must take effect now, accepting that it reintroduces a lookup for exactly those; and a signing key rotation procedure, including what happens to tokens signed with the retired key. Then make the cookie's flags and the verification a shared library rather than a page of documentation, because the failure that matters is one service accepting an unverified token, and that is a thing a library can make impossible."

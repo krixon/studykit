@@ -162,3 +162,27 @@ derivation = [
   "alert_mb = limit_mb * alert_pct / 100",
   "warning_hours = (limit_mb - alert_mb) / growth_mb_per_hour",
 ]
+
+[[q]]
+id = "os-020"
+qtype = "judgment"
+subtopic = "environment-config"
+levels = ["graduate", "mid"]
+q = "A service reads an API key from an environment variable and falls back to an empty string when it is unset, so a developer can run it locally without setting anything. New information: the same code path runs in production. More or less appropriate?"
+a = "Less, -2. The default turns a missing required value into a valid-looking one, so the process starts happily and fails later at the first call that uses the key, in a place that has nothing to do with configuration and often on an uncommon path hours in. Validate configuration at startup and refuse to run without what is required, with a message naming the variable. The local-development convenience is real and belongs elsewhere: a checked-in example environment file, a development default that is only applied when an explicit development mode is set, or a local secret file. What must not happen is that the same silence covers both cases."
+
+[[q]]
+id = "os-021"
+qtype = "diagnostic"
+subtopic = "signals-shutdown"
+levels = ["graduate", "mid"]
+q = "Every deploy produces a small spike of failed requests, always as the old instances go away. The service handles the stop signal by exiting immediately, and the team considers that correct because the exit is clean. Most likely cause?"
+a = "Exiting immediately drops every request in flight, and the load balancer keeps sending new ones for the moment it takes to notice the instance has gone. A clean exit is not a graceful one. The sequence that removes the spike is: on the stop signal, fail the readiness check so traffic is routed away, stop accepting new work, finish the requests already in progress up to a deadline shorter than the orchestrator's grace period, flush buffers and close connections, then exit zero. The spike is small enough that teams learn to ignore it, which is why it survives; it is also entirely avoidable, and the same handler is what makes a restart under load safe."
+
+[[q]]
+id = "os-022"
+qtype = "judgment"
+subtopic = "files-descriptors"
+levels = ["lead", "staff"]
+q = "After an outage caused by descriptor exhaustion, the proposal is to raise the per-process limit substantially across the fleet. More or less appropriate, and what would you put in place alongside it?"
+a = "More, around +1, and insufficient on its own. The default limit is genuinely too low for a server, so raising it is right independent of this incident, but a leak fills any limit and raising it only moves the outage later and makes it harder to attribute. What actually prevents a recurrence is a mechanism rather than a memory: scope-bound closing as the only accepted way to open anything, enforced by a lint rather than by review; open descriptors exported as a metric with an alert on the trend, because a leak is visible as a rising line long before it is visible as an outage; and a load test that runs long enough for a slow leak to show. The lead-level point is that the incident's real finding is that nothing was watching a resource with a hard ceiling."

@@ -168,3 +168,51 @@ derivation = [
   "pointer_ms = elements * miss_ns / 1000000",
   "ratio = miss_ns / hit_ns",
 ]
+
+[[q]]
+id = "cx-020"
+qtype = "diagnostic"
+subtopic = "hashing"
+levels = ["graduate", "mid"]
+q = "A value is added to a set. A freshly built value that compares as equal to it is then reported as absent, and adding that one too leaves the set holding both. Comparing the two directly still says they are equal. Most likely cause?"
+a = "The two objects agree on equality and disagree on their hash. A hash-based structure finds a candidate by hashing to a bucket first and only then compares, so if equal objects hash differently they land in different buckets and the comparison never happens. The rule is that equality and hashing are one contract: if two objects are equal they must hash equally, and implementing one without the other is the usual way this is introduced. The reverse is allowed - unequal objects may share a hash, which is an ordinary collision and is resolved by the comparison."
+
+[[q]]
+id = "cx-021"
+qtype = "judgment"
+subtopic = "memory-locality"
+levels = ["graduate", "mid"]
+q = "A profile shows a hot loop walking a pointer-linked collection of a few hundred small objects. Someone proposes copying the elements into a contiguous array before the loop and walking that instead. New information: the loop runs many times per request and the collection changes rarely. More or less appropriate?"
+a = "More, +1 to +2, and the new information is what makes it clear. Walking contiguous memory lets the processor prefetch the next elements while working on the current one, whereas each pointer hop can be a cache miss that stalls, and at a few hundred small objects the difference is a large constant factor even though both walks are linear. The copy is itself a linear pass, so the case rests on doing it rarely: build the array when the collection changes rather than on every loop, and the cost is amortised away. If the collection changed as often as it was walked, the copy would be pure overhead and the answer would flip."
+
+[[q]]
+id = "cx-022"
+qtype = "numeric"
+subtopic = "big-o"
+levels = ["lead", "staff"]
+q = "An endpoint compares every item in a request against every other item. The API's page-size limit caps a request at 500 items. How many comparisons is that at the limit, and what happens to the number if a later change raises the limit to 2000?"
+a = "124,750 comparisons at the limit, which is nothing. At 2000 items it is 1,999,000, about 16 times as many for a limit raised 4 times, because the work grows with the square of the input while the limit reads like a linear knob. That asymmetry is the thing to make a team-wide default: the bound belongs next to the algorithm that consumes it, a test exercises the endpoint at the maximum the API permits rather than at a typical size, and any change to a limit is reviewed by whoever owns the code behind it. Otherwise the quadratic loop is written once by someone who checked it at the limit of the day, and broken later by a one-line configuration change in another file."
+derivation = [
+  "limit = 500",
+  "comparisons = limit * (limit - 1) / 2",
+  "raised_limit = 2000",
+  "raised_comparisons = raised_limit * (raised_limit - 1) / 2",
+  "limit_factor = raised_limit / limit",
+  "work_factor = raised_comparisons / comparisons",
+]
+
+[[q]]
+id = "cx-023"
+qtype = "judgment"
+subtopic = "hashing"
+levels = ["lead", "staff"]
+q = "A team's review checklist says every value object must implement equality. Hashing is left to whoever needs it. More or less adequate as a standard?"
+a = "Less, -2. Equality and hashing are one contract, and a type that implements only the first is correct everywhere except inside a hash-based structure, where it silently fails to find things and quietly stores duplicates. The failure appears far from the type, often long after it was written, and in code that looks obviously right. A checklist item does not survive that: make the two impossible to separate instead, by generating both from the same declaration - a language feature, a base class, or a code generator - and add a lint that fails a type defining one without the other. The general lead point is that a rule requiring a person to remember a pairing will be broken by the first person who does not know the pairing exists."
+
+[[q]]
+id = "cx-024"
+qtype = "judgment"
+subtopic = "structure-choice"
+levels = ["lead", "staff"]
+q = "A team convention says reach for a hash map unless you can name a reason not to. More or less sound as a standard, and which reasons are worth naming?"
+a = "More, around +1: it makes the common case the default and puts the burden of argument on the unusual choice, which is what a convention is for. The boundaries have to be named with it or the convention becomes a reflex. Reach elsewhere when you need range queries or ordered iteration, which a hash map cannot answer at all and a sorted structure answers in logarithmic time; when the collection is small and iterated constantly, where a contiguous array wins on locality despite the worse class; when the key is mutable, since mutating a key after insertion strands the entry; and when iteration order leaks into output, because an unordered structure makes results that differ between runs and tests that pass by luck."
