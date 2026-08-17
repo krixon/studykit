@@ -81,7 +81,7 @@ The full report: due now, never measured, weakest facets, score by question type
 
 ### `queue`
 
-The ordered work list: overdue first (weakest first within that), then never-measured, then due today. `--limit N`, `--json`.
+The ordered work list: overdue first, then due today, staler first within each band, with weakness breaking ties. Every third slot is held for a never-measured facet, so a backlog cannot starve discovery. `--limit N`, `--json`.
 
 ### `packs`
 

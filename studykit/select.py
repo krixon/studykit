@@ -24,7 +24,7 @@ RECORDING_RESERVE = 2
 #: The quiz set is the only block with breadth: a targeted block measures one
 #: facet, a quiz set measures six, so without it the due queue never drains.
 QUIZ_FLOOR = 10
-#: What the floor shrinks to for the strongest diagnosis, which outranks breadth.
+#: Below this there is no quiz set worth running, so the budget goes elsewhere.
 MIN_QUIZ_FLOOR = 4
 #: Below this, a full problem cannot be run honestly, so the budget goes to retrieval.
 PROBLEM_FLOOR = 30
@@ -32,6 +32,11 @@ PROBLEM_FLOOR = 30
 #: precision. A session may run this far over what was asked; `plan` reports it.
 OVERRUN_FRACTION = 0.1
 MIN_OVERRUN = 2
+#: Every Nth slot at the head of the queue is held for a never-measured facet.
+#: Priority bands alone starve discovery: any non-empty backlog precedes every
+#: unmeasured facet, so the weakness found in the first few sessions is the only
+#: weakness that is ever worked on.
+EXPLORATION_EVERY = 3
 
 #: Measurements, across all types, before the ledger outweighs the level's prior.
 #: Small enough that a few sessions move the mix, large enough that three lucky
@@ -123,8 +128,11 @@ class QueueEntry:
 def build_queue(library: Library, rows: list[Row], level: str, as_of: str | None = None) -> list[QueueEntry]:
     """Ordered work list.
 
-    Overdue beats unmeasured beats due-today. Within overdue, weakest first: a
-    facet sitting at 2 and three days late is a worse liability than one at 5.
+    Overdue beats due-today, and within a band staleness leads. Weakness is not
+    ranked on again here because `schedule` has already priced it into the due
+    date, resetting a 1-2 to a one-day interval; ranking on it twice is what lets
+    a bad score buy its own topic repeat airtime. Discovery is woven into the
+    head by `_weave_unmeasured` rather than queued behind the backlog.
     """
     as_of = as_of or today()
     items = live_items(compute_items(rows))
@@ -184,7 +192,24 @@ def build_queue(library: Library, rows: list[Row], level: str, as_of: str | None
             e.subtopic,
         )
     )
-    return _spread_topics(entries)
+    return _weave_unmeasured(_spread_topics(entries))
+
+
+def _weave_unmeasured(entries: list[QueueEntry]) -> list[QueueEntry]:
+    """Hold every `EXPLORATION_EVERY`th slot for a facet never measured.
+
+    Degrades at both ends: with nothing unmeasured this returns the review order
+    untouched, and with nothing to review it returns pure discovery.
+    """
+    unmeasured = [e for e in entries if e.reason == "unmeasured"]
+    review = [e for e in entries if e.reason != "unmeasured"]
+    if not unmeasured or not review:
+        return entries
+    out: list[QueueEntry] = []
+    while unmeasured or review:
+        pool = unmeasured if (len(out) + 1) % EXPLORATION_EVERY == 0 and unmeasured else review
+        out.append((pool or unmeasured).pop(0))
+    return out
 
 
 def _spread_topics(entries: list[QueueEntry]) -> list[QueueEntry]:
@@ -485,7 +510,11 @@ def compose(
             alt = block.get("alt")
             if alt is not None and alt in satisfied:
                 continue
-            if len(targeted) >= max_targeted or block["minutes"] > max(budget - reserve, 0):
+            if len(targeted) >= max_targeted:
+                continue
+            # `skipped` carries only what the budget could not hold, so the note
+            # it drives never blames the budget for a full session.
+            if block["minutes"] > max(budget - reserve, 0):
                 skipped.append(block)
                 continue
             block.pop("alt", None)
@@ -494,10 +523,11 @@ def compose(
             if alt is not None:
                 satisfied.add(alt)
 
-    # The strongest diagnosis outranks both breadth and far transfer, so it claims
-    # first and against a reduced floor. Everything else queues behind the problem.
+    # The strongest diagnosis outranks far transfer and claims first, but not at
+    # the cost of the quiz floor: a session that rebuilds one facet and asks three
+    # questions cannot find the gap it should rebuild next.
     head, tail = _priority_split(candidates)
-    claim_targeted(head, min(MIN_QUIZ_FLOOR, floor))
+    claim_targeted(head, floor)
 
     # A half day spent entirely on retrieval measures the cheap thing.
     max_problems = 0 if not allow_problem else 1 if minutes < 120 else 2 if minutes < 300 else 3
@@ -558,16 +588,28 @@ def compose(
     blocks.extend(problem_blocks)
 
     notes: list[str] = []
-    dropped_learn = next(
-        (b for b in skipped if b["type"] == "learn" and b.get("alt") not in satisfied), None
+
+    def focus_key(block: dict) -> tuple[str, str, str] | None:
+        focus = block.get("focus")
+        return None if focus is None else (focus["pack"], focus["topic"], focus["subtopic"])
+
+    worked = {focus_key(b) for b in targeted}
+    dropped = next(
+        (
+            b
+            for b in skipped
+            if focus_key(b) is not None
+            and focus_key(b) not in worked
+            and b.get("alt") not in satisfied
+        ),
+        None,
     )
-    if dropped_learn is not None:
-        focus = dropped_learn["focus"]
+    if dropped is not None:
+        focus = dropped["focus"]
         notes.append(
-            f"{focus['topic']}/{focus['subtopic']} is at strength {focus['strength']} with nothing "
-            f"to retrieve, and the {dropped_learn['minutes']} minutes it needs do not fit this "
-            f"budget. The quiz set will measure the same gap again. Ask for a learn session on "
-            f"{focus['topic']}, or plan a longer one."
+            f"{focus['topic']}/{focus['subtopic']} is at strength {focus['strength']}, and the "
+            f"{dropped['minutes']} minutes of {dropped['type']} it needs do not fit this budget. "
+            f"The quiz set will measure the same gap again. Plan a longer session for it."
         )
 
     # A long budget can outrun the queue and the problem bank.

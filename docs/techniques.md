@@ -40,7 +40,9 @@ The blocks `./study plan` draws from. Each targets a specific failure, has a rou
 
 Two minutes are always reserved at the end for recording.
 
-The queue rotates through topics rather than exhausting one, so a 12-question set draws from up to 12 different topics.
+The queue rotates through topics rather than exhausting one, so a 12-question set draws from up to 12 different topics. Every third slot in it is held for a facet you have never been measured on, however long the overdue list is: without that, the weaknesses found in your first few sessions are the only ones ever worked on, and the rest of the pack is never reached.
+
+A targeted block never claims the budget the quiz set needs. Rebuilding one facet is worth more than another six questions, but not if it leaves too few questions to find the facet worth rebuilding next, so a deep block that does not fit says so in `notes` and asks for a longer session.
 
 ## Overriding it
 

@@ -68,13 +68,38 @@ class TestQueue(SelectionTestCase):
         self.assertEqual(queue[0].reason, "overdue")
         self.assertEqual(queue[0].subtopic, "hot-key")
 
-    def test_weakest_first_among_the_overdue(self):
+    def test_weakest_breaks_the_tie_between_equally_overdue_facets(self):
         rows = [
             row("2026-01-01", "caching", "hot-key", 5),
             row("2026-01-01", "caching", "eviction", 2),
         ]
         overdue = [e for e in build_queue(self.library, rows, "senior", "2026-06-01") if e.reason == "overdue"]
         self.assertEqual(overdue[0].subtopic, "eviction")
+
+    def test_staleness_leads_weakness_within_the_overdue_band(self):
+        """`schedule` has already priced weakness into the due date. Ranking on it
+        again here is what lets a bad score buy its own topic repeat airtime."""
+        rows = [
+            row("2026-01-01", "caching", "hot-key", 5),
+            row("2026-05-20", "caching", "eviction", 2),
+        ]
+        overdue = [e for e in build_queue(self.library, rows, "senior", "2026-06-01") if e.reason == "overdue"]
+        self.assertEqual(overdue[0].subtopic, "hot-key")
+
+    def test_discovery_is_woven_into_a_backlog_rather_than_queued_behind_it(self):
+        """Priority bands alone starve it: any backlog precedes every unmeasured
+        facet, so the gaps found early are the only ones ever worked on."""
+        facets = [(t.id, s) for t in self.library.topics("senior") for s in t.subtopics]
+        rows = [row("2026-01-01", topic, subtopic, 3) for topic, subtopic in facets[:20]]
+        head = build_queue(self.library, rows, "senior", "2026-06-01")[:9]
+        self.assertEqual([e.reason for e in head].count("unmeasured"), 3)
+
+    def test_the_weave_leaves_a_fully_measured_queue_alone(self):
+        facets = [(t.id, s) for t in self.library.topics("senior") for s in t.subtopics]
+        rows = [row("2026-01-01", topic, subtopic, 3) for topic, subtopic in facets]
+        queue = build_queue(self.library, rows, "senior", "2026-06-01")
+        self.assertTrue(queue)
+        self.assertFalse(any(e.reason == "unmeasured" for e in queue))
 
     def test_the_queue_rotates_through_topics(self):
         # Interleaving is worthless if the head of the queue is one topic.
@@ -330,10 +355,19 @@ class TestCompose(SelectionTestCase):
 
     def test_a_budget_too_small_for_learn_falls_back_to_the_same_facet(self):
         rows = [row("2026-05-01", "caching", "hot-key", 1)]
-        plan = compose(self.library, rows, "senior", 28, as_of="2026-06-01", seed=1, allow_problem=False)
+        plan = compose(self.library, rows, "senior", 34, as_of="2026-06-01", seed=1, allow_problem=False)
         faded = next(b for b in plan["blocks"] if b["type"] == "faded-worked-example")
         self.assertEqual(faded["focus"]["subtopic"], "hot-key")
         self.assertNotIn("learn", [b["type"] for b in plan["blocks"]])
+
+    def test_a_short_budget_keeps_its_breadth_instead_of_rebuilding_one_facet(self):
+        """Depth outranks breadth, but not below the quiz floor: a session that
+        rebuilds one facet and asks three questions cannot find the next gap."""
+        rows = [row("2026-05-01", "caching", "hot-key", 1)]
+        plan = compose(self.library, rows, "senior", 30, as_of="2026-06-01", seed=1, allow_problem=False)
+        quiz = next(b for b in plan["blocks"] if b["type"] == "quiz-set")
+        self.assertGreaterEqual(len(quiz["questions"]), 8)
+        self.assertTrue(any("hot-key" in n for n in plan["notes"]))
 
     def test_learn_and_its_fallback_are_never_both_taken(self):
         rows = [row("2026-05-01", "caching", "hot-key", 1)]
@@ -357,7 +391,7 @@ class TestCompose(SelectionTestCase):
 
     def test_no_note_when_the_fallback_taught_the_facet_anyway(self):
         rows = [row("2026-05-01", "caching", "hot-key", 1)]
-        plan = compose(self.library, rows, "senior", 30, as_of="2026-06-01", seed=1, allow_problem=False)
+        plan = compose(self.library, rows, "senior", 34, as_of="2026-06-01", seed=1, allow_problem=False)
         self.assertIn("faded-worked-example", [b["type"] for b in plan["blocks"]])
         self.assertEqual(plan["notes"], [])
 
