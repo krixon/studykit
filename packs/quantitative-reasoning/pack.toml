@@ -82,3 +82,10 @@ area = "measurement"
 prefix = "me"
 levels = ["senior", "lead", "staff"]
 subtopics = ["sample-size", "sampling-bias", "load-test-validity", "aggregation-traps", "before-after"]
+
+[[problem]]
+slug = "telemetry-ingest"
+title = "Size a vehicle telemetry pipeline"
+areas = ["estimation", "capacity", "queueing"]
+levels = ["mid", "senior", "lead", "staff"]
+minutes = 40
