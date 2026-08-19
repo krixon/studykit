@@ -22,7 +22,7 @@ id = "cd-003"
 qtype = "diagnostic"
 subtopic = "what-it-caches"
 levels = ["senior", "lead", "staff"]
-q = "You put a CDN in front of a site and the hit rate is close to zero, though the pages are identical for everyone. What do you check first?"
+q = "You put a CDN in front of a site. Traffic volume is normal, but the cache hit ratio is close to zero - the CDN forwards almost every request to the origin, though the pages are byte-identical for every visitor. What do you check first?"
 a = "The Vary header and Set-Cookie. Vary: Cookie means each distinct cookie value is a separate cache entry, so with any per-user cookie the hit rate collapses to nothing. Analytics cookies set on the origin response are the usual culprit. Strip or normalise cookies at the edge for cacheable paths."
 
 [[q]]
