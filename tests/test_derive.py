@@ -7,7 +7,7 @@ was made in a live session and reached the ledger before anyone noticed.
 import unittest
 
 from studykit.config import StudykitError
-from studykit.derive import check, evaluate, figures
+from studykit.derive import ambiguous_scales, check, evaluate, figures
 from studykit.packs import Question
 
 
@@ -78,6 +78,26 @@ class TestFigures(unittest.TestCase):
     def test_a_comma_separated_list_is_not_a_thousands_separator(self):
         """The ring positions A#2, A#0, B#1 are punctuation, not numbers."""
         self.assertEqual(self.found("the ring reads A#2, A#0, B#1 and you take 3"), [])
+
+    def test_a_unit_written_against_its_number_is_still_a_magnitude(self):
+        """No space is the common way to write these, and it used to match nothing."""
+        self.assertEqual(
+            self.found("40ms of queries, 200KB per key, 5s of stall, 5days of replay"),
+            ["200KB", "40ms", "5days", "5s"],
+        )
+
+    def test_an_adjacent_unit_keeps_its_own_value(self):
+        found = {f.raw: f.value for f in figures("40ms and 3MB")}
+        self.assertEqual(found, {"40ms": 40.0, "3MB": 3.0})
+
+    def test_a_lowercase_m_with_no_unit_is_ambiguous(self):
+        self.assertEqual(ambiguous_scales(figures("retries at 1m, 5m and 30m")), ["1m", "30m", "5m"])
+
+    def test_an_uppercase_M_is_million_by_convention(self):
+        self.assertEqual(ambiguous_scales(figures("80M requests and 5 million users")), [])
+
+    def test_a_scaled_figure_carrying_a_unit_is_not_ambiguous(self):
+        self.assertEqual(ambiguous_scales(figures("2m rps sustained")), [])
 
     def test_odds_are_read_as_the_proportion_they_mean(self):
         odds = [f for f in figures("about 1 in 5 per step") if "in" in f.raw]

@@ -133,7 +133,10 @@ _FIGURE = re.compile(
     (?P<num>\d{1,3}(?:[,_]\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?(?:e-?\d+)?)
     (?P<mult>x)?
     \s*
-    (?P<scale>k|m|bn|thousand|million|billion)?\b
+    # The boundary belongs inside the group. Outside it, a scale that fails to
+    # match leaves \b sitting between the digit and the unit's first letter,
+    # where no boundary exists, so "5ms" matches nothing at all.
+    (?P<scale>(?:k|m|bn|thousand|million|billion)\b)?
     \s*
     (?P<unit>"""
     + _UNIT
@@ -166,6 +169,9 @@ class Figure:
     #: "1 in 5" is a precise claim, and its own last digit says nothing useful
     #: about how much rounding to permit.
     odds: bool = False
+    #: "5m" is five million or five minutes and the prose does not say which.
+    #: Read as million here, but the author has to disambiguate before it counts.
+    ambiguous: bool = False
 
     def matches(self, value: float) -> bool:
         if self.value == 0:
@@ -201,7 +207,8 @@ def figures(text: str) -> list[Figure]:
     out: list[Figure] = []
     for match in _FIGURE.finditer(text):
         numeral = match.group("num")
-        scale = (match.group("scale") or "").lower()
+        written = match.group("scale") or ""
+        scale = written.lower()
         unit = match.group("unit")
         plain = numeral.replace(",", "").replace("_", "")
         try:
@@ -222,6 +229,9 @@ def figures(text: str) -> list[Figure]:
                 value=value,
                 slack=_half_place(numeral) * scaling,
                 magnitude_only="e" in plain.lower() and _significant(numeral) == 1,
+                # "50M" is million by convention; "50m" is equally how minutes
+                # get written, and nothing in the text settles it.
+                ambiguous=written == "m" and not unit,
             )
         )
     for match in _ODDS.finditer(text):
@@ -239,6 +249,14 @@ def figures(text: str) -> list[Figure]:
     return out
 
 
+AMBIGUOUS_M = ": a lowercase 'm' is read as million here, and is also how minutes get written. Use 'M', 'million' or 'minutes'."
+
+
+def ambiguous_scales(found: list[Figure]) -> list[str]:
+    """The bare lowercase 'm' suffixes, read as million and often meaning minutes."""
+    return sorted({figure.raw for figure in found if figure.ambiguous})
+
+
 def check(question) -> tuple[list[str], list[str]]:
     """Cross-check one question's prose against its derivation.
 
@@ -246,19 +264,20 @@ def check(question) -> tuple[list[str], list[str]]:
     so adding this check cannot retroactively fail a pack that predates it.
     """
     found = figures(question.q) + figures(question.a)
+    ambiguous = [f"{question.id}: {raw}" + AMBIGUOUS_M for raw in ambiguous_scales(found)]
     if not question.derivation:
         if found:
             listed = ", ".join(sorted({f.raw for f in found})[:6])
-            return [], [f"{question.id}: figures with no derivation ({listed})"]
-        return [], []
+            return ambiguous, [f"{question.id}: figures with no derivation ({listed})"]
+        return ambiguous, []
 
     try:
         env = evaluate(question.derivation)
     except StudykitError as exc:
-        return [f"{question.id}: {exc}"], []
+        return [*ambiguous, f"{question.id}: {exc}"], []
 
     values = list(env.values())
-    problems = [
+    problems = ambiguous + [
         f"{question.id}: {figure.raw!r} matches no derivation result"
         for figure in found
         if not any(figure.matches(value) for value in values)

@@ -722,6 +722,8 @@ def _check_figures(entry: dict) -> None:
     if isinstance(steps, str):
         steps = [line for line in steps.splitlines() if line.strip()]
     found = derive.figures(entry["q"]) + derive.figures(entry["a"])
+    if ambiguous := derive.ambiguous_scales(found):
+        raise StudykitError(", ".join(ambiguous) + derive.AMBIGUOUS_M)
     if not steps:
         if not found:
             return
