@@ -93,7 +93,8 @@ derivation = [
   "trials = 5000",
   "expected = trials / p_denominator",
   "p_none = round(100 * exp(-expected))",
-  "trials_for_confidence = 30000",
+  "confidence_multiple = 6",
+  "trials_for_confidence = confidence_multiple * p_denominator",
 ]
 
 [[q]]

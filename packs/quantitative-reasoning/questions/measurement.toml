@@ -16,7 +16,8 @@ derivation = [
   "observed_pct = 100 * failures / samples",
   "interval_pct = round(100 / sqrt(samples))",
   "upper_pct = observed_pct + interval_pct",
-  "samples_for_one_point = 10000",
+  "target_interval_pct = 1",
+  "samples_for_one_point = (100 / target_interval_pct) ** 2",
 ]
 
 [[q]]
