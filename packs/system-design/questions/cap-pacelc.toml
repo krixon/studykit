@@ -118,7 +118,7 @@ id = "cp-015"
 qtype = "diagnostic"
 subtopic = "cap"
 levels = ["mid", "senior"]
-q = "A network fault splits two datacentres for several minutes. The store kept accepting reads and writes on both sides throughout. Afterwards, one key has two different values and one of them is silently gone. What happened, and what was the choice that produced it?"
+q = "A network fault splits two datacentres for several minutes. The store kept accepting reads and writes on both sides throughout, and the same key was written on both sides during the split. Once the link heals, the key holds a single value, the other write is gone, and nothing logged an error or raised a conflict. What happened, and what was the choice that produced it?"
 a = "Both sides answered from their own state, because they had to: with the link down, a node can either answer from what it knows or refuse, and this store was configured to answer. That is the available side of the trade, and the divergence is not a bug in it. The loss came afterwards, at reconciliation: with no conflict handling of your own, the store applied its default, typically last write wins by timestamp, which discards one of two updates that were both accepted. The decision to revisit is not whether to be available during a partition but what happens on the way back: application-level merge, version vectors that surface a conflict to be resolved, or a data model where concurrent updates commute."
 
 [[q]]
